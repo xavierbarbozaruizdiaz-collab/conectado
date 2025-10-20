@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
             <CardDescription>
               Los últimos productos añadidos a la plataforma.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
