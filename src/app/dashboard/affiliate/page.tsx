@@ -111,6 +111,51 @@ export default function AffiliateDashboardPage() {
 
        <Card>
           <CardHeader>
+            <CardTitle>Conversiones Recientes</CardTitle>
+            <CardDescription>
+              Un registro de las ventas más recientes referidas por ti.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Monto de Venta</TableHead>
+                  <TableHead>Comisión Ganada</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>2023-10-15</TableCell>
+                  <TableCell>Dron con Cámara 4K</TableCell>
+                  <TableCell>{formatCurrency(499000)}</TableCell>
+                  <TableCell>{formatCurrency(49900)}</TableCell>
+                  <TableCell><Badge variant="outline">Pendiente</Badge></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>2023-10-12</TableCell>
+                  <TableCell>Caja de Verduras Orgánicas</TableCell>
+                  <TableCell>{formatCurrency(35000)}</TableCell>
+                  <TableCell>{formatCurrency(3500)}</TableCell>
+                   <TableCell><Badge className="bg-green-500/20 text-green-700 dark:text-green-400">Aprobada</Badge></TableCell>
+                </TableRow>
+                 <TableRow>
+                  <TableCell>2023-10-08</TableCell>
+                  <TableCell>Diario de Cuero Hecho a Mano</TableCell>
+                  <TableCell>{formatCurrency(45000)}</TableCell>
+                  <TableCell>{formatCurrency(4500)}</TableCell>
+                   <TableCell><Badge className="bg-green-500/20 text-green-700 dark:text-green-400">Aprobada</Badge></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+       <Card>
+          <CardHeader>
             <CardTitle>Historial de Pagos</CardTitle>
             <CardDescription>Un registro de tus pagos anteriores.</CardDescription>
           </CardHeader>

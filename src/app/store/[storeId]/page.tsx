@@ -39,11 +39,13 @@ export default function StorePage({ params }: { params: { storeId: string } }) {
             <h1 className="text-3xl md:text-4xl font-bold">{seller.storeName}</h1>
             <p className="text-muted-foreground mt-2">{seller.storeDescription}</p>
           </div>
-          <Button asChild size="lg">
-            <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
-              <MessageSquare className="mr-2 h-5 w-5" /> Contactar
-            </a>
-          </Button>
+          <div className="flex-shrink-0">
+             <Button asChild size="lg">
+                <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
+                  <MessageSquare className="mr-2 h-5 w-5" /> Contactar
+                </a>
+              </Button>
+          </div>
         </div>
       </div>
       
