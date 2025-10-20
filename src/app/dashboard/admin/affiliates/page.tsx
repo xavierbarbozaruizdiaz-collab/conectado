@@ -26,10 +26,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreHorizontal, Search, Percent } from 'lucide-react';
+import { MoreHorizontal, Search } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { affiliates, Affiliate } from '@/lib/data';
 
@@ -52,7 +51,6 @@ const getStatusBadge = (status: string) => {
 export default function AdminAffiliatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentAffiliates, setCurrentAffiliates] = useState<Affiliate[]>(affiliates);
-  const [commissionRate, setCommissionRate] = useState(10); // Default commission rate
 
   const filteredAffiliates = currentAffiliates.filter(
     (affiliate) =>
@@ -78,35 +76,6 @@ export default function AdminAffiliatesPage() {
           Supervisa a tus afiliados, sus ganancias y gestiona los pagos.
         </p>
       </div>
-
-      <Card>
-        <CardHeader>
-            <CardTitle>Configuración del Programa de Afiliados</CardTitle>
-            <CardDescription>Define los parámetros para las comisiones de los afiliados.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="space-y-2 max-w-sm">
-                <Label htmlFor="commission-rate" className="flex items-center">
-                    <Percent className="w-4 h-4 mr-2"/>
-                    Porcentaje de Comisión
-                </Label>
-                <div className="flex items-center gap-2">
-                    <Input 
-                        id="commission-rate" 
-                        type="number" 
-                        value={commissionRate}
-                        onChange={(e) => setCommissionRate(Number(e.target.value))}
-                        className="w-24"
-                        min="0"
-                        max="100"
-                    />
-                    <span className="text-muted-foreground">%</span>
-                </div>
-                <p className="text-xs text-muted-foreground">El porcentaje de cada venta que se pagará como comisión al afiliado.</p>
-            </div>
-            <Button>Guardar Configuración</Button>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
@@ -155,7 +124,7 @@ export default function AdminAffiliatesPage() {
                   <TableCell>{formatCurrency(affiliate.totalEarnings)}</TableCell>
                   <TableCell className="font-semibold text-primary">{formatCurrency(affiliate.pendingBalance)}</TableCell>
                   <TableCell className="text-right">
-                     <Button variant="outline" size="sm">Generar Código</Button>
+                     <Button variant="outline" size="sm">Asignar Afiliado</Button>
                   </TableCell>
                 </TableRow>
               ))}
