@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
-  Link as LinkIcon,
+  Users,
   FileText,
   CreditCard,
   Settings,
@@ -26,12 +26,11 @@ const sellerLinks = [
   { href: "/dashboard/seller", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/seller/products", label: "Productos", icon: ShoppingBag },
   { href: "/dashboard/seller/add-product", label: "Añadir Producto", icon: PlusCircle },
-  { href: "/dashboard/seller/settings", label: "Configuración de la tienda", icon: Settings },
+  { href: "/dashboard/seller/settings", label: "Configuración", icon: Settings },
 ];
 
 const affiliateLinks = [
-  { href: "/dashboard/affiliate", label: "Resumen", icon: LayoutDashboard },
-  { href: "/dashboard/affiliate/tools", label: "Herramientas de Referencia", icon: LinkIcon },
+  { href: "/dashboard/affiliate", label: "Panel de Afiliado", icon: Users },
   { href: "/dashboard/affiliate/reports", label: "Reportes", icon: FileText },
   { href: "/dashboard/affiliate/payments", label: "Pagos", icon: CreditCard },
 ];
@@ -78,7 +77,7 @@ export default function DashboardLayout({
             <SidebarMenu className="mt-4">
               <SidebarMenuItem>
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Afiliado
+                  Programa de Afiliados
                 </div>
               </SidebarMenuItem>
               {affiliateLinks.map((link) => (

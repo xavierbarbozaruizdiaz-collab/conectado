@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 
 export default function AffiliateDashboardPage() {
   return (
@@ -55,7 +56,7 @@ export default function AffiliateDashboardPage() {
         />
         <StatCard
           title="Comisión"
-          value="Gs. 1.289.400"
+          value={formatCurrency(1289400)}
           icon={BadgePercent}
           description="Ganancias totales este mes"
         />
@@ -93,15 +94,15 @@ export default function AffiliateDashboardPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-baseline">
                 <span className="text-muted-foreground">Total Generado</span>
-                <span className="font-bold text-lg">Gs. 5.670.500</span>
+                <span className="font-bold text-lg">{formatCurrency(5670500)}</span>
             </div>
             <div className="flex justify-between items-baseline">
                 <span className="text-muted-foreground">Total Pagado</span>
-                <span className="font-bold text-lg">Gs. 4.100.000</span>
+                <span className="font-bold text-lg">{formatCurrency(4100000)}</span>
             </div>
             <div className="flex justify-between items-baseline text-primary">
                 <span >Saldo Pendiente</span>
-                <span className="font-bold text-lg">Gs. 1.570.500</span>
+                <span className="font-bold text-lg">{formatCurrency(1570500)}</span>
             </div>
             <Button className="w-full">Solicitar Pago</Button>
           </CardContent>
@@ -126,19 +127,19 @@ export default function AffiliateDashboardPage() {
               <TableBody>
                 <TableRow>
                   <TableCell>2023-10-05</TableCell>
-                  <TableCell>Gs. 500.000</TableCell>
+                  <TableCell>{formatCurrency(500000)}</TableCell>
                   <TableCell><Badge className="bg-green-500/20 text-green-700 dark:text-green-400">Pagado</Badge></TableCell>
                   <TableCell>txn_123abc</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>2023-09-05</TableCell>
-                  <TableCell>Gs. 450.000</TableCell>
+                  <TableCell>{formatCurrency(450000)}</TableCell>
                   <TableCell><Badge className="bg-green-500/20 text-green-700 dark:text-green-400">Pagado</Badge></TableCell>
                   <TableCell>txn_456def</TableCell>
                 </TableRow>
                  <TableRow>
                   <TableCell>2023-08-05</TableCell>
-                  <TableCell>Gs. 550.000</TableCell>
+                  <TableCell>{formatCurrency(550000)}</TableCell>
                   <TableCell><Badge className="bg-green-500/20 text-green-700 dark:text-green-400">Pagado</Badge></TableCell>
                   <TableCell>txn_789ghi</TableCell>
                 </TableRow>

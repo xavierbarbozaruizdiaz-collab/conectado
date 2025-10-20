@@ -94,7 +94,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
                   </Button>
                   <Button asChild className="flex-1">
                     <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
-                      <MessageSquare className="mr-2 h-4 w-4" /> Contactar por WhatsApp
+                      <MessageSquare className="mr-2 h-4 w-4" /> Contactar
                     </a>
                   </Button>
                 </div>
