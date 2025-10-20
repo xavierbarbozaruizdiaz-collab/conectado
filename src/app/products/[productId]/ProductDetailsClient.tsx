@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -11,10 +12,16 @@ import AuctionTimer from "@/components/auction-timer";
 import { Hammer, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
+import CircularAuctionTimer from "@/components/circular-auction-timer";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Store, MessageSquare } from "lucide-react";
+import { users } from "@/lib/data";
 
 export default function ProductDetailsClient({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const seller = users.find((u) => u.id === product.sellerId);
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -26,7 +33,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
 
   return (
     <>
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow-lg md:aspect-[4/3]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl shadow-lg">
         <Image
           src={product.imageUrl}
           alt={product.name}
@@ -41,6 +48,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
           </Badge>
         )}
       </div>
+
       <div className="flex flex-col space-y-6">
         <div className="space-y-3">
           <Badge variant="secondary">{product.category}</Badge>
@@ -50,11 +58,11 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
 
         {product.isAuction && product.auctionEndDate ? (
           <Card>
-            <CardHeader>
+            <CardHeader className="items-center">
               <CardTitle>Detalles de la Subasta</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <AuctionTimer endDate={product.auctionEndDate} />
+              <CircularAuctionTimer endDate={product.auctionEndDate} />
               <div className="text-center">
                 <div className="text-sm text-muted-foreground">Puja Actual</div>
                 <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
@@ -75,6 +83,37 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
               Añadir al Carrito
             </Button>
           </div>
+        )}
+         {seller && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Información del Vendedor</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16">
+                            <AvatarImage src={seller.profilePictureUrl} alt={seller.storeName} />
+                            <AvatarFallback>{seller.storeName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h3 className="font-bold text-lg">{seller.storeName}</h3>
+                            <p className="text-sm text-muted-foreground">{seller.storeDescription}</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Button asChild className="flex-1" variant="outline">
+                            <Link href={`/store/${seller.id}`}>
+                                <Store className="mr-2 h-4 w-4" /> Visitar Tienda
+                            </Link>
+                        </Button>
+                        <Button asChild className="flex-1">
+                            <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
+                                <MessageSquare className="mr-2 h-4 w-4" /> Contactar
+                            </a>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
         )}
       </div>
     </>

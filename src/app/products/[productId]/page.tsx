@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -24,40 +25,6 @@ export default function ProductPage({ params }: { params: { productId: string } 
     <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
             <ProductDetailsClient product={product} />
-            
-            <div className="space-y-6">
-                 {seller && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Información del Vendedor</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-16 w-16">
-                                    <AvatarImage src={seller.profilePictureUrl} alt={seller.storeName} />
-                                    <AvatarFallback>{seller.storeName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h3 className="font-bold text-lg">{seller.storeName}</h3>
-                                    <p className="text-sm text-muted-foreground">{seller.storeDescription}</p>
-                                </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <Button asChild className="flex-1" variant="outline">
-                                    <Link href={`/store/${seller.id}`}>
-                                        <Store className="mr-2 h-4 w-4" /> Visitar Tienda
-                                    </Link>
-                                </Button>
-                                <Button asChild className="flex-1">
-                                    <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
-                                        <MessageSquare className="mr-2 h-4 w-4" /> Contactar
-                                    </a>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
         </div>
       
       {relatedProducts.length > 0 && (

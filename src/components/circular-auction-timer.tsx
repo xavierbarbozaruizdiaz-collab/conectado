@@ -1,0 +1,118 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
+
+type CircularAuctionTimerProps = {
+  endDate: string;
+};
+
+const COUNTDOWN_FROM = 60 * 5; // 5 minutes in seconds for dynamic coloring
+const STROKE_WIDTH = 8;
+const RADIUS = 80;
+const CIRCUMFERENCE = 2 * Math.PI * (RADIUS - STROKE_WIDTH / 2);
+
+export default function CircularAuctionTimer({ endDate }: CircularAuctionTimerProps) {
+  const [totalDuration, setTotalDuration] = useState(COUNTDOWN_FROM);
+  const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_FROM);
+
+  useEffect(() => {
+    const targetDate = parseISO(endDate);
+
+    const updateTimerState = () => {
+      const now = new Date();
+      const duration = (targetDate.getTime() - now.getTime()) / 1000;
+      
+      setTotalDuration(Math.max(duration, COUNTDOWN_FROM));
+
+      if (now > targetDate) {
+        setSecondsLeft(0);
+        return;
+      }
+      setSecondsLeft(duration);
+    };
+
+    updateTimerState(); // Initial call
+    const interval = setInterval(updateTimerState, 1000);
+
+    return () => clearInterval(interval);
+  }, [endDate]);
+
+  const isEndingSoon = secondsLeft <= 10 && secondsLeft > 0;
+  const isFinished = secondsLeft <= 0;
+
+  const percentage = (secondsLeft / totalDuration) * 100;
+  const strokeDashoffset = CIRCUMFERENCE - (percentage / 100) * CIRCUMFERENCE;
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = Math.floor(secondsLeft % 60);
+  
+  let statusText = "Tiempo restante";
+  let colorClass = "text-green-500";
+  
+  if (secondsLeft <= 30) {
+      statusText = "Últimos segundos";
+      colorClass = "text-yellow-500";
+  }
+  if (secondsLeft <= 10) {
+      statusText = "Cerrando";
+      colorClass = "text-red-500";
+  }
+  if (isFinished) {
+      statusText = "Lote Cerrado";
+      colorClass = "text-muted-foreground";
+  }
+
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 p-4 rounded-lg">
+      <div className={cn("text-lg font-medium tracking-wide", colorClass)}>
+        {statusText}
+      </div>
+      <div className="relative w-48 h-48">
+        <svg className="w-full h-full" viewBox="0 0 176 176">
+          <circle
+            cx="88"
+            cy="88"
+            r={RADIUS - STROKE_WIDTH / 2}
+            fill="transparent"
+            stroke="hsl(var(--muted))"
+            strokeWidth={STROKE_WIDTH}
+          />
+          <circle
+            cx="88"
+            cy="88"
+            r={RADIUS - STROKE_WIDTH / 2}
+            fill="transparent"
+            stroke="currentColor"
+            strokeWidth={STROKE_WIDTH}
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={isFinished ? CIRCUMFERENCE : strokeDashoffset}
+            strokeLinecap="round"
+            transform="rotate(-90 88 88)"
+            className={cn(
+              "transition-all duration-1000 ease-linear",
+              colorClass
+            )}
+          />
+        </svg>
+        <div 
+          className={cn(
+            "absolute inset-0 flex flex-col items-center justify-center",
+            isEndingSoon && "animate-pulse"
+          )}
+        >
+          {isFinished ? (
+             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          ) : (
+            <span className="text-4xl font-bold font-mono tracking-tighter">
+              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
