@@ -29,13 +29,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -185,22 +178,4 @@ export default function AffiliateReportsPage() {
       </Card>
     </div>
   );
-}
-
-// A placeholder for a real date range picker component
-function DateRangePicker() {
-    return (
-        <Select defaultValue="last_30_days">
-            <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Seleccionar rango" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="today">Hoy</SelectItem>
-                <SelectItem value="last_7_days">Últimos 7 días</SelectItem>
-                <SelectItem value="last_30_days">Últimos 30 días</SelectItem>
-                <SelectItem value="this_month">Este mes</SelectItem>
-                <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-        </Select>
-    )
 }
