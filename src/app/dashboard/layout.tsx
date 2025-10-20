@@ -20,6 +20,8 @@ import {
   ShoppingBag,
   Home,
   LogOut,
+  Shield,
+  Package,
 } from "lucide-react";
 
 const sellerLinks = [
@@ -35,6 +37,12 @@ const affiliateLinks = [
   { href: "/dashboard/affiliate/payments", label: "Pagos", icon: CreditCard },
 ];
 
+const adminLinks = [
+    { href: "/dashboard/admin", label: "Resumen", icon: LayoutDashboard },
+    { href: "/dashboard/admin/users", label: "Usuarios", icon: Users },
+    { href: "/dashboard/admin/products", label: "Productos", icon: Package },
+];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -47,17 +55,34 @@ export default function DashboardLayout({
           <SidebarHeader>
             <div className="flex items-center gap-2">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="https://picsum.photos/seed/s1p/100/100" />
-                <AvatarFallback>VF</AvatarFallback>
+                <AvatarImage src="https://picsum.photos/seed/admin/100/100" />
+                <AvatarFallback>AD</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="font-semibold">Vintage Finds</span>
-                <span className="text-xs text-muted-foreground">Cuenta de Vendedor</span>
+                <span className="font-semibold">Admin</span>
+                <span className="text-xs text-muted-foreground">Administrador del Sitio</span>
               </div>
             </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                  Admin
+                </div>
+              </SidebarMenuItem>
+              {adminLinks.map((link) => (
+                <SidebarMenuItem key={link.href}>
+                  <Link href={link.href}>
+                    <SidebarMenuButton>
+                      <link.icon className="h-4 w-4" />
+                      <span>{link.label}</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+            <SidebarMenu className="mt-4">
               <SidebarMenuItem>
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
                   Vendedor
