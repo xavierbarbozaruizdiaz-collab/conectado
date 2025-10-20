@@ -18,6 +18,7 @@ import {
   LogOut,
   Package,
   Award,
+  BadgePercent,
 } from "lucide-react";
 
 const adminLinks = [
@@ -25,6 +26,7 @@ const adminLinks = [
     { href: "/dashboard/admin/users", label: "Usuarios", icon: Users },
     { href: "/dashboard/admin/products", label: "Productos", icon: Package },
     { href: "/dashboard/admin/subscriptions", label: "Suscripciones", icon: Award },
+    { href: "/dashboard/admin/affiliates", label: "Afiliados", icon: BadgePercent },
 ];
 
 export default function AdminDashboardLayout({

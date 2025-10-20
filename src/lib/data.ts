@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { Shirt, Car, Home, Laptop, Gamepad2, Dumbbell, ToyBrick, BookOpen, Music, Dices } from 'lucide-react';
 
@@ -35,6 +36,23 @@ export type SubscriptionTier = {
   maxBidding: number;
   features: string[];
 };
+
+export type AffiliatePayment = {
+  id: string;
+  date: string;
+  amount: number;
+  status: 'Pagado' | 'Pendiente' | 'Procesando' | 'Rechazado';
+  method: string;
+}
+
+export type Affiliate = {
+    user: User;
+    affiliateCode: string;
+    totalEarnings: number;
+    pendingBalance: number;
+    paymentHistory: AffiliatePayment[];
+}
+
 
 export const users: User[] = [
   {
@@ -195,3 +213,38 @@ export const subscriptionTiers: SubscriptionTier[] = [
     features: ['Pujas ilimitadas', 'Listados ilimitados', 'Personalización de tienda', 'Soporte dedicado'],
   },
 ];
+
+
+export const affiliates: Affiliate[] = [
+    {
+        user: users[0],
+        affiliateCode: 'VINTAGE2024',
+        totalEarnings: 5670500,
+        pendingBalance: 1570500,
+        paymentHistory: [
+            { id: 'pay1', date: '2023-10-05', amount: 500000, status: 'Pagado', method: 'Transferencia Bancaria'},
+            { id: 'pay2', date: '2023-11-05', amount: 450000, status: 'Pagado', method: 'Transferencia Bancaria'},
+            { id: 'pay3', date: '2023-12-05', amount: 1570500, status: 'Pendiente', method: 'Transferencia Bancaria'},
+        ]
+    },
+    {
+        user: users[1],
+        affiliateCode: 'GREENFARM',
+        totalEarnings: 2300000,
+        pendingBalance: 800000,
+        paymentHistory: [
+            { id: 'pay4', date: '2023-11-15', amount: 750000, status: 'Pagado', method: 'PayPal'},
+            { id: 'pay5', date: '2023-12-15', amount: 800000, status: 'Pendiente', method: 'PayPal'},
+        ]
+    },
+     {
+        user: users[2],
+        affiliateCode: 'GADGETGURU',
+        totalEarnings: 8900000,
+        pendingBalance: 0,
+        paymentHistory: [
+            { id: 'pay6', date: '2023-11-20', amount: 4000000, status: 'Pagado', method: 'Transferencia Bancaria'},
+            { id: 'pay7', date: '2023-12-20', amount: 4900000, status: 'Pagado', method: 'Transferencia Bancaria'},
+        ]
+    }
+]
