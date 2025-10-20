@@ -1,3 +1,5 @@
+
+import React from "react";
 import StatCard from "@/components/stat-card";
 import {
   DollarSign,
@@ -20,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { products, users } from "@/lib/data";
 
@@ -98,7 +99,7 @@ export default function AdminDashboardPage() {
             <CardDescription>
               Los últimos productos añadidos a la plataforma.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <Table>
               <TableHeader>
