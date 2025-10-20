@@ -10,6 +10,7 @@ import {
   Sun,
   Tag,
   LayoutDashboard,
+  LogIn,
 } from "lucide-react";
 import * as React from "react";
 import { useCart } from "@/context/cart-context";
@@ -19,7 +20,6 @@ import LogoIcon from "./logo-icon";
 const navLinks = [
   { href: "/products", label: "Productos", icon: ShoppingCart },
   { href: "/pricing", label: "Precios", icon: Tag },
-  { href: "/dashboard/seller", label: "Panel", icon: LayoutDashboard },
 ];
 
 export default function Header() {
@@ -54,6 +54,19 @@ export default function Header() {
         </div>
         
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+           <div className="hidden md:flex items-center gap-2">
+                <Button variant="outline" asChild>
+                    <Link href="/dashboard/seller">
+                        Vender
+                    </Link>
+                </Button>
+                <Button asChild>
+                    <Link href="/login">
+                        <LogIn className="mr-2 h-4 w-4"/>
+                        Acceder
+                    </Link>
+                </Button>
+            </div>
           {isClient && (
             <>
               <ThemeToggle />
@@ -83,7 +96,7 @@ export default function Header() {
                 <span className="font-bold">Mercadito Online</span>
               </Link>
               <div className="flex flex-col space-y-3">
-                {navLinks.map((link) => (
+                {[...navLinks, { href: "/dashboard/seller", label: "Panel", icon: LayoutDashboard }].map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -93,6 +106,12 @@ export default function Header() {
                     <span>{link.label}</span>
                   </Link>
                 ))}
+                 <Button asChild className="mt-4">
+                    <Link href="/login">
+                        <LogIn className="mr-2 h-4 w-4"/>
+                        Acceder
+                    </Link>
+                </Button>
               </div>
             </SheetContent>
           </Sheet>
