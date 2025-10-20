@@ -16,7 +16,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store, MessageSquare } from "lucide-react";
 import { users } from "@/lib/data";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 function ProductImageGallery({ images, productName }: { images: string[], productName: string }) {
     const [selectedImage, setSelectedImage] = useState(0);
@@ -61,6 +61,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   const { addToCart } = useCart();
   const { toast } = useToast();
   const seller = users.find((u) => u.id === product.sellerId);
+  const [bidAmount, setBidAmount] = useState<string>('');
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -69,22 +70,52 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
       description: `${product.name} ha sido añadido a tu carrito.`,
     });
   };
+  
+  const minimumBid = useMemo(() => {
+    if (!product.isAuction) return 0;
+    return Math.ceil(product.price * 1.1);
+  }, [product.price, product.isAuction]);
+
+  const isBidInvalid = useMemo(() => {
+      const bid = Number(bidAmount);
+      return bid < minimumBid;
+  }, [bidAmount, minimumBid])
+  
+  const handleBidSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if(isBidInvalid) {
+          toast({
+              variant: "destructive",
+              title: "Puja inválida",
+              description: `Tu puja debe ser de al menos ${formatCurrency(minimumBid)}.`,
+          });
+          return;
+      }
+      // En una app real, aquí se enviaría la puja al servidor.
+      console.log('Puja enviada:', bidAmount);
+      toast({
+          title: "¡Puja realizada!",
+          description: `Has pujado ${formatCurrency(Number(bidAmount))} por ${product.name}.`,
+      });
+  }
 
   return (
     <>
       <div className="col-span-1">
         <ProductImageGallery images={product.imageUrls} productName={product.name} />
-        {product.isAuction && (
-          <Badge variant="destructive" className="absolute top-4 right-4 text-sm px-3 py-1 bg-accent text-accent-foreground">
-            <Hammer className="w-4 h-4 mr-2" />
-            Subasta
-          </Badge>
-        )}
       </div>
       
       <div className="col-span-1 flex flex-col gap-8">
         <div className="space-y-4">
-          <Badge variant="secondary">{product.category}</Badge>
+          <div className="flex items-center gap-4">
+            <Badge variant="secondary">{product.category}</Badge>
+             {product.isAuction && (
+              <Badge variant="destructive" className="text-sm px-3 py-1 bg-accent text-accent-foreground">
+                <Hammer className="w-4 h-4 mr-2" />
+                Subasta
+              </Badge>
+            )}
+          </div>
           <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight">{product.name}</h1>
           <p className="text-muted-foreground text-lg">{product.description}</p>
         </div>
@@ -94,15 +125,30 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
             <CardHeader className="items-center">
               <CardTitle>Detalles de la Subasta</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <CircularAuctionTimer endDate={product.auctionEndDate} />
               <div className="text-center">
                 <div className="text-sm text-muted-foreground">Puja Actual</div>
                 <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
               </div>
-              <form className="flex gap-2">
-                <Input type="number" placeholder="Monto de tu puja" className="flex-grow" />
-                <Button type="submit" className="bg-accent hover:bg-accent/90">Pujar</Button>
+              <form onSubmit={handleBidSubmit} className="space-y-3">
+                <div className="flex gap-2">
+                    <Input 
+                        type="number" 
+                        placeholder="Monto de tu puja" 
+                        className="flex-grow" 
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        min={minimumBid}
+                    />
+                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isBidInvalid && !!bidAmount}>Pujar</Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  {bidAmount && isBidInvalid
+                    ? <span className="text-destructive">La puja debe ser de al menos {formatCurrency(minimumBid)}.</span>
+                    : `Ingresa al menos ${formatCurrency(minimumBid)}.`
+                  }
+                </p>
               </form>
             </CardContent>
           </Card>
