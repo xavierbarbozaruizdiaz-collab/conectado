@@ -9,6 +9,7 @@ import { Store, MessageSquare } from "lucide-react";
 import ProductDetailsClient from "./ProductDetailsClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import ProductAuctionNavigation from "./ProductAuctionNavigation";
 
 
 export default function ProductPage({ params }: { params: { productId: string } }) {
@@ -18,11 +19,34 @@ export default function ProductPage({ params }: { params: { productId: string } 
     notFound();
   }
 
+  // --- Auction Navigation Logic ---
+  const auctionProducts = products
+    .filter(p => p.isAuction)
+    .sort((a, b) => new Date(a.auctionEndDate!).getTime() - new Date(b.auctionEndDate!).getTime());
+  
+  const currentIndex = auctionProducts.findIndex(p => p.id === product.id);
+  
+  let prevProductId: string | null = null;
+  let nextProductId: string | null = null;
+
+  if (product.isAuction && currentIndex !== -1) {
+    if (currentIndex > 0) {
+      prevProductId = auctionProducts[currentIndex - 1].id;
+    }
+    if (currentIndex < auctionProducts.length - 1) {
+      nextProductId = auctionProducts[currentIndex + 1].id;
+    }
+  }
+  // --- End Logic ---
+
   const seller = users.find((u) => u.id === product.sellerId);
   const relatedProducts = products.filter(p => p.sellerId === product.sellerId && p.id !== product.id).slice(0, 3);
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12">
+    <div className="container mx-auto px-4 md:px-6 py-12 relative">
+        {product.isAuction && (
+             <ProductAuctionNavigation prevProductId={prevProductId} nextProductId={nextProductId} />
+        )}
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
             <ProductDetailsClient product={product} />
         </div>
