@@ -2,16 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { products, categories } from "@/lib/data";
-import { ArrowRight, Tag, Zap, ShieldCheck } from "lucide-react";
+import { products } from "@/lib/data";
 import ProductCard from "@/components/product-card";
 import {
   Carousel,
@@ -20,79 +11,79 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { CreditCard, ShieldCheck, Truck } from "lucide-react";
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find(p => p.id === 'hero');
   const directSaleProducts = products.filter(p => !p.isAuction);
   const auctionProducts = products.filter(p => p.isAuction);
+  const bannerImages = [
+    { id: 1, src: "https://picsum.photos/seed/b1/1600/400", alt: "Promoción de envío gratis", hint: "delivery promotion" },
+    { id: 2, src: "https://picsum.photos/seed/b2/1600/400", alt: "Ofertas de tiempo limitado", hint: "limited time offer" },
+    { id: 3, src: "https://picsum.photos/seed/b3/1600/400", alt: "Nuevos arribos en tecnología", hint: "tech sale" },
+  ];
 
   return (
     <div className="flex flex-col min-h-dvh">
-      <section className="relative w-full py-20 md:py-32 lg:py-40 bg-card">
-        <div className="container mx-auto px-4 md:px-6 grid md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-6 text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-primary">
-              Mercadito Online
-            </h1>
-            <p className="max-w-[600px] mx-auto md:mx-0 text-lg md:text-xl text-muted-foreground">
-              Descubre artículos únicos, vende tus productos y únete a una comunidad vibrante. Tu próximo tesoro está a solo un clic de distancia.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="#featured-products">
-                  Empezar a Explorar
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/dashboard/seller">
-                  Conviértete en Vendedor
-                </Link>
-              </Button>
+      
+      <section className="w-full">
+         <Carousel opts={{ loop: true }} className="w-full">
+            <CarouselContent>
+              {bannerImages.map((img) => (
+                <CarouselItem key={img.id}>
+                  <div className="relative aspect-[4/1] w-full">
+                    <Image
+                      src={img.src}
+                      alt={img.alt}
+                      fill
+                      className="object-cover"
+                      data-ai-hint={img.hint}
+                      priority={img.id === 1}
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden lg:flex left-4" />
+            <CarouselNext className="hidden lg:flex right-4" />
+          </Carousel>
+      </section>
+
+      <section className="py-12 bg-card">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="font-semibold">Pagá online</h3>
+                <p className="text-xs text-muted-foreground">Con tarjeta o transferencia</p>
+              </div>
+            </div>
+             <div className="flex items-center gap-3">
+              <Truck className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="font-semibold">Envíos a todo el país</h3>
+                <p className="text-xs text-muted-foreground">Recibí en la puerta de tu casa</p>
+              </div>
+            </div>
+             <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="font-semibold">Compra segura</h3>
+                <p className="text-xs text-muted-foreground">Tu dinero está protegido</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+               <Image src="/img/hendyla.svg" alt="Hendyla" width={80} height={30} />
+               <div>
+                 <h3 className="font-semibold">Integrado con Hendyla</h3>
+                 <p className="text-xs text-muted-foreground">Potenciando el e-commerce</p>
+               </div>
             </div>
           </div>
-          <div className="relative h-64 md:h-auto">
-            {heroImage && (
-              <Image
-                src={heroImage.imageUrl}
-                alt={heroImage.description}
-                fill
-                className="object-cover rounded-xl shadow-2xl"
-                data-ai-hint={heroImage.imageHint}
-                priority
-              />
-            )}
-          </div>
         </div>
       </section>
 
-      <section id="categories" className="py-16 md:py-24">
-        <div className="container mx-auto px-4 md:px-6 flex flex-col items-center">
-          <h2 className="text-3xl font-bold tracking-tight text-center mb-4">
-            Compra por Categoría
-          </h2>
-          <p className="text-muted-foreground text-center mb-8 max-w-lg">
-            Explora nuestra amplia gama de productos seleccionando una categoría del menú desplegable a continuación.
-          </p>
-          <Select>
-            <SelectTrigger className="w-full max-w-sm">
-              <SelectValue placeholder="Selecciona una categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.name}>
-                    <div className="flex items-center gap-2">
-                        <category.icon className="h-4 w-4" />
-                        <span>{category.name}</span>
-                    </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
-
-      <section id="featured-products" className="py-16 md:py-24 bg-card w-full">
+      <section id="featured-products" className="py-16 md:py-24 bg-background w-full">
         <div className="container mx-auto px-4 md:px-6 space-y-16">
           
           <div>
@@ -143,40 +134,6 @@ export default function Home() {
             </Carousel>
           </div>
 
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-primary/10 p-4 rounded-full">
-                <Tag className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold">Ventas Directas y Subastas</h3>
-              <p className="text-muted-foreground">
-                Elige tu estilo de venta. Ofrece artículos a un precio fijo o deja que el mejor postor gane con nuestro emocionante formato de subasta.
-              </p>
-            </div>
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-primary/10 p-4 rounded-full">
-                <Zap className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold">Comunicación Instantánea</h3>
-              <p className="text-muted-foreground">
-                Conéctate con los vendedores al instante usando el botón de WhatsApp integrado. Haz preguntas y cierra tratos más rápido que nunca.
-              </p>
-            </div>
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-primary/10 p-4 rounded-full">
-                <ShieldCheck className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold">Seguro y Confiable</h3>
-              <p className="text-muted-foreground">
-                Benefíciate de los perfiles de usuario y las tiendas para generar confianza. Encuentra vendedores confiables y construye tu propia reputación.
-              </p>
-            </div>
-          </div>
         </div>
       </section>
     </div>
