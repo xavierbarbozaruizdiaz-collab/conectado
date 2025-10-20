@@ -20,6 +20,7 @@ import {
   Award,
   BadgePercent,
   Settings,
+  GalleryHorizontal,
 } from "lucide-react";
 
 const adminLinks = [
@@ -28,6 +29,7 @@ const adminLinks = [
     { href: "/dashboard/admin/products", label: "Productos", icon: Package },
     { href: "/dashboard/admin/subscriptions", label: "Suscripciones", icon: Award },
     { href: "/dashboard/admin/affiliates", label: "Afiliados", icon: BadgePercent },
+    { href: "/dashboard/admin/banners", label: "Banners", icon: GalleryHorizontal },
     { href: "/dashboard/admin/settings", label: "Configuración", icon: Settings },
 ];
 
