@@ -8,16 +8,11 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
-  SidebarInset,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
-  Users,
-  BadgePercent,
   Link as LinkIcon,
-  DollarSign,
   FileText,
   CreditCard,
   Settings,
@@ -26,20 +21,19 @@ import {
   Home,
   LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const sellerLinks = [
-  { href: "/dashboard/seller", label: "Overview", icon: LayoutDashboard },
-  { href: "#", label: "Products", icon: ShoppingBag },
-  { href: "#", label: "Add Product", icon: PlusCircle },
-  { href: "#", label: "Store Settings", icon: Settings },
+  { href: "/dashboard/seller", label: "Resumen", icon: LayoutDashboard },
+  { href: "#", label: "Productos", icon: ShoppingBag },
+  { href: "#", label: "Añadir Producto", icon: PlusCircle },
+  { href: "#", label: "Configuración de la tienda", icon: Settings },
 ];
 
 const affiliateLinks = [
-  { href: "/dashboard/affiliate", label: "Overview", icon: LayoutDashboard },
-  { href: "#", label: "Referral Tools", icon: LinkIcon },
-  { href: "#", label: "Reports", icon: FileText },
-  { href: "#", label: "Payments", icon: CreditCard },
+  { href: "/dashboard/affiliate", label: "Resumen", icon: LayoutDashboard },
+  { href: "#", label: "Herramientas de Referencia", icon: LinkIcon },
+  { href: "#", label: "Reportes", icon: FileText },
+  { href: "#", label: "Pagos", icon: CreditCard },
 ];
 
 export default function DashboardLayout({
@@ -59,7 +53,7 @@ export default function DashboardLayout({
               </Avatar>
               <div className="flex flex-col">
                 <span className="font-semibold">Vintage Finds</span>
-                <span className="text-xs text-muted-foreground">Seller Account</span>
+                <span className="text-xs text-muted-foreground">Cuenta de Vendedor</span>
               </div>
             </div>
           </SidebarHeader>
@@ -67,7 +61,7 @@ export default function DashboardLayout({
             <SidebarMenu>
               <SidebarMenuItem>
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Seller
+                  Vendedor
                 </div>
               </SidebarMenuItem>
               {sellerLinks.map((link) => (
@@ -84,7 +78,7 @@ export default function DashboardLayout({
             <SidebarMenu className="mt-4">
               <SidebarMenuItem>
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Affiliate
+                  Afiliado
                 </div>
               </SidebarMenuItem>
               {affiliateLinks.map((link) => (
@@ -105,24 +99,22 @@ export default function DashboardLayout({
                   <Link href="/">
                       <SidebarMenuButton>
                           <Home className="h-4 w-4" />
-                          <span>Back to Home</span>
+                          <span>Volver al Inicio</span>
                       </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton>
                       <LogOut className="h-4 w-4" />
-                      <span>Log Out</span>
+                      <span>Cerrar Sesión</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset>
-            <div className="p-4 sm:p-6 lg:p-8">
-                {children}
-            </div>
-        </SidebarInset>
+        <div className="p-4 sm:p-6 lg:p-8 flex-1">
+            {children}
+        </div>
       </div>
     </SidebarProvider>
   );

@@ -22,11 +22,11 @@ export default function StoreProducts({ products, storeName }: StoreProductsProp
   return (
     <>
       <div className="flex justify-between items-center mb-8 gap-4">
-        <h2 className="text-2xl font-bold">Products from {storeName}</h2>
+        <h2 className="text-2xl font-bold">Productos de {storeName}</h2>
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search in this store..."
+            placeholder="Buscar en esta tienda..."
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -43,7 +43,7 @@ export default function StoreProducts({ products, storeName }: StoreProductsProp
       ) : (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground">
-            {searchTerm ? "No products match your search." : "This store has no products yet."}
+            {searchTerm ? "No hay productos que coincidan con tu búsqueda." : "Esta tienda aún no tiene productos."}
           </p>
         </div>
       )}

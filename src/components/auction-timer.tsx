@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { Hammer } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,13 +20,13 @@ export default function AuctionTimer({ endDate }: AuctionTimerProps) {
     const interval = setInterval(() => {
       const now = new Date();
       if (now > targetDate) {
-        setTimeLeft("Auction Ended");
+        setTimeLeft("Subasta Terminada");
         clearInterval(interval);
         return;
       }
 
-      const distance = formatDistanceToNow(targetDate, { addSuffix: true });
-      setTimeLeft(distance.replace("about ", ""));
+      const distance = formatDistanceToNow(targetDate, { addSuffix: true, locale: es });
+      setTimeLeft(distance.replace("aproximadamente ", ""));
 
       const secondsLeft = (targetDate.getTime() - now.getTime()) / 1000;
       setIsEndingSoon(secondsLeft < 60 * 5); // 5 minutes
@@ -46,7 +47,7 @@ export default function AuctionTimer({ endDate }: AuctionTimerProps) {
       <Hammer className="h-6 w-6" />
       <div className="text-center">
         <div className="text-sm font-medium uppercase tracking-wider">
-          {isEndingSoon ? "Ending Soon" : "Auction Ends"}
+          {isEndingSoon ? "Termina Pronto" : "La Subasta Termina"}
         </div>
         <div className="text-2xl font-bold tabular-nums">
           {timeLeft}

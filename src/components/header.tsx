@@ -12,13 +12,12 @@ import {
   Tag,
   LayoutDashboard,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import * as React from "react";
 
 const navLinks = [
-  { href: "/products", label: "Products", icon: ShoppingCart },
-  { href: "/pricing", label: "Pricing", icon: Tag },
-  { href: "/dashboard/seller", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/products", label: "Productos", icon: ShoppingCart },
+  { href: "/pricing", label: "Precios", icon: Tag },
+  { href: "/dashboard/seller", label: "Panel", icon: LayoutDashboard },
 ];
 
 export default function Header() {
@@ -57,7 +56,7 @@ export default function Header() {
             <SheetTrigger asChild>
               <Button variant="ghost" className="md:hidden">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
+                <span className="sr-only">Activar Menú</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
@@ -99,7 +98,7 @@ function ThemeToggle() {
     return (
         <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            <span className="sr-only">Toggle theme</span>
+            <span className="sr-only">Activar tema</span>
         </Button>
     );
 }

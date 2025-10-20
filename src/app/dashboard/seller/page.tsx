@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { products } from "@/lib/data";
+import { formatCurrency } from "@/lib/utils";
 
 const sellerProducts = products.filter(p => p.sellerId === 'user1');
 
@@ -32,56 +33,56 @@ export default function SellerDashboardPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Seller Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, here's your sales overview.</p>
+          <h1 className="text-3xl font-bold">Panel de Vendedor</h1>
+          <p className="text-muted-foreground">Bienvenido de nuevo, aquí está tu resumen de ventas.</p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Add Product
+          Añadir Producto
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Revenue"
-          value="$45,231.89"
+          title="Ingresos Totales"
+          value="Gs. 45.231.890"
           icon={DollarSign}
-          description="+20.1% from last month"
+          description="+20.1% desde el mes pasado"
         />
         <StatCard
-          title="Sales"
-          value="+12,234"
+          title="Ventas"
+          value="+12.234"
           icon={CreditCard}
-          description="+19% from last month"
+          description="+19% desde el mes pasado"
         />
         <StatCard
-          title="Pending Balance"
-          value="$2,350.00"
+          title="Saldo Pendiente"
+          value="Gs. 2.350.000"
           icon={CircleHelp}
-          description="Awaiting payout"
+          description="Esperando pago"
         />
         <StatCard
-          title="Total Products"
+          title="Productos Totales"
           value="57"
           icon={Package}
-          description="2 products need attention"
+          description="2 productos necesitan atención"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Product History</CardTitle>
-            <CardDescription>A list of your recent products.</CardDescription>
+            <CardTitle>Historial de Productos</CardTitle>
+            <CardDescription>Una lista de tus productos recientes.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Tipo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -91,17 +92,17 @@ export default function SellerDashboardPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          product.status === 'Active' ? 'default' :
-                          product.status === 'Sold' ? 'secondary' : 'outline'
+                          product.status === 'Activo' ? 'default' :
+                          product.status === 'Vendido' ? 'secondary' : 'outline'
                         }
-                        className={product.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:text-green-400' : ''}
+                        className={product.status === 'Activo' ? 'bg-green-500/20 text-green-700 dark:text-green-400' : ''}
                       >
                         {product.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(product.price)}</TableCell>
                     <TableCell>
-                      {product.isAuction ? "Auction" : "Direct Sale"}
+                      {product.isAuction ? "Subasta" : "Venta Directa"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -112,28 +113,28 @@ export default function SellerDashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Personalize Store</CardTitle>
+            <CardTitle>Personalizar Tienda</CardTitle>
             <CardDescription>
-              Update your store's appearance and information.
+              Actualiza la apariencia e información de tu tienda.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="storeName" className="text-sm font-medium">Store Name</label>
+              <label htmlFor="storeName" className="text-sm font-medium">Nombre de la Tienda</label>
               <input id="storeName" defaultValue="Vintage Finds" className="w-full p-2 border rounded-md bg-transparent" />
             </div>
             <div className="space-y-2">
-              <label htmlFor="storeDesc" className="text-sm font-medium">Store Description</label>
-              <textarea id="storeDesc" defaultValue="Curated collection of vintage..." className="w-full p-2 border rounded-md bg-transparent min-h-[100px]" />
+              <label htmlFor="storeDesc" className="text-sm font-medium">Descripción de la Tienda</label>
+              <textarea id="storeDesc" defaultValue="Colección curada de vintage..." className="w-full p-2 border rounded-md bg-transparent min-h-[100px]" />
             </div>
             <div className="space-y-2">
-                <label className="text-sm font-medium">Profile Picture & Banner</label>
+                <label className="text-sm font-medium">Foto de Perfil y Banner</label>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1">Upload Picture</Button>
-                    <Button variant="outline" className="flex-1">Upload Banner</Button>
+                    <Button variant="outline" className="flex-1">Subir Foto</Button>
+                    <Button variant="outline" className="flex-1">Subir Banner</Button>
                 </div>
             </div>
-            <Button className="w-full">Save Changes</Button>
+            <Button className="w-full">Guardar Cambios</Button>
           </CardContent>
         </Card>
       </div>

@@ -12,28 +12,28 @@ export default function Footer() {
               <span className="font-bold text-lg">Mercadito Online</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Your modern online marketplace for direct sales and auctions.
+              Tu moderno mercado en línea para ventas directas y subastas.
             </p>
           </div>
           <div>
-            <h4 className="font-semibold mb-3">Quick Links</h4>
+            <h4 className="font-semibold mb-3">Enlaces Rápidos</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/products" className="text-muted-foreground hover:text-primary">Products</Link></li>
-              <li><Link href="/pricing" className="text-muted-foreground hover:text-primary">Pricing</Link></li>
-              <li><Link href="/dashboard/seller" className="text-muted-foreground hover:text-primary">Seller Dashboard</Link></li>
-              <li><Link href="/dashboard/affiliate" className="text-muted-foreground hover:text-primary">Affiliate Program</Link></li>
+              <li><Link href="/products" className="text-muted-foreground hover:text-primary">Productos</Link></li>
+              <li><Link href="/pricing" className="text-muted-foreground hover:text-primary">Precios</Link></li>
+              <li><Link href="/dashboard/seller" className="text-muted-foreground hover:text-primary">Panel de Vendedor</Link></li>
+              <li><Link href="/dashboard/affiliate" className="text-muted-foreground hover:text-primary">Programa de Afiliados</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-3">Legal</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Terms of Service</Link></li>
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Cookie Policy</Link></li>
+              <li><Link href="#" className="text-muted-foreground hover:text-primary">Términos de Servicio</Link></li>
+              <li><Link href="#" className="text-muted-foreground hover:text-primary">Política de Privacidad</Link></li>
+              <li><Link href="#" className="text-muted-foreground hover:text-primary">Política de Cookies</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold mb-3">Follow Us</h4>
+            <h4 className="font-semibold mb-3">Síguenos</h4>
             <div className="flex space-x-4">
               <Link href="#" className="text-muted-foreground hover:text-primary"><Twitter className="h-5 w-5" /></Link>
               <Link href="#" className="text-muted-foreground hover:text-primary"><Facebook className="h-5 w-5" /></Link>
@@ -42,7 +42,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-border/40 mt-8 pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Mercadito Online. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Mercadito Online. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

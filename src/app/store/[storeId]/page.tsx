@@ -21,7 +21,7 @@ export default function StorePage({ params }: { params: { storeId: string } }) {
       <section className="relative h-48 md:h-64 w-full">
         <Image
           src={seller.bannerUrl}
-          alt={`${seller.storeName} banner`}
+          alt={`Banner de ${seller.storeName}`}
           fill
           className="object-cover"
           data-ai-hint="store banner"
@@ -41,7 +41,7 @@ export default function StorePage({ params }: { params: { storeId: string } }) {
           </div>
           <Button asChild size="lg">
             <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
-              <MessageSquare className="mr-2 h-5 w-5" /> Contact Seller
+              <MessageSquare className="mr-2 h-5 w-5" /> Contactar al Vendedor
             </a>
           </Button>
         </div>

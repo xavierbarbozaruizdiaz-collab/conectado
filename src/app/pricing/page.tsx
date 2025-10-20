@@ -2,17 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { subscriptionTiers } from "@/lib/data";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export default function PricingPage() {
   return (
     <div className="container mx-auto px-4 md:px-6 py-16 md:py-24">
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-          Choose Your Plan
+          Elige tu Plan
         </h1>
         <p className="text-lg text-muted-foreground">
-          Unlock more features and grow your store with our flexible subscription tiers. Cancel anytime.
+          Desbloquea más funciones y haz crecer tu tienda con nuestros flexibles niveles de suscripción. Cancela en cualquier momento.
         </p>
       </div>
 
@@ -27,12 +27,12 @@ export default function PricingPage() {
           >
             <CardHeader className="text-center">
               <CardTitle className="text-3xl">{tier.name}</CardTitle>
-              <CardDescription>Max Bidding: ${tier.maxBidding}</CardDescription>
+              <CardDescription>Puja Máxima: {formatCurrency(tier.maxBidding)}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow space-y-6">
               <div className="text-center">
-                <span className="text-5xl font-bold">${tier.price}</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-5xl font-bold">{formatCurrency(tier.price)}</span>
+                <span className="text-muted-foreground">/mes</span>
               </div>
               <ul className="space-y-3">
                 {tier.features.map((feature, index) => (
@@ -49,7 +49,7 @@ export default function PricingPage() {
                 size="lg"
                 variant={tier.name === "Silver" ? "default" : "outline"}
               >
-                Choose {tier.name}
+                Elegir {tier.name}
               </Button>
             </CardFooter>
           </Card>

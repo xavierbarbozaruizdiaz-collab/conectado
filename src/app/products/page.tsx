@@ -47,14 +47,14 @@ export default function ProductsPage() {
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight">Explore Our Products</h1>
-        <p className="text-muted-foreground mt-2">Find what you're looking for from our wide collection.</p>
+        <h1 className="text-4xl font-bold tracking-tight">Explora Nuestros Productos</h1>
+        <p className="text-muted-foreground mt-2">Encuentra lo que buscas en nuestra amplia colección.</p>
       </div>
       <div className="grid lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1">
           <Card>
             <CardContent className="p-4">
-              <h3 className="font-semibold mb-4">Categories</h3>
+              <h3 className="font-semibold mb-4">Categorías</h3>
               <ul className="space-y-2">
                 <li>
                   <Button
@@ -65,7 +65,7 @@ export default function ProductsPage() {
                     )}
                     onClick={() => setActiveCategory("All")}
                   >
-                    All Categories
+                    Todas las Categorías
                   </Button>
                 </li>
                 {categories.map((category) => (
@@ -93,7 +93,7 @@ export default function ProductsPage() {
             <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search products..."
+                placeholder="Buscar productos..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -101,13 +101,13 @@ export default function ProductsPage() {
             </div>
             <Select onValueChange={setSortBy} defaultValue="featured">
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="featured">Featured</SelectItem>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                <SelectItem value="featured">Destacados</SelectItem>
+                <SelectItem value="newest">Más Nuevos</SelectItem>
+                <SelectItem value="price-asc">Precio: Menor a Mayor</SelectItem>
+                <SelectItem value="price-desc">Precio: Mayor a Menor</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -119,7 +119,7 @@ export default function ProductsPage() {
           </div>
           {filteredProducts.length === 0 && (
             <div className="text-center py-16 border-2 border-dashed rounded-lg col-span-full">
-                <p className="text-muted-foreground">No products found. Try adjusting your filters.</p>
+                <p className="text-muted-foreground">No se encontraron productos. Intenta ajustar tus filtros.</p>
             </div>
           )}
         </main>

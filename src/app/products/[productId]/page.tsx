@@ -10,6 +10,7 @@ import AuctionTimer from "@/components/auction-timer";
 import ProductCard from "@/components/product-card";
 import { MessageSquare, ArrowRight, Store, Hammer } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { formatCurrency } from "@/lib/utils";
 
 export default function ProductPage({ params }: { params: { productId: string } }) {
   const product = products.find((p) => p.id === params.productId);
@@ -35,7 +36,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
              {product.isAuction && (
               <Badge variant="destructive" className="absolute top-4 right-4 text-sm px-3 py-1 bg-accent text-accent-foreground">
                 <Hammer className="w-4 h-4 mr-2"/>
-                Auction
+                Subasta
               </Badge>
             )}
           </div>
@@ -51,28 +52,28 @@ export default function ProductPage({ params }: { params: { productId: string } 
           {product.isAuction && product.auctionEndDate ? (
             <Card>
               <CardHeader>
-                <CardTitle>Auction Details</CardTitle>
+                <CardTitle>Detalles de la Subasta</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <AuctionTimer endDate={product.auctionEndDate} />
                 <div className="text-center">
-                  <div className="text-sm text-muted-foreground">Current Bid</div>
-                  <div className="text-4xl font-bold text-primary">${product.price.toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">Puja Actual</div>
+                  <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
                 </div>
                 <form className="flex gap-2">
-                  <Input type="number" placeholder="Your bid amount" className="flex-grow" />
-                  <Button type="submit" className="bg-accent hover:bg-accent/90">Place Bid</Button>
+                  <Input type="number" placeholder="Monto de tu puja" className="flex-grow" />
+                  <Button type="submit" className="bg-accent hover:bg-accent/90">Pujar</Button>
                 </form>
               </CardContent>
             </Card>
           ) : (
-            <div className="text-4xl font-bold text-primary">${product.price.toFixed(2)}</div>
+            <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
           )}
 
           {seller && (
             <Card>
               <CardHeader>
-                <CardTitle>Seller Information</CardTitle>
+                <CardTitle>Información del Vendedor</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
@@ -88,12 +89,12 @@ export default function ProductPage({ params }: { params: { productId: string } 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button asChild className="flex-1" variant="outline">
                     <Link href={`/store/${seller.id}`}>
-                      <Store className="mr-2 h-4 w-4" /> Visit Store
+                      <Store className="mr-2 h-4 w-4" /> Visitar Tienda
                     </Link>
                   </Button>
                   <Button asChild className="flex-1">
                     <a href={`https://wa.me/${seller.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
-                      <MessageSquare className="mr-2 h-4 w-4" /> Contact via WhatsApp
+                      <MessageSquare className="mr-2 h-4 w-4" /> Contactar por WhatsApp
                     </a>
                   </Button>
                 </div>
@@ -105,7 +106,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
       
       {relatedProducts.length > 0 && (
         <div className="mt-16 lg:mt-24">
-          <h2 className="text-2xl font-bold tracking-tight mb-8">More from {seller?.storeName}</h2>
+          <h2 className="text-2xl font-bold tracking-tight mb-8">Más de {seller?.storeName}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
           </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { users } from "@/lib/data";
 import type { Product } from "@/lib/data";
+import { formatCurrency } from "@/lib/utils";
 
 type ProductCardProps = {
   product: Product;
@@ -26,7 +27,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
           {product.isAuction && (
             <Badge variant="destructive" className="absolute top-3 right-3 bg-accent text-accent-foreground">
-              Auction
+              Subasta
             </Badge>
           )}
         </div>
@@ -37,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </h3>
         <p className="text-muted-foreground text-sm line-clamp-2 min-h-[40px]">{product.description}</p>
         <div className="flex justify-between items-center pt-2">
-          <p className="text-xl font-bold text-primary">${product.price.toFixed(2)}</p>
+          <p className="text-xl font-bold text-primary">{formatCurrency(product.price)}</p>
           {seller && (
             <Link href={`/store/${seller.id}`} className="flex items-center gap-2 group/seller">
               <span className="text-sm text-muted-foreground group-hover/seller:text-primary transition-colors">{seller.storeName}</span>
