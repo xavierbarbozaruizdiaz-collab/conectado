@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AuctionTimer from "@/components/auction-timer";
 import ProductCard from "@/components/product-card";
-import { MessageSquare, ArrowRight, Store, Hammer, ShoppingCart } from "lucide-react";
+import { MessageSquare, Store, Hammer, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
