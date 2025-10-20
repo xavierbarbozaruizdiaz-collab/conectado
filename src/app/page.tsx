@@ -1,7 +1,14 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { products, categories } from "@/lib/data";
 import { ArrowRight, Tag, Zap, ShieldCheck } from "lucide-react";
@@ -60,22 +67,28 @@ export default function Home() {
       </section>
 
       <section id="categories" className="py-16 md:py-24">
-        <div className="container mx-auto px-4 md:px-6">
-          <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
+        <div className="container mx-auto px-4 md:px-6 flex flex-col items-center">
+          <h2 className="text-3xl font-bold tracking-tight text-center mb-4">
             Compra por Categoría
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-            {categories.map((category) => (
-              <Link href="#" key={category.id}>
-                <Card className="group overflow-hidden text-center hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4 flex flex-col items-center justify-center gap-2">
-                    <category.icon className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="font-semibold text-sm">{category.name}</span>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <p className="text-muted-foreground text-center mb-8 max-w-lg">
+            Explora nuestra amplia gama de productos seleccionando una categoría del menú desplegable a continuación.
+          </p>
+          <Select>
+            <SelectTrigger className="w-full max-w-sm">
+              <SelectValue placeholder="Selecciona una categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.name}>
+                    <div className="flex items-center gap-2">
+                        <category.icon className="h-4 w-4" />
+                        <span>{category.name}</span>
+                    </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </section>
 
