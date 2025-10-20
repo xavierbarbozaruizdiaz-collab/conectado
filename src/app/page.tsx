@@ -40,7 +40,7 @@ export default function Home() {
     },
   ];
 
-  const plugin = React.useRef(
+  const autoplayPlugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
   )
 
@@ -48,11 +48,11 @@ export default function Home() {
     <div className="flex flex-col min-h-dvh">
       <section className="w-full">
         <Carousel 
-            plugins={[plugin.current]}
+            plugins={[autoplayPlugin.current]}
             opts={{ loop: true }} 
             className="w-full"
-            onMouseEnter={plugin.current.stop}
-            onMouseLeave={plugin.current.reset}
+            onMouseEnter={autoplayPlugin.current.stop}
+            onMouseLeave={autoplayPlugin.current.reset}
         >
           <CarouselContent>
             {bannerImages.map((img) => (
@@ -111,9 +111,9 @@ export default function Home() {
 
       <section
         id="featured-products"
-        className="py-16 md:py-24 bg-background w-full"
+        className="py-12 md:py-16 bg-background w-full"
       >
-        <div className="container mx-auto px-4 md:px-6 space-y-16">
+        <div className="container mx-auto px-4 md:px-6 space-y-12">
           <div>
             <div className="flex justify-between items-center mb-8">
               <Link href="/products?type=direct" className="group">
@@ -126,6 +126,7 @@ export default function Home() {
               </Link>
             </div>
             <Carousel
+              plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
               opts={{ align: 'start', loop: directSaleProducts.length > 4 }}
               className="w-full"
             >
@@ -158,6 +159,7 @@ export default function Home() {
               </Link>
             </div>
             <Carousel
+              plugins={[Autoplay({ delay: 5500, stopOnInteraction: true })]}
               opts={{ align: 'start', loop: auctionProducts.length > 4 }}
               className="w-full"
             >
