@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,15 +10,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AuctionTimer from "@/components/auction-timer";
 import ProductCard from "@/components/product-card";
-import { MessageSquare, ArrowRight, Store, Hammer } from "lucide-react";
+import { MessageSquare, ArrowRight, Store, Hammer, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
+import { useCart } from "@/context/cart-context";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductPage({ params }: { params: { productId: string } }) {
   const product = products.find((p) => p.id === params.productId);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+
   if (!product) {
     notFound();
   }
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product);
+      toast({
+        title: "Producto añadido",
+        description: `${product.name} ha sido añadido a tu carrito.`,
+      });
+    }
+  };
 
   const seller = users.find((u) => u.id === product.sellerId);
   const relatedProducts = products.filter(p => p.sellerId === product.sellerId && p.id !== product.id).slice(0, 3);
@@ -67,7 +84,13 @@ export default function ProductPage({ params }: { params: { productId: string } 
               </CardContent>
             </Card>
           ) : (
-            <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
+            <div className="flex items-center justify-between">
+              <span className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</span>
+              <Button onClick={handleAddToCart}>
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Añadir al Carrito
+              </Button>
+            </div>
           )}
 
           {seller && (

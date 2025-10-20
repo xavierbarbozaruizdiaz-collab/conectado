@@ -13,6 +13,8 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import * as React from "react";
+import { useCart } from "@/context/cart-context";
+import CartDrawer from "./cart-drawer";
 
 const navLinks = [
   { href: "/products", label: "Productos", icon: ShoppingCart },
@@ -22,6 +24,7 @@ const navLinks = [
 
 export default function Header() {
   const [isClient, setIsClient] = React.useState(false);
+  const { cart } = useCart();
 
   React.useEffect(() => {
     setIsClient(true);
@@ -51,7 +54,22 @@ export default function Header() {
         </div>
         
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          {isClient && <ThemeToggle />}
+          {isClient && (
+            <>
+              <ThemeToggle />
+              <CartDrawer>
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="h-5 w-5" />
+                  {cart.length > 0 && (
+                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {cart.reduce((acc, item) => acc + item.quantity, 0)}
+                    </span>
+                  )}
+                  <span className="sr-only">Abrir carrito</span>
+                </Button>
+              </CartDrawer>
+            </>
+          )}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" className="md:hidden">
