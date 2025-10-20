@@ -50,34 +50,27 @@ export default function Home() {
 
       <section className="py-12 bg-card">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="flex items-center gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex items-center justify-center gap-3">
               <CreditCard className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="font-semibold">Pagá online</h3>
                 <p className="text-xs text-muted-foreground">Con tarjeta o transferencia</p>
               </div>
             </div>
-             <div className="flex items-center gap-3">
+             <div className="flex items-center justify-center gap-3">
               <Truck className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="font-semibold">Envíos a todo el país</h3>
                 <p className="text-xs text-muted-foreground">Recibí en la puerta de tu casa</p>
               </div>
             </div>
-             <div className="flex items-center gap-3">
+             <div className="flex items-center justify-center gap-3">
               <ShieldCheck className="h-8 w-8 text-primary" />
               <div>
                 <h3 className="font-semibold">Compra segura</h3>
                 <p className="text-xs text-muted-foreground">Tu dinero está protegido</p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-               <Image src="/img/hendyla.svg" alt="Hendyla" width={80} height={30} />
-               <div>
-                 <h3 className="font-semibold">Integrado con Hendyla</h3>
-                 <p className="text-xs text-muted-foreground">Potenciando el e-commerce</p>
-               </div>
             </div>
           </div>
         </div>
