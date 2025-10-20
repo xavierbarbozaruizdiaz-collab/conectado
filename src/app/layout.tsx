@@ -6,7 +6,7 @@ import Footer from '@/components/footer';
 import { CartProvider } from '@/context/cart-context';
 
 export const metadata: Metadata = {
-  title: 'Mercadito Online',
+  title: 'Mercadito Xbar',
   description: 'Tu moderno mercado en línea para ventas directas y subastas.',
 };
 
