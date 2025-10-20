@@ -1,3 +1,94 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "A vibrant, bustling outdoor market with many stalls and people.",
+      "imageUrl": "https://images.unsplash.com/photo-1589900586776-53db57559c73?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYXJrZXQlMjBiYXphYXJ8ZW58MHx8fHwxNzYwOTcwNjk2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "market bazaar"
+    },
+    {
+      "id": "product1",
+      "description": "A classic, well-maintained vintage bicycle leaning against a brick wall.",
+      "imageUrl": "https://images.unsplash.com/photo-1663427768578-aa88be42bf56?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx2aW50YWdlJTIwYmljeWNsZXxlbnwwfHx8fDE3NjA5NDExNzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vintage bicycle"
+    },
+    {
+      "id": "product2",
+      "description": "A handmade leather journal with intricate tooling on the cover.",
+      "imageUrl": "https://images.unsplash.com/photo-1583341655648-78bdf4ed6d13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsZWF0aGVyJTIwam91cm5hbHxlbnwwfHx8fDE3NjA5Mjc2NTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "leather journal"
+    },
+    {
+      "id": "product3",
+      "description": "A collection of colorful, freshly picked organic vegetables in a wooden crate.",
+      "imageUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxvcmdhbmljJTIwdmVnZXRhYmxlc3xlbnwwfHx8fDE3NjA5NDE5NTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "organic vegetables"
+    },
+    {
+      "id": "product4",
+      "description": "A sleek, modern drone with its controller, ready for flight.",
+      "imageUrl": "https://images.unsplash.com/photo-1745390396894-bca7e9c8bd66?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtb2Rlcm4lMjBkcm9uZXxlbnwwfHx8fDE3NjA5NjY2NzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern drone"
+    },
+    {
+      "id": "product5",
+      "description": "A vintage film camera on a wooden table.",
+      "imageUrl": "https://images.unsplash.com/photo-1595401735913-4ca17c66e755?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmaWxtJTIwY2FtZXJhfGVufDB8fHx8MTc2MDk0MjU2NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "film camera"
+    },
+    {
+      "id": "product6",
+      "description": "A set of hand-painted ceramic mugs.",
+      "imageUrl": "https://images.unsplash.com/photo-1669329322659-3779dc49f849?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjZXJhbWljJTIwbXVnc3xlbnwwfHx8fDE3NjA5NjgxMDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ceramic mugs"
+    },
+    {
+      "id": "product7",
+      "description": "A stylish smartwatch with a vibrant display.",
+      "imageUrl": "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzbWFydCUyMHdhdGNofGVufDB8fHx8MTc2MDk1MzcxMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "smart watch"
+    },
+    {
+      "id": "product8",
+      "description": "A rare vinyl record in its sleeve.",
+      "imageUrl": "https://images.unsplash.com/photo-1535992165812-68d1861aa71e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx2aW55bCUyMHJlY29yZHxlbnwwfHx8fDE3NjA5MzU1NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vinyl record"
+    },
+    {
+      "id": "store1-banner",
+      "description": "Banner for a store selling vintage items and antiques.",
+      "imageUrl": "https://images.unsplash.com/photo-1612470759952-6f39bc964fb1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhbnRpcXVlJTIwc2hvcHxlbnwwfHx8fDE3NjA5NzA2OTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "antique shop"
+    },
+    {
+      "id": "store1-profile",
+      "description": "Profile picture of a friendly-looking store owner.",
+      "imageUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjA5MjcyMzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "store2-banner",
+      "description": "Banner for a store that sells fresh, organic produce.",
+      "imageUrl": "https://images.unsplash.com/photo-1514425263458-109317cc1321?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmYXJtZXJzJTIwbWFya2V0fGVufDB8fHx8MTc2MDk2ODY0MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "farmers market"
+    },
+    {
+      "id": "store2-profile",
+      "description": "Profile picture of a farmer with a welcoming smile.",
+      "imageUrl": "https://images.unsplash.com/photo-1618496899001-b58ebcbeef26?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYXJtZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjA5NTQwNTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "farmer portrait"
+    },
+    {
+      "id": "store3-banner",
+      "description": "Banner for a tech gadget store with a modern, clean aesthetic.",
+      "imageUrl": "https://images.unsplash.com/photo-1558455546-d697224f1d4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0ZWNoJTIwc3RvcmV8ZW58MHx8fHwxNzYwODc1MjI3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tech store"
+    },
+    {
+      "id": "store3-profile",
+      "description": "Profile picture of a tech enthusiast.",
+      "imageUrl": "https://images.unsplash.com/photo-1679124500499-88d6a0d3774b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0ZWNoJTIwcGVyc29ufGVufDB8fHx8MTc2MDk3MDY5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tech person"
+    }
+  ]
 }
