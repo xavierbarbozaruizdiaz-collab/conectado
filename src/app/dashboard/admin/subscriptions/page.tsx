@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { subscriptionTiers } from "@/lib/data";
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, Pencil } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminSubscriptionsPage() {
   return (
@@ -29,9 +30,11 @@ export default function AdminSubscriptionsPage() {
             Visualiza y gestiona los planes de suscripción y sus límites.
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Añadir Plan
+        <Button asChild>
+          <Link href="/dashboard/admin/subscriptions/edit">
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar Planes
+          </Link>
         </Button>
       </div>
       
@@ -72,9 +75,6 @@ export default function AdminSubscriptionsPage() {
                         ))}
                     </ul>
                 </CardContent>
-                <div className="p-6 pt-0">
-                    <Button variant="outline" className="w-full">Editar Plan</Button>
-                </div>
               </Card>
             ))}
           </div>
