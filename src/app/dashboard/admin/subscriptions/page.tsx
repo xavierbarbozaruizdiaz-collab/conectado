@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -5,22 +9,26 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { subscriptionTiers } from "@/lib/data";
+import { subscriptionTiers as initialTiers, SubscriptionTier } from "@/lib/data";
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
-import { Check, Plus, Pencil } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import Link from "next/link";
 
+const TIERS_STORAGE_KEY = 'subscriptionTiers';
+
 export default function AdminSubscriptionsPage() {
+  const [currentTiers, setCurrentTiers] = useState<SubscriptionTier[]>(initialTiers);
+
+  useEffect(() => {
+    const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
+    if (savedTiers) {
+      setCurrentTiers(JSON.parse(savedTiers));
+    }
+  }, []);
+
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-start">
@@ -47,7 +55,7 @@ export default function AdminSubscriptionsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {subscriptionTiers.map((tier) => (
+            {currentTiers.map((tier) => (
               <Card key={tier.name} className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="flex justify-between items-center">

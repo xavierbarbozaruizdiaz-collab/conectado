@@ -1,10 +1,25 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { subscriptionTiers } from "@/lib/data";
+import { subscriptionTiers as initialTiers, SubscriptionTier } from "@/lib/data";
 import { cn, formatCurrency } from "@/lib/utils";
 
+const TIERS_STORAGE_KEY = 'subscriptionTiers';
+
 export default function PricingPage() {
+  const [currentTiers, setCurrentTiers] = useState<SubscriptionTier[]>(initialTiers);
+
+  useEffect(() => {
+    const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
+    if (savedTiers) {
+      setCurrentTiers(JSON.parse(savedTiers));
+    }
+  }, []);
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-16 md:py-24">
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
@@ -17,7 +32,7 @@ export default function PricingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-        {subscriptionTiers.map((tier) => (
+        {currentTiers.map((tier) => (
           <Card
             key={tier.name}
             className={cn(
