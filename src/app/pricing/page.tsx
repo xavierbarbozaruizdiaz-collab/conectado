@@ -16,7 +16,7 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {subscriptionTiers.map((tier) => (
           <Card
             key={tier.name}
@@ -27,12 +27,18 @@ export default function PricingPage() {
           >
             <CardHeader className="text-center">
               <CardTitle className="text-3xl">{tier.name}</CardTitle>
-              <CardDescription>Puja Máxima: {formatCurrency(tier.maxBidding)}</CardDescription>
+              <CardDescription>
+                {tier.maxBidding === Infinity
+                  ? "Puja sin límites"
+                  : `Puja Máxima: ${formatCurrency(tier.maxBidding)}`}
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow space-y-6">
               <div className="text-center">
-                <span className="text-5xl font-bold">{formatCurrency(tier.price)}</span>
-                <span className="text-muted-foreground">/mes</span>
+                <span className="text-5xl font-bold">
+                  {tier.price === 0 ? "Gratis" : formatCurrency(tier.price)}
+                </span>
+                {tier.price > 0 && <span className="text-muted-foreground">/mes</span>}
               </div>
               <ul className="space-y-3">
                 {tier.features.map((feature, index) => (

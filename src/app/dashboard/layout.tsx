@@ -22,6 +22,7 @@ import {
   LogOut,
   Shield,
   Package,
+  Award,
 } from "lucide-react";
 
 const sellerLinks = [
@@ -41,6 +42,7 @@ const adminLinks = [
     { href: "/dashboard/admin", label: "Resumen", icon: LayoutDashboard },
     { href: "/dashboard/admin/users", label: "Usuarios", icon: Users },
     { href: "/dashboard/admin/products", label: "Productos", icon: Package },
+    { href: "/dashboard/admin/subscriptions", label: "Suscripciones", icon: Award },
 ];
 
 export default function DashboardLayout({

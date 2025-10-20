@@ -30,7 +30,7 @@ export type Category = {
 };
 
 export type SubscriptionTier = {
-  name: 'Bronce' | 'Plata' | 'Oro';
+  name: 'Gratis' | 'Bronce' | 'Plata' | 'Oro';
   price: number;
   maxBidding: number;
   features: string[];
@@ -171,21 +171,27 @@ export const categories: Category[] = [
 
 export const subscriptionTiers: SubscriptionTier[] = [
   {
+    name: 'Gratis',
+    price: 0,
+    maxBidding: 500000,
+    features: ['Puja hasta Gs. 500.000', 'Funcionalidades básicas'],
+  },
+  {
     name: 'Bronce',
-    price: 10000,
-    maxBidding: 100000,
-    features: ['Hasta 10 listados activos', 'Personalización básica de la tienda', 'Soporte estándar'],
+    price: 50000,
+    maxBidding: 2000000,
+    features: ['Puja hasta Gs. 2.000.000', 'Hasta 10 listados activos', 'Soporte estándar'],
   },
   {
     name: 'Plata',
-    price: 25000,
-    maxBidding: 500000,
-    features: ['Hasta 50 listados activos', 'Personalización avanzada de la tienda', 'Listados destacados (3/mes)', 'Soporte prioritario'],
+    price: 100000,
+    maxBidding: 10000000,
+    features: ['Puja hasta Gs. 10.000.000', 'Hasta 50 listados activos', 'Listados destacados', 'Soporte prioritario'],
   },
   {
     name: 'Oro',
-    price: 50000,
-    maxBidding: 2000000,
-    features: ['Listados activos ilimitados', 'Personalización completa de la tienda', 'Listados destacados (10/mes)', 'Soporte dedicado'],
+    price: 200000,
+    maxBidding: Infinity,
+    features: ['Pujas ilimitadas', 'Listados ilimitados', 'Personalización de tienda', 'Soporte dedicado'],
   },
 ];
