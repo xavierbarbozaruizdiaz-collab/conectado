@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { products } from '@/lib/data';
+import { products, users } from '@/lib/data';
 import ProductCard from '@/components/product-card';
 import {
   Carousel,
@@ -13,8 +13,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { CreditCard, ShieldCheck, Truck } from 'lucide-react';
+import { CreditCard, ShieldCheck, Truck, Store } from 'lucide-react';
 import Autoplay from "embla-carousel-autoplay"
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Home() {
   const directSaleProducts = products.filter((p) => !p.isAuction);
@@ -109,9 +111,33 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="stores" className="py-12 md:py-16 bg-background w-full">
+        <div className="container mx-auto px-4 md:px-6">
+           <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold tracking-tight">Explora Nuestras Tiendas</h2>
+               <Button asChild variant="outline">
+                  <Link href="/stores">
+                      Ver Todas las Tiendas <Store className="ml-2 h-4 w-4" />
+                  </Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+                {users.slice(0, 6).map(user => (
+                  <Link href={`/store/${user.id}`} key={user.id} className="group flex flex-col items-center gap-2 text-center">
+                    <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-transparent group-hover:border-primary transition-all duration-300">
+                        <AvatarImage src={user.profilePictureUrl} />
+                        <AvatarFallback>{user.storeName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <p className="font-semibold text-sm group-hover:text-primary transition-colors">{user.storeName}</p>
+                  </Link>  
+                ))}
+            </div>
+        </div>
+      </section>
+
       <section
         id="featured-products"
-        className="py-12 md:py-16 bg-background w-full"
+        className="py-12 md:py-16 bg-card w-full"
       >
         <div className="container mx-auto px-4 md:px-6 space-y-12">
           <div>
