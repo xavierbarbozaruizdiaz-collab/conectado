@@ -24,16 +24,16 @@ import {
 
 const sellerLinks = [
   { href: "/dashboard/seller", label: "Resumen", icon: LayoutDashboard },
-  { href: "#", label: "Productos", icon: ShoppingBag },
-  { href: "#", label: "Añadir Producto", icon: PlusCircle },
-  { href: "#", label: "Configuración de la tienda", icon: Settings },
+  { href: "/dashboard/seller/products", label: "Productos", icon: ShoppingBag },
+  { href: "/dashboard/seller/add-product", label: "Añadir Producto", icon: PlusCircle },
+  { href: "/dashboard/seller/settings", label: "Configuración de la tienda", icon: Settings },
 ];
 
 const affiliateLinks = [
   { href: "/dashboard/affiliate", label: "Resumen", icon: LayoutDashboard },
-  { href: "#", label: "Herramientas de Referencia", icon: LinkIcon },
-  { href: "#", label: "Reportes", icon: FileText },
-  { href: "#", label: "Pagos", icon: CreditCard },
+  { href: "/dashboard/affiliate/tools", label: "Herramientas de Referencia", icon: LinkIcon },
+  { href: "/dashboard/affiliate/reports", label: "Reportes", icon: FileText },
+  { href: "/dashboard/affiliate/payments", label: "Pagos", icon: CreditCard },
 ];
 
 export default function DashboardLayout({
