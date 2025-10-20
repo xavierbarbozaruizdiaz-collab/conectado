@@ -1,12 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import { products, categories } from "@/lib/data";
 import ProductCard from "@/components/product-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,92 +12,68 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ProductType = "all" | "direct" | "auction";
 
-export default function ProductsPage() {
-  const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("featured");
-  const [productType, setProductType] = useState<ProductType>("all");
+const useProductFilters = () => {
+    const searchParams = useSearchParams();
+    const [activeCategory, setActiveCategory] = useState<string>("All");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortBy, setSortBy] = useState("featured");
+    
+    const initialProductType = searchParams.get('type') as ProductType | null;
+    const [productType, setProductType] = useState<ProductType>(initialProductType || "all");
 
-  const filteredProducts = products
-    .filter((product) => {
-      const categoryMatch =
-        activeCategory === "All" || product.category === activeCategory;
-      const searchMatch = product.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const typeMatch = 
-        productType === 'all' ||
-        (productType === 'direct' && !product.isAuction) ||
-        (productType === 'auction' && product.isAuction);
-      return categoryMatch && searchMatch && typeMatch;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "price-asc":
-          return a.price - b.price;
-        case "price-desc":
-          return b.price - a.price;
-        case "newest":
-          // This would need a date field in a real app
-          return b.id.localeCompare(a.id);
-        default:
-          return 0;
-      }
-    });
+    useEffect(() => {
+        const category = searchParams.get('category');
+        const search = searchParams.get('search');
+        if (category) setActiveCategory(category);
+        if (search) setSearchTerm(search);
+    }, [searchParams]);
+
+    const filteredProducts = useMemo(() => {
+        return products
+            .filter((product) => {
+                const categoryMatch = activeCategory === "All" || product.category === activeCategory;
+                const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const typeMatch =
+                    productType === 'all' ||
+                    (productType === 'direct' && !product.isAuction) ||
+                    (productType === 'auction' && product.isAuction);
+                return categoryMatch && searchMatch && typeMatch;
+            })
+            .sort((a, b) => {
+                switch (sortBy) {
+                    case "price-asc":
+                        return a.price - b.price;
+                    case "price-desc":
+                        return b.price - a.price;
+                    case "newest":
+                        return b.id.localeCompare(a.id);
+                    default:
+                        return 0;
+                }
+            });
+    }, [activeCategory, searchTerm, productType, sortBy]);
+
+    return { filteredProducts, productType, setProductType, sortBy, setSortBy };
+};
+
+function ProductsPageContent() {
+  const { filteredProducts, productType, setProductType, sortBy, setSortBy } = useProductFilters();
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight">Explora Nuestros Productos</h1>
-          <p className="text-muted-foreground mt-2">Encuentra lo que buscas en nuestra amplia colección.</p>
-        </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-auto justify-between">
-                  <span>{activeCategory === "All" ? "Todas las Categorías" : activeCategory}</span>
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-full md:w-[250px]">
-                <DropdownMenuItem onClick={() => setActiveCategory("All")}>
-                  Todas las Categorías
-                </DropdownMenuItem>
-                {categories.map((category) => (
-                  <DropdownMenuItem key={category.id} onClick={() => setActiveCategory(category.name)}>
-                    <category.icon className="h-4 w-4 mr-2" />
-                    {category.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Buscar productos..."
-                    className="pl-9 w-full"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight">Explora Nuestros Productos</h1>
+        <p className="text-muted-foreground mt-2">Encuentra lo que buscas en nuestra amplia colección.</p>
       </div>
       
       <main>
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg">
             <Tabs 
-              defaultValue="all" 
+              value={productType}
               className="w-full sm:w-auto" 
               onValueChange={(value) => setProductType(value as ProductType)}
             >
@@ -110,7 +84,7 @@ export default function ProductsPage() {
               </TabsList>
             </Tabs>
 
-            <Select onValueChange={setSortBy} defaultValue="featured">
+            <Select onValueChange={setSortBy} defaultValue={sortBy}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
@@ -123,13 +97,13 @@ export default function ProductsPage() {
             </Select>
         </div>
 
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
           <div className="text-center py-16 border-2 border-dashed rounded-lg col-span-full">
               <p className="text-muted-foreground">No se encontraron productos. Intenta ajustar tus filtros.</p>
           </div>
@@ -137,4 +111,13 @@ export default function ProductsPage() {
       </main>
     </div>
   );
+}
+
+// We wrap the page in a Suspense boundary to allow `useSearchParams` to work correctly.
+export default function ProductsPage() {
+    return (
+        <React.Suspense fallback={<div>Cargando...</div>}>
+            <ProductsPageContent />
+        </React.Suspense>
+    );
 }

@@ -81,14 +81,14 @@ export default function Home() {
           
           <div>
             <div className="flex justify-between items-center mb-8">
-              <Link href="/products" className="group">
+              <Link href="/products?type=direct" className="group">
                 <h2 className="text-3xl font-bold tracking-tight group-hover:text-primary transition-colors">
                   Venta Directa
                 </h2>
                  <p className="text-muted-foreground group-hover:text-primary transition-colors">Cómpralo ahora.</p>
               </Link>
             </div>
-            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+            <Carousel opts={{ align: "start", loop: directSaleProducts.length > 4 }} className="w-full">
               <CarouselContent>
                 {directSaleProducts.map((product) => (
                   <CarouselItem key={product.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
@@ -105,14 +105,14 @@ export default function Home() {
 
           <div>
              <div className="flex justify-between items-center mb-8">
-              <Link href="/products" className="group">
+              <Link href="/products?type=auction" className="group">
                 <h2 className="text-3xl font-bold tracking-tight group-hover:text-primary transition-colors">
                   Subastas Activas
                 </h2>
                  <p className="text-muted-foreground group-hover:text-primary transition-colors">Haz tu mejor oferta.</p>
               </Link>
             </div>
-            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+            <Carousel opts={{ align: "start", loop: auctionProducts.length > 4 }} className="w-full">
               <CarouselContent>
                 {auctionProducts.map((product) => (
                   <CarouselItem key={product.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
