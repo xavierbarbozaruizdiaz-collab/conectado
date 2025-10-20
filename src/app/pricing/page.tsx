@@ -22,7 +22,7 @@ export default function PricingPage() {
             key={tier.name}
             className={cn(
               "flex flex-col",
-              tier.name === "Silver" && "border-primary shadow-primary/20 shadow-lg"
+              tier.name === "Plata" && "border-primary shadow-primary/20 shadow-lg"
             )}
           >
             <CardHeader className="text-center">
@@ -47,7 +47,7 @@ export default function PricingPage() {
               <Button
                 className="w-full"
                 size="lg"
-                variant={tier.name === "Silver" ? "default" : "outline"}
+                variant={tier.name === "Plata" ? "default" : "outline"}
               >
                 Elegir {tier.name}
               </Button>
