@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   SidebarProvider,
@@ -13,30 +14,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   Users,
-  FileText,
-  CreditCard,
-  Settings,
-  PlusCircle,
-  ShoppingBag,
   Home,
   LogOut,
-  Shield,
   Package,
   Award,
 } from "lucide-react";
-
-const sellerLinks = [
-  { href: "/dashboard/seller", label: "Resumen", icon: LayoutDashboard },
-  { href: "/dashboard/seller/products", label: "Productos", icon: ShoppingBag },
-  { href: "/dashboard/seller/add-product", label: "Añadir Producto", icon: PlusCircle },
-  { href: "/dashboard/seller/settings", label: "Configuración", icon: Settings },
-];
-
-const affiliateLinks = [
-  { href: "/dashboard/affiliate", label: "Panel de Afiliado", icon: Users },
-  { href: "/dashboard/affiliate/reports", label: "Reportes", icon: FileText },
-  { href: "/dashboard/affiliate/payments", label: "Pagos", icon: CreditCard },
-];
 
 const adminLinks = [
     { href: "/dashboard/admin", label: "Resumen", icon: LayoutDashboard },
@@ -74,40 +56,6 @@ export default function DashboardLayout({
                 </div>
               </SidebarMenuItem>
               {adminLinks.map((link) => (
-                <SidebarMenuItem key={link.href}>
-                  <Link href={link.href}>
-                    <SidebarMenuButton>
-                      <link.icon className="h-4 w-4" />
-                      <span>{link.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-            <SidebarMenu className="mt-4">
-              <SidebarMenuItem>
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Vendedor
-                </div>
-              </SidebarMenuItem>
-              {sellerLinks.map((link) => (
-                <SidebarMenuItem key={link.href}>
-                  <Link href={link.href}>
-                    <SidebarMenuButton>
-                      <link.icon className="h-4 w-4" />
-                      <span>{link.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-            <SidebarMenu className="mt-4">
-              <SidebarMenuItem>
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Programa de Afiliados
-                </div>
-              </SidebarMenuItem>
-              {affiliateLinks.map((link) => (
                 <SidebarMenuItem key={link.href}>
                   <Link href={link.href}>
                     <SidebarMenuButton>
