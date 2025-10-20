@@ -17,7 +17,7 @@ export type Product = {
   description: string;
   price: number;
   category: string;
-  imageUrl: string;
+  imageUrls: string[];
   sellerId: string;
   isAuction: boolean;
   auctionEndDate?: string;
@@ -88,7 +88,7 @@ export const products: Product[] = [
     description: 'Una bicicleta vintage de los años 70 bellamente restaurada. Perfecta para pasear por la ciudad. Una sola velocidad, freno contrapedal y un sillín cómodo.',
     price: 250000,
     category: 'Vehículos',
-    imageUrl: 'https://picsum.photos/seed/p1/600/400',
+    imageUrls: ['https://picsum.photos/seed/p1/600/400'],
     sellerId: 'user1',
     isAuction: false,
     status: 'Activo',
@@ -99,10 +99,14 @@ export const products: Product[] = [
     description: 'Diario de tamaño A5 con 200 páginas de papel de alta calidad. La cubierta de cuero está repujada a mano con un diseño único. Ideal para escribir, dibujar o como un regalo especial.',
     price: 45000,
     category: 'Libros',
-    imageUrl: 'https://picsum.photos/seed/p2/600/400',
+    imageUrls: [
+        'https://picsum.photos/seed/p2/600/400',
+        'https://picsum.photos/seed/p2a/600/400',
+        'https://picsum.photos/seed/p2b/600/400',
+        'https://picsum.photos/seed/p2c/600/400',
+    ],
     sellerId: 'user1',
     isAuction: true,
-    // Set to end in 4 minutes to show the "ending soon" state
     auctionEndDate: new Date(Date.now() + 4 * 60 * 1000).toISOString(),
     status: 'Activo',
   },
@@ -112,7 +116,7 @@ export const products: Product[] = [
     description: 'Una caja de suscripción semanal llena de una variedad de verduras orgánicas frescas de temporada. El contenido cambia según la cosecha.',
     price: 35000,
     category: 'Hogar',
-    imageUrl: 'https://picsum.photos/seed/p3/600/400',
+    imageUrls: ['https://picsum.photos/seed/p3/600/400'],
     sellerId: 'user2',
     isAuction: false,
     status: 'Activo',
@@ -123,7 +127,7 @@ export const products: Product[] = [
     description: 'Un dron de grado profesional con cámara 4K, cardán de 3 ejes y 30 minutos de tiempo de vuelo. Incluye controlador y batería extra.',
     price: 499000,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/p4/600/400',
+    imageUrls: ['https://picsum.photos/seed/p4/600/400'],
     sellerId: 'user3',
     isAuction: true,
     auctionEndDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // Ends in 3 days
@@ -135,7 +139,7 @@ export const products: Product[] = [
     description: 'Una clásica Pentax K1000, completamente funcional y probada. Viene con un lente de 50mm f/2. Una entrada perfecta a la fotografía de película.',
     price: 150000,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/p5/600/400',
+    imageUrls: ['https://picsum.photos/seed/p5/600/400'],
     sellerId: 'user1',
     isAuction: false,
     status: 'Vendido',
@@ -146,7 +150,7 @@ export const products: Product[] = [
     description: 'Juego de cuatro tazas de cerámica únicas, pintadas a mano. Aptas para lavavajillas y microondas. Cada taza tiene un diseño diferente pero complementario.',
     price: 60000,
     category: 'Hogar',
-    imageUrl: 'https://picsum.photos/seed/p6/600/400',
+    imageUrls: ['https://picsum.photos/seed/p6/600/400'],
     sellerId: 'user1',
     isAuction: false,
     status: 'Activo',
@@ -157,7 +161,7 @@ export const products: Product[] = [
     description: 'Realiza un seguimiento de la frecuencia cardíaca, los pasos, el sueño y más de 100 modos deportivos. GPS incorporado, duración de la batería de 2 semanas. Compatible con iOS y Android.',
     price: 120000,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/p7/600/400',
+    imageUrls: ['https://picsum.photos/seed/p7/600/400'],
     sellerId: 'user3',
     isAuction: false,
     status: 'Pendiente',
@@ -168,7 +172,7 @@ export const products: Product[] = [
     description: 'Primera edición de un clásico álbum de funk de 1978. La funda está en buen estado, el vinilo está casi perfecto. Imprescindible para coleccionistas.',
     price: 85000,
     category: 'Música',
-    imageUrl: 'https://picsum.photos/seed/p8/600/400',
+    imageUrls: ['https://picsum.photos/seed/p8/600/400'],
     sellerId: 'user1',
     isAuction: false,
     status: 'Activo',

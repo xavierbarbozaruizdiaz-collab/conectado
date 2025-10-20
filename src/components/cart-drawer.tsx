@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -40,7 +41,7 @@ export default function CartDrawer({ children }: { children: React.ReactNode }) 
                   <div key={product.id} className="flex items-center gap-4">
                     <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
                       <Image
-                        src={product.imageUrl}
+                        src={product.imageUrls[0]}
                         alt={product.name}
                         fill
                         className="object-cover"

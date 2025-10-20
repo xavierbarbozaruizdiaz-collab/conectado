@@ -1,3 +1,4 @@
+
 "use client"
 import { useState } from 'react';
 import {
@@ -89,7 +90,7 @@ export default function AdminProductsPage() {
                     <TableCell>
                         <div className="flex items-center gap-3">
                             <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border">
-                                <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                <Image src={product.imageUrls[0]} alt={product.name} fill className="object-cover" />
                             </div>
                             <span className="font-medium">{product.name}</span>
                         </div>
