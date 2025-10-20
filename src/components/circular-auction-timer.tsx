@@ -9,7 +9,7 @@ type CircularAuctionTimerProps = {
   endDate: string;
 };
 
-const COUNTDOWN_FROM = 60 * 5; // 5 minutes in seconds for dynamic coloring
+const COUNTDOWN_FROM = 24 * 60 * 60; // 24 hours in seconds
 const STROKE_WIDTH = 8;
 const RADIUS = 80;
 const CIRCUMFERENCE = 2 * Math.PI * (RADIUS - STROKE_WIDTH / 2);
@@ -25,7 +25,9 @@ export default function CircularAuctionTimer({ endDate }: CircularAuctionTimerPr
       const now = new Date();
       const duration = (targetDate.getTime() - now.getTime()) / 1000;
       
-      setTotalDuration(Math.max(duration, COUNTDOWN_FROM));
+      // Set the total duration for the progress ring calculation.
+      // If the auction is longer than 24h, we cap the visual progress at 24h.
+      setTotalDuration(Math.min(duration, COUNTDOWN_FROM));
 
       if (now > targetDate) {
         setSecondsLeft(0);
@@ -40,24 +42,26 @@ export default function CircularAuctionTimer({ endDate }: CircularAuctionTimerPr
     return () => clearInterval(interval);
   }, [endDate]);
 
-  const isEndingSoon = secondsLeft <= 10 && secondsLeft > 0;
+  const isEndingSoon = secondsLeft <= 60 && secondsLeft > 0;
   const isFinished = secondsLeft <= 0;
 
   const percentage = (secondsLeft / totalDuration) * 100;
   const strokeDashoffset = CIRCUMFERENCE - (percentage / 100) * CIRCUMFERENCE;
 
-  const minutes = Math.floor(secondsLeft / 60);
+  const days = Math.floor(secondsLeft / (24 * 60 * 60));
+  const hours = Math.floor((secondsLeft % (24 * 60 * 60)) / (60 * 60));
+  const minutes = Math.floor((secondsLeft % (60 * 60)) / 60);
   const seconds = Math.floor(secondsLeft % 60);
   
   let statusText = "Tiempo restante";
   let colorClass = "text-green-500";
   
-  if (secondsLeft <= 30) {
-      statusText = "Últimos segundos";
+  if (secondsLeft <= 60 * 60) { // Under 1 hour
+      statusText = "Termina pronto";
       colorClass = "text-yellow-500";
   }
-  if (secondsLeft <= 10) {
-      statusText = "Cerrando";
+  if (secondsLeft <= 60) { // Under 1 minute
+      statusText = "Últimos segundos";
       colorClass = "text-red-500";
   }
   if (isFinished) {
@@ -107,9 +111,18 @@ export default function CircularAuctionTimer({ endDate }: CircularAuctionTimerPr
           {isFinished ? (
              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           ) : (
-            <span className="text-4xl font-bold font-mono tracking-tighter">
-              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-            </span>
+            <>
+              {secondsLeft > 24 * 60 * 60 ? (
+                 <div className="text-center">
+                    <span className="text-4xl font-bold font-mono tracking-tighter">{days}d</span>
+                    <span className="text-2xl font-bold font-mono tracking-tighter ml-1">{hours}h</span>
+                 </div>
+              ) : (
+                <span className="text-4xl font-bold font-mono tracking-tighter">
+                  {String(hours).padStart(2, "0")}:{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>

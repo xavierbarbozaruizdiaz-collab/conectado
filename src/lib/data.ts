@@ -126,7 +126,7 @@ export const products: Product[] = [
     imageUrl: 'https://picsum.photos/seed/p4/600/400',
     sellerId: 'user3',
     isAuction: true,
-    auctionEndDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    auctionEndDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // Ends in 3 days
     status: 'Activo',
   },
    {
