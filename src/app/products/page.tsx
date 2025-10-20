@@ -15,11 +15,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type ProductType = "all" | "direct" | "auction";
 
 export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("featured");
+  const [productType, setProductType] = useState<ProductType>("all");
 
   const filteredProducts = products
     .filter((product) => {
@@ -28,7 +32,11 @@ export default function ProductsPage() {
       const searchMatch = product.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      return categoryMatch && searchMatch;
+      const typeMatch = 
+        productType === 'all' ||
+        (productType === 'direct' && !product.isAuction) ||
+        (productType === 'auction' && product.isAuction);
+      return categoryMatch && searchMatch && typeMatch;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -89,8 +97,8 @@ export default function ProductsPage() {
         </aside>
 
         <main className="lg:col-span-3">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-8">
-            <div className="relative w-full sm:max-w-xs">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
+             <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar productos..."
@@ -110,6 +118,20 @@ export default function ProductsPage() {
                 <SelectItem value="price-desc">Precio: Mayor a Menor</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+           <div className="mb-8">
+            <Tabs 
+              defaultValue="all" 
+              className="w-full" 
+              onValueChange={(value) => setProductType(value as ProductType)}
+            >
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all">Todos</TabsTrigger>
+                <TabsTrigger value="direct">Venta Directa</TabsTrigger>
+                <TabsTrigger value="auction">En Subasta</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
