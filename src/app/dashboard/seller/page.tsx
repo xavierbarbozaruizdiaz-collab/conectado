@@ -5,6 +5,7 @@ import {
   CreditCard,
   CircleHelp,
   Plus,
+  Settings
 } from "lucide-react";
 import {
   Card,
@@ -25,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { products } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
 
 const sellerProducts = products.filter(p => p.sellerId === 'user1');
 
@@ -36,9 +38,11 @@ export default function SellerDashboardPage() {
           <h1 className="text-3xl font-bold">Panel de Vendedor</h1>
           <p className="text-muted-foreground">Bienvenido de nuevo, aquí está tu resumen de ventas.</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Añadir Producto
+        <Button asChild>
+          <Link href="/dashboard/seller/add-product">
+            <Plus className="mr-2 h-4 w-4" />
+            Añadir Producto
+          </Link>
         </Button>
       </div>
 
@@ -72,8 +76,8 @@ export default function SellerDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Historial de Productos</CardTitle>
-            <CardDescription>Una lista de tus productos recientes.</CardDescription>
+            <CardTitle>Productos Recientes</CardTitle>
+            <CardDescription>Una lista de tus productos añadidos recientemente.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -113,28 +117,28 @@ export default function SellerDashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Personalizar Tienda</CardTitle>
+            <CardTitle>Acciones Rápidas</CardTitle>
             <CardDescription>
-              Actualiza la apariencia e información de tu tienda.
+              Gestiona tu tienda rápidamente.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="storeName" className="text-sm font-medium">Nombre de la Tienda</label>
-              <input id="storeName" defaultValue="Vintage Finds" className="w-full p-2 border rounded-md bg-transparent" />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="storeDesc" className="text-sm font-medium">Descripción de la Tienda</label>
-              <textarea id="storeDesc" defaultValue="Colección curada de vintage..." className="w-full p-2 border rounded-md bg-transparent min-h-[100px]" />
-            </div>
-            <div className="space-y-2">
-                <label className="text-sm font-medium">Foto de Perfil y Banner</label>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1">Subir Foto</Button>
-                    <Button variant="outline" className="flex-1">Subir Banner</Button>
-                </div>
-            </div>
-            <Button className="w-full">Guardar Cambios</Button>
+              <Button asChild className="w-full justify-start" variant="outline">
+                 <Link href="/dashboard/seller/add-product">
+                    <Plus className="mr-2"/> Añadir Nuevo Producto
+                 </Link>
+              </Button>
+              <Button asChild className="w-full justify-start" variant="outline">
+                 <Link href="/dashboard/seller/settings">
+                    <Settings className="mr-2"/> Configuración de la Tienda
+                 </Link>
+              </Button>
+               <Button asChild className="w-full justify-start" variant="outline">
+                 <Link href="/store/user1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/><path d="M12 18a10 10 0 0 0-3.5 1.83"/><path d="M12 18a10 10 0 0 1-3.5 1.83"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M12 2a10 10 0 0 1 3.5 1.83"/><path d="M12 2a10 10 0 0 0 3.5 1.83"/></svg>
+                     Ver Tienda Pública
+                 </Link>
+              </Button>
           </CardContent>
         </Card>
       </div>
