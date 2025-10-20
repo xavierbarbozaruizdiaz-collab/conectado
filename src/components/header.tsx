@@ -23,6 +23,52 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { categories } from "@/lib/data";
+import { useRouter } from "next/navigation";
+
+function SearchBar() {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/products?search=${searchTerm.trim()}`);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSearch} className="relative w-full max-w-lg">
+      <div className="absolute left-0 top-0 flex h-full items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-full w-10 rounded-r-none border-r border-input">
+              <Menu className="h-5 w-5 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {categories.map((category) => (
+              <DropdownMenuItem key={category.id} asChild>
+                <Link href={`/products?category=${category.name}`}>
+                  <category.icon className="mr-2 h-4 w-4" />
+                  <span>{category.name}</span>
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <Input 
+        placeholder="Buscar productos, marcas y más..." 
+        className="pl-12 pr-10 h-10"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <Button type="submit" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
+          <Search className="h-5 w-5 text-muted-foreground" />
+      </Button>
+    </form>
+  );
+}
 
 export default function Header() {
   const [isClient, setIsClient] = React.useState(false);
@@ -55,31 +101,7 @@ export default function Header() {
 
         {/* Search Bar */}
         <div className="flex-1 flex justify-center px-4">
-            <div className="relative w-full max-w-lg">
-                <div className="absolute left-0 top-0 flex h-full items-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-full w-10 rounded-r-none border-r border-input">
-                        <Menu className="h-5 w-5 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {categories.map((category) => (
-                        <DropdownMenuItem key={category.id} asChild>
-                          <Link href={`/products?category=${category.name}`}>
-                            <category.icon className="mr-2 h-4 w-4" />
-                            <span>{category.name}</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <Input placeholder="Buscar productos, marcas y más..." className="pl-12 pr-10 h-10"/>
-                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
-                    <Search className="h-5 w-5 text-muted-foreground" />
-                </Button>
-            </div>
+            <SearchBar />
         </div>
         
         <div className="flex items-center justify-end space-x-2">

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { categories } from "@/lib/data";
 
 type ProductType = "all" | "direct" | "auction";
 
@@ -21,11 +22,12 @@ const useProductFilters = () => {
     const [sortBy, setSortBy] = useState("featured");
     
     const productType = (searchParams.get('type') as ProductType | null) || "all";
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
 
     useEffect(() => {
-        const search = searchParams.get('search');
-        if (search) setSearchTerm(search);
-    }, [searchParams]);
+        setSearchTerm(search || "");
+    }, [search]);
 
     const filteredProducts = useMemo(() => {
         return products
@@ -35,7 +37,8 @@ const useProductFilters = () => {
                     productType === 'all' ||
                     (productType === 'direct' && !product.isAuction) ||
                     (productType === 'auction' && product.isAuction);
-                return searchMatch && typeMatch;
+                const categoryMatch = !category || product.category === category;
+                return searchMatch && typeMatch && categoryMatch;
             })
             .sort((a, b) => {
                 switch (sortBy) {
@@ -49,20 +52,38 @@ const useProductFilters = () => {
                         return 0;
                 }
             });
-    }, [searchTerm, productType, sortBy]);
+    }, [searchTerm, productType, sortBy, category]);
+    
+    const pageTitle = useMemo(() => {
+        if (category) {
+            return `Explora ${category}`;
+        }
+        if (searchTerm) {
+            return `Resultados para "${searchTerm}"`;
+        }
+        return "Explora Nuestros Productos";
+    }, [category, searchTerm]);
 
-    return { filteredProducts, sortBy, setSortBy };
+    const pageDescription = useMemo(() => {
+        if (category || searchTerm) {
+            return `${filteredProducts.length} productos encontrados.`;
+        }
+        return "Encuentra lo que buscas en nuestra amplia colección.";
+    }, [category, searchTerm, filteredProducts.length]);
+
+
+    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription };
 };
 
 function ProductsPageContent() {
-  const { filteredProducts, sortBy, setSortBy } = useProductFilters();
+  const { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription } = useProductFilters();
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Explora Nuestros Productos</h1>
-          <p className="text-muted-foreground mt-2">Encuentra lo que buscas en nuestra amplia colección.</p>
+          <h1 className="text-4xl font-bold tracking-tight">{pageTitle}</h1>
+          <p className="text-muted-foreground mt-2">{pageDescription}</p>
         </div>
         <div className="w-full sm:w-auto">
           <Select onValueChange={setSortBy} defaultValue={sortBy}>

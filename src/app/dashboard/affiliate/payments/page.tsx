@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -19,6 +21,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { Banknote, CreditCard, Landmark, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 const paymentHistory = [
   {
@@ -72,8 +86,17 @@ const getStatusBadge = (status: string) => {
 
 
 export default function AffiliatePaymentsPage() {
+  const { toast } = useToast();
   const pendingBalance = 1570500;
   const minimumPayout = 100000;
+  
+  const handleRequestPayout = () => {
+    // Aquí iría la lógica para enviar la solicitud al backend
+    toast({
+      title: 'Solicitud Enviada',
+      description: 'Tu solicitud de pago ha sido enviada para su procesamiento.',
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -110,10 +133,29 @@ export default function AffiliatePaymentsPage() {
                      </div>
                 )}
                
-                <Button size="lg" className="w-full" disabled={pendingBalance < minimumPayout}>
-                    <Banknote className="mr-2 h-5 w-5" />
-                    Solicitar Pago de {formatCurrency(pendingBalance)}
-                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button size="lg" className="w-full" disabled={pendingBalance < minimumPayout}>
+                            <Banknote className="mr-2 h-5 w-5" />
+                            Solicitar Pago de {formatCurrency(pendingBalance)}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>¿Confirmas la solicitud de pago?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Se solicitará un pago por un total de{' '}
+                            <span className="font-bold text-primary">{formatCurrency(pendingBalance)}</span>.
+                            Este monto se enviará a tu método de pago configurado.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRequestPayout}>Confirmar y Solicitar</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
               </CardContent>
             </Card>
 
