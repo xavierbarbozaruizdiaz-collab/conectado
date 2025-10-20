@@ -22,16 +22,10 @@ export default function ProductPage({ params }: { params: { productId: string } 
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
-            <div className="lg:col-span-3">
-                 <ProductDetailsClient product={product} />
-            </div>
-
-            <div className="lg:col-span-2 space-y-6">
-                <div className="space-y-3">
-                    <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight">{product.name}</h1>
-                    <p className="text-muted-foreground text-lg">{product.description}</p>
-                </div>
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+            <ProductDetailsClient product={product} />
+            
+            <div className="space-y-6">
                  {seller && (
                     <Card>
                         <CardHeader>

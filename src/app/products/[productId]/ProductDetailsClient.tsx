@@ -25,52 +25,58 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   };
 
   return (
-    <div className="space-y-6">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow-lg">
-            <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-                data-ai-hint="product image"
-            />
-            {product.isAuction && (
-                <Badge variant="destructive" className="absolute top-4 right-4 text-sm px-3 py-1 bg-accent text-accent-foreground">
-                    <Hammer className="w-4 h-4 mr-2"/>
-                    Subasta
-                </Badge>
-            )}
-        </div>
+    <>
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl shadow-lg md:aspect-[4/3]">
+        <Image
+          src={product.imageUrl}
+          alt={product.name}
+          fill
+          className="object-cover"
+          data-ai-hint="product image"
+        />
+        {product.isAuction && (
+          <Badge variant="destructive" className="absolute top-4 right-4 text-sm px-3 py-1 bg-accent text-accent-foreground">
+            <Hammer className="w-4 h-4 mr-2" />
+            Subasta
+          </Badge>
+        )}
+      </div>
+      <div className="flex flex-col space-y-6">
         <div className="space-y-3">
-             <Badge variant="secondary">{product.category}</Badge>
+          <Badge variant="secondary">{product.category}</Badge>
+          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight">{product.name}</h1>
+          <p className="text-muted-foreground text-lg">{product.description}</p>
         </div>
 
         {product.isAuction && product.auctionEndDate ? (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Detalles de la Subasta</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <AuctionTimer endDate={product.auctionEndDate} />
-                    <div className="text-center">
-                        <div className="text-sm text-muted-foreground">Puja Actual</div>
-                        <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
-                    </div>
-                    <form className="flex gap-2">
-                        <Input type="number" placeholder="Monto de tu puja" className="flex-grow" />
-                        <Button type="submit" className="bg-accent hover:bg-accent/90">Pujar</Button>
-                    </form>
-                </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Detalles de la Subasta</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AuctionTimer endDate={product.auctionEndDate} />
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">Puja Actual</div>
+                <div className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</div>
+              </div>
+              <form className="flex gap-2">
+                <Input type="number" placeholder="Monto de tu puja" className="flex-grow" />
+                <Button type="submit" className="bg-accent hover:bg-accent/90">Pujar</Button>
+              </form>
+            </CardContent>
+          </Card>
         ) : (
+          <div className="space-y-4 rounded-lg border bg-card p-6">
             <div className="flex items-center justify-between">
-                <span className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</span>
-                <Button onClick={handleAddToCart} size="lg">
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Añadir al Carrito
-                </Button>
+              <span className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</span>
             </div>
+            <Button onClick={handleAddToCart} size="lg" className="w-full">
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Añadir al Carrito
+            </Button>
+          </div>
         )}
-    </div>
+      </div>
+    </>
   );
 }
