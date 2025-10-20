@@ -6,10 +6,18 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { products, categories } from "@/lib/data";
 import { ArrowRight, Tag, Zap, ShieldCheck } from "lucide-react";
 import ProductCard from "@/components/product-card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero');
-  const featuredProducts = products.slice(0, 4);
+  const directSaleProducts = products.filter(p => !p.isAuction);
+  const auctionProducts = products.filter(p => p.isAuction);
 
   return (
     <div className="flex flex-col min-h-dvh">
@@ -71,16 +79,57 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="featured-products" className="py-16 md:py-24 bg-card">
-        <div className="container mx-auto px-4 md:px-6">
-          <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
-            Productos Destacados
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+      <section id="featured-products" className="py-16 md:py-24 bg-card w-full">
+        <div className="container mx-auto px-4 md:px-6 space-y-16">
+          
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <Link href="/products" className="group">
+                <h2 className="text-3xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                  Venta Directa
+                </h2>
+                 <p className="text-muted-foreground group-hover:text-primary transition-colors">Cómpralo ahora.</p>
+              </Link>
+            </div>
+            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+              <CarouselContent>
+                {directSaleProducts.map((product) => (
+                  <CarouselItem key={product.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                    <div className="p-1">
+                      <ProductCard product={product} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden lg:flex" />
+              <CarouselNext className="hidden lg:flex" />
+            </Carousel>
           </div>
+
+          <div>
+             <div className="flex justify-between items-center mb-8">
+              <Link href="/products" className="group">
+                <h2 className="text-3xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                  Subastas Activas
+                </h2>
+                 <p className="text-muted-foreground group-hover:text-primary transition-colors">Haz tu mejor oferta.</p>
+              </Link>
+            </div>
+            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+              <CarouselContent>
+                {auctionProducts.map((product) => (
+                  <CarouselItem key={product.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                     <div className="p-1">
+                      <ProductCard product={product} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden lg:flex" />
+              <CarouselNext className="hidden lg:flex" />
+            </Carousel>
+          </div>
+
         </div>
       </section>
 
