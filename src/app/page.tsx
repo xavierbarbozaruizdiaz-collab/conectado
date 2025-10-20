@@ -17,7 +17,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 grid md:grid-cols-2 gap-8 items-center">
           <div className="space-y-6 text-center md:text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-primary">
-              Mercadito Xbar
+              Mercadito Online
             </h1>
             <p className="max-w-[600px] mx-auto md:mx-0 text-lg md:text-xl text-muted-foreground">
               Descubre artículos únicos, vende tus productos y únete a una comunidad vibrante. Tu próximo tesoro está a solo un clic de distancia.

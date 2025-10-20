@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Gavel, Twitter, Facebook, Instagram } from "lucide-react";
+import { Twitter, Facebook, Instagram } from "lucide-react";
+import LogoIcon from "./logo-icon";
 
 export default function Footer() {
   return (
@@ -8,8 +9,8 @@ export default function Footer() {
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center space-x-2 mb-4">
-              <Gavel className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">Mercadito Xbar</span>
+              <LogoIcon className="h-6 w-6 text-primary" />
+              <span className="font-bold text-lg">Mercadito Online</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Tu moderno mercado en línea para ventas directas y subastas.
@@ -42,7 +43,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-border/40 mt-8 pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Mercadito Xbar. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Mercadito Online. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
