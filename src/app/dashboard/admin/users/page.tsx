@@ -30,6 +30,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from 'next/link';
 
 export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,7 +113,9 @@ export default function AdminUsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Ver Tienda</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/store/${user.uid}`}>Ver Tienda</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Editar Usuario</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Suspender Usuario</DropdownMenuItem>
                       </DropdownMenuContent>

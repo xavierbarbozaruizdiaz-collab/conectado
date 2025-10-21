@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -133,7 +134,9 @@ export default function AdminProductsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem>Ver Producto</DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href={`/products/${product.id}`}>Ver Producto</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem>Editar</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive">Eliminar Producto</DropdownMenuItem>
                         </DropdownMenuContent>
