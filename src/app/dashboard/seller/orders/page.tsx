@@ -27,8 +27,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { Order, UserProfile, OrderItem } from '@/lib/types';
-import { useFirestore, useCollection, collection, query, where, useUser } from '@/firebase';
+import type { Order, UserProfile } from '@/lib/types';
+import { useFirestore, useCollection, collection, useUser } from '@/firebase';
 import { Timestamp } from 'firebase/firestore';
 import { useMemo } from 'react';
 
@@ -63,18 +63,9 @@ export default function SellerOrdersPage() {
 
   const sellerOrders = useMemo(() => {
     if (!allOrders || !user) return [];
+    // Filtra los pedidos para que solo incluyan aquellos que contienen al menos un producto del vendedor actual.
     return allOrders.filter(order => 
-      order.items.some(item => {
-        // Asumiendo que el ID del producto contiene el ID del vendedor, o tienes que buscarlo.
-        // Por simplicidad, este filtro es básico. Para una app real, los productos deberían tener un `sellerId`.
-        // Como ya lo tienen nuestros productos, debemos encontrar el producto de cada item.
-        // Esto es ineficiente y en una app real, el `sellerId` debería estar en el item del pedido.
-        // Dado que no es así, lo dejaremos como está, y filtraremos basándonos en si el vendedor
-        // tiene un producto con ese ID. Esto es muy ineficiente y costoso.
-        // Vamos a asumir que el sellerId está en los items del pedido, aunque no esté en el tipo
-        // (lo que sería un bug a reparar). Por ahora, asumimos que existe para la query
-        return true; // Temporalmente, se necesita una mejor forma.
-      })
+      order.items.some(item => item.sellerId === user.uid)
     );
   }, [allOrders, user]);
 
@@ -103,7 +94,7 @@ export default function SellerOrdersPage() {
         <CardHeader>
           <CardTitle>Tus Pedidos Recibidos</CardTitle>
           <CardDescription>
-            {allOrders?.length || 0} ventas que incluyen tus productos.
+            {sellerOrders.length} ventas que incluyen tus productos.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -119,7 +110,7 @@ export default function SellerOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(allOrders || []).map((order) => (
+              {sellerOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-mono text-xs">#{order.id?.substring(0, 7)}</TableCell>
                   <TableCell>{order.createdAt ? formatDate(order.createdAt as Timestamp) : 'N/A'}</TableCell>

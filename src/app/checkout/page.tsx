@@ -80,13 +80,14 @@ export default function CheckoutPage() {
           userId: user.uid,
           createdAt: serverTimestamp(),
           totalAmount: total,
-          status: 'Pendiente',
+          status: 'Pendiente' as const,
           shippingAddress,
           items: cart.map(item => ({
               productId: item.product.id,
               name: item.product.name,
               price: item.product.price,
               quantity: item.quantity,
+              sellerId: item.product.sellerId,
           })),
       };
 
