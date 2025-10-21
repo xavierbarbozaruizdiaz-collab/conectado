@@ -45,8 +45,8 @@ export default function AdminProductsPage() {
   );
 
   const filteredProducts = (products || []).filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.id.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (productsLoading || usersLoading) {

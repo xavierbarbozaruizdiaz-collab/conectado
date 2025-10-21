@@ -39,8 +39,8 @@ export default function AdminUsersPage() {
   );
 
   const filteredUsers = (users || []).filter(user => 
-    user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.uid.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.storeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.uid || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={user.profilePictureUrl} />
-                        <AvatarFallback>{user.storeName.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{user.storeName?.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <span className="font-medium">{user.storeName}</span>
                     </div>
