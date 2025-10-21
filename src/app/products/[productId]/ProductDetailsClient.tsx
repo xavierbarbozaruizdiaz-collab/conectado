@@ -18,8 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store, MessageSquare } from "lucide-react";
 import { useState, useMemo } from "react";
 import logger from "@/lib/logger";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import { useDoc, docRef } from "@/firebase/firestore/use-doc";
+import { updateDoc, doc } from 'firebase/firestore';
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 function ProductImageGallery({ images, productName }: { images: string[], productName: string }) {
     const [selectedImage, setSelectedImage] = useState(0);
@@ -64,6 +67,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   const { addToCart } = useCart();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   const { data: seller, loading: sellerLoading } = useDoc<UserProfile>(
     firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null
   );
@@ -79,7 +83,9 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   
   const minimumBid = useMemo(() => {
     if (!product.isAuction) return 0;
-    return Math.ceil(product.price * 1.1);
+    // La puja mínima es un 10% sobre la puja actual o el precio de salida
+    const currentPrice = product.price;
+    return Math.ceil(currentPrice * 1.05);
   }, [product.price, product.isAuction]);
 
   const isBidInvalid = useMemo(() => {
@@ -87,8 +93,12 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
       return bid < minimumBid;
   }, [bidAmount, minimumBid])
   
-  const handleBidSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleBidSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      if (!firestore || !user) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para pujar.'});
+          return;
+      }
       if(isBidInvalid) {
           toast({
               variant: "destructive",
@@ -97,12 +107,29 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
           });
           return;
       }
-      // En una app real, aquí se enviaría la puja al servidor.
-      logger.info('Bid submitted:', { productId: product.id, amount: bidAmount });
-      toast({
-          title: "¡Puja realizada!",
-          description: `Has pujado ${formatCurrency(Number(bidAmount))} por ${product.name}.`,
-      });
+      
+      // En una app real, aquí se validaría el plan de suscripción del usuario.
+      // Por ahora, asumimos que el usuario puede pujar.
+      const productRef = doc(firestore, 'products', product.id);
+      const newPrice = Number(bidAmount);
+
+      try {
+          await updateDoc(productRef, { 
+              price: newPrice,
+          });
+          toast({
+              title: "¡Puja realizada!",
+              description: `Has pujado ${formatCurrency(newPrice)} por ${product.name}.`,
+          });
+          setBidAmount(''); // Limpiar el input después de una puja exitosa
+      } catch (error) {
+            const permissionError = new FirestorePermissionError({
+                path: productRef.path,
+                operation: 'update',
+                requestResourceData: { price: newPrice }
+            });
+            errorEmitter.emit('permission-error', permissionError);
+      }
   }
 
   return (
@@ -141,13 +168,13 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                 <div className="flex gap-2">
                     <Input 
                         type="number" 
-                        placeholder="Monto de tu puja" 
+                        placeholder={`Puja mínima: ${formatCurrency(minimumBid)}`}
                         className="flex-grow" 
                         value={bidAmount}
                         onChange={(e) => setBidAmount(e.target.value)}
                         min={minimumBid}
                     />
-                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isBidInvalid && !!bidAmount}>Pujar</Button>
+                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={!bidAmount || isBidInvalid}>Pujar</Button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
                   {bidAmount && isBidInvalid
