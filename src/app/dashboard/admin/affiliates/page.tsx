@@ -36,6 +36,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import Link from 'next/link';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -170,7 +171,9 @@ export default function AdminAffiliatesPage() {
                   <TableCell>{formatCurrency(affiliate.totalEarnings)}</TableCell>
                   <TableCell className="font-semibold text-primary">{formatCurrency(affiliate.pendingBalance)}</TableCell>
                   <TableCell className="text-right">
-                     <Button variant="outline" size="sm">Ver Detalles</Button>
+                     <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/affiliate/reports?userId=${affiliate.id}`}>Ver Detalles</Link>
+                     </Button>
                   </TableCell>
                 </TableRow>
               ))}

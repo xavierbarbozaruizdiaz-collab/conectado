@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import {
   BarChart,
   Bar,
@@ -38,14 +39,18 @@ import { Timestamp } from "firebase/firestore";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function AffiliateReportsPage() {
+function AffiliateReportsContent() {
+  const searchParams = useSearchParams();
   const { user } = useUser();
   const firestore = useFirestore();
 
+  // If userId is in params, we're in admin view. Otherwise, it's the affiliate's own view.
+  const affiliateId = searchParams.get('userId') || user?.uid;
+
   const eventsQuery = useMemo(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, 'affiliateEvents'), where('affiliateId', '==', user.uid));
-  }, [user, firestore]);
+    if (!affiliateId || !firestore) return null;
+    return query(collection(firestore, 'affiliateEvents'), where('affiliateId', '==', affiliateId));
+  }, [affiliateId, firestore]);
 
   const { data: events, loading } = useCollection<AffiliateEvent>(eventsQuery);
 
@@ -215,4 +220,14 @@ export default function AffiliateReportsPage() {
       </Card>
     </div>
   );
+}
+
+import React from 'react';
+
+export default function AffiliateReportsPage() {
+    return (
+        <React.Suspense fallback={<div>Cargando reportes...</div>}>
+            <AffiliateReportsContent />
+        </React.Suspense>
+    )
 }
