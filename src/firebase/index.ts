@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore, writeBatch } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 import { firebaseConfig } from './config';
 
@@ -14,6 +15,7 @@ export {
   useFirebaseApp,
   useFirestore,
   useAuth,
+  useStorage,
 } from './provider';
 
 // Providers
@@ -28,16 +30,19 @@ export { writeBatch };
 let app: FirebaseApp;
 let auth: Auth;
 let firestore: Firestore;
+let storage: FirebaseStorage;
 
 export function initializeFirebase() {
   if (getApps().length === 0) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     firestore = getFirestore(app);
+    storage = getStorage(app);
   } else {
     app = getApp();
     auth = getAuth(app);
     firestore = getFirestore(app);
+    storage = getStorage(app);
   }
-  return { app, auth, firestore };
+  return { app, auth, firestore, storage };
 }

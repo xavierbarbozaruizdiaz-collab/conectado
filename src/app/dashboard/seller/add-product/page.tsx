@@ -25,11 +25,12 @@ import { Upload, X } from 'lucide-react';
 import { categories } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore, useUser } from '@/firebase';
+import { useStorage, useUser, useFirestore } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-
+import { v4 as uuidv4 } from 'uuid';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState('');
@@ -38,18 +39,21 @@ export default function AddProductPage() {
   const [category, setCategory] = useState('');
   const [isAuction, setIsAuction] = useState(false);
   const [auctionEndDate, setAuctionEndDate] = useState('');
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   
   const { user } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
   const { toast } = useToast();
   const router = useRouter();
 
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      if (images.length + e.target.files.length > 10) {
+      const filesArray = Array.from(e.target.files);
+      if (images.length + filesArray.length > 10) {
         toast({
           variant: 'destructive',
           title: 'Límite de imágenes alcanzado',
@@ -57,54 +61,82 @@ export default function AddProductPage() {
         });
         return;
       }
-      // For now, we'll use placeholder images. Real upload would happen here.
-      const newImages = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-      setImages(prev => [...prev, ...newImages]);
+      setImages(prev => [...prev, ...filesArray]);
+      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
     }
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setImages(newImages);
+    setImagePreviews(newPreviews);
+    // Revoke the object URL to free up memory
+    URL.revokeObjectURL(imagePreviews[index]);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!firestore || !user) {
+      if (!firestore || !user || !storage) {
         toast({
           variant: 'destructive',
-          title: 'Error de autenticación',
-          description: 'Debes iniciar sesión para añadir un producto.',
+          title: 'Error de inicialización',
+          description: 'Los servicios de Firebase no están disponibles. Intenta recargar la página.',
         });
         return;
       }
+      if (images.length === 0) {
+          toast({
+              variant: 'destructive',
+              title: 'Se requieren imágenes',
+              description: 'Debes subir al menos una imagen para el producto.',
+          });
+          return;
+      }
       setIsSaving(true);
-
-      const productData = {
-        name: productName,
-        description: description,
-        price: Number(price),
-        category: category,
-        imageUrls: images.length > 0 ? images : ['https://picsum.photos/seed/placeholder/600/400'], // Placeholder if no images
-        sellerId: user.uid,
-        isAuction: isAuction,
-        auctionEndDate: isAuction ? auctionEndDate : null,
-        status: 'Activo',
-      };
-
+      
       try {
+        toast({ title: 'Subiendo imágenes...', description: 'Esto puede tardar un momento.' });
+        
+        const imageUrls: string[] = [];
+        for (const image of images) {
+            const imageId = uuidv4();
+            const storageRef = ref(storage, `products/${user.uid}/${imageId}`);
+            await uploadBytes(storageRef, image);
+            const downloadURL = await getDownloadURL(storageRef);
+            imageUrls.push(downloadURL);
+        }
+
+        toast({ title: 'Guardando producto...' });
+
+        const productData = {
+            name: productName,
+            description: description,
+            price: Number(price),
+            category: category,
+            imageUrls: imageUrls,
+            sellerId: user.uid,
+            isAuction: isAuction,
+            auctionEndDate: isAuction ? auctionEndDate : null,
+            status: 'Activo',
+        };
+
         const docRef = await addDoc(collection(firestore, 'products'), productData);
         toast({
             title: "Producto añadido",
             description: "Tu nuevo producto ha sido creado exitosamente.",
         });
         router.push('/dashboard/seller');
+
       } catch (e: any) {
         const permissionError = new FirestorePermissionError({
             path: 'products',
             operation: 'create',
-            requestResourceData: productData
+            requestResourceData: {} // Don't log full data for brevity
         });
         errorEmitter.emit('permission-error', permissionError);
+        toast({ variant: 'destructive', title: 'Error al guardar', description: e.message });
       } finally {
         setIsSaving(false);
       }
@@ -155,7 +187,7 @@ export default function AddProductPage() {
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                    {images.map((src, index) => (
+                    {imagePreviews.map((src, index) => (
                         <div key={index} className="relative aspect-square rounded-md border group">
                             <img src={src} alt={`Preview ${index}`} className="object-cover w-full h-full rounded-md"/>
                             <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeImage(index)}>
