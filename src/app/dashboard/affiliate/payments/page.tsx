@@ -33,41 +33,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-
-const paymentHistory = [
-  {
-    id: 'pay_req_1',
-    date: '2023-10-02',
-    amount: 500000,
-    status: 'Pagado',
-    method: 'Transferencia Bancaria',
-    transactionId: 'txn_123abc',
-  },
-  {
-    id: 'pay_req_2',
-    date: '2023-09-01',
-    amount: 450000,
-    status: 'Pagado',
-    method: 'Transferencia Bancaria',
-    transactionId: 'txn_456def',
-  },
-  {
-    id: 'pay_req_3',
-    date: '2023-08-15',
-    amount: 250000,
-    status: 'Rechazado',
-    method: 'PayPal',
-    transactionId: 'N/A',
-  },
-  {
-    id: 'pay_req_4',
-    date: '2023-08-03',
-    amount: 550000,
-    status: 'Pagado',
-    method: 'Transferencia Bancaria',
-    transactionId: 'txn_789ghi',
-  },
-];
+import { useUser, useFirestore } from "@/firebase";
+import { useDoc, docRef } from "@/firebase/firestore/use-doc";
+import { updateDoc } from 'firebase/firestore';
+import type { Affiliate } from '@/lib/types';
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -87,16 +58,56 @@ const getStatusBadge = (status: string) => {
 
 export default function AffiliatePaymentsPage() {
   const { toast } = useToast();
-  const pendingBalance = 1570500;
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const affiliateDocRef = user && firestore ? docRef(firestore, "affiliates", user.uid) : null;
+  const { data: affiliate, loading } = useDoc<Affiliate>(affiliateDocRef);
+  
   const minimumPayout = 100000;
   
   const handleRequestPayout = () => {
-    // Aquí iría la lógica para enviar la solicitud al backend
-    toast({
-      title: 'Solicitud Enviada',
-      description: 'Tu solicitud de pago ha sido enviada para su procesamiento.',
-    });
+    if (!affiliateDocRef || !affiliate) return;
+
+    const newPaymentRequest = {
+      id: `pay_req_${new Date().getTime()}`,
+      date: new Date().toISOString().split('T')[0],
+      amount: affiliate.pendingBalance,
+      status: 'Pendiente' as const,
+      method: 'Transferencia Bancaria', // Default method
+    };
+
+    const updatedPaymentHistory = [...(affiliate.paymentHistory || []), newPaymentRequest];
+    const updatedData = {
+        paymentHistory: updatedPaymentHistory
+    };
+
+    updateDoc(affiliateDocRef, updatedData)
+        .then(() => {
+            toast({
+                title: 'Solicitud Enviada',
+                description: `Tu solicitud de pago por ${formatCurrency(affiliate.pendingBalance)} ha sido enviada.`,
+            });
+        })
+        .catch(e => {
+             const permissionError = new FirestorePermissionError({
+                path: affiliateDocRef.path,
+                operation: 'update',
+                requestResourceData: updatedData
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
+  
+  if (loading) {
+      return <div>Cargando...</div>;
+  }
+  
+  if (!affiliate) {
+      return <div>No se encontró información de afiliado.</div>;
+  }
+  
+  const pendingBalance = affiliate.pendingBalance;
 
   return (
     <div className="space-y-8">
@@ -172,17 +183,15 @@ export default function AffiliatePaymentsPage() {
                       <TableHead>Monto</TableHead>
                       <TableHead>Método</TableHead>
                       <TableHead>Estado</TableHead>
-                       <TableHead>ID de Transacción</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paymentHistory.map((payment) => (
+                    {affiliate.paymentHistory.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell>{payment.date}</TableCell>
                         <TableCell>{formatCurrency(payment.amount)}</TableCell>
                         <TableCell>{payment.method}</TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                        <TableCell className="font-mono text-xs">{payment.transactionId}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

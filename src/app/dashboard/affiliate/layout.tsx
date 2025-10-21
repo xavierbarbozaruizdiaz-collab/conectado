@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   Home,
   LogOut,
-  BadgePercent,
   Banknote,
   BarChart,
   Store,
@@ -37,6 +36,10 @@ export default function AffiliateDashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, loading } = useUser();
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   return (
     <SidebarProvider>
