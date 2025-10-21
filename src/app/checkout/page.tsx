@@ -18,10 +18,20 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CreditCard, ShoppingCart } from 'lucide-react';
+import { useUser, useFirestore } from '@/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { useState } from 'react';
 
 export default function CheckoutPage() {
   const { cart, subtotal = 0 } = useCart();
   const router = useRouter();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   if (cart.length === 0) {
     return (
@@ -41,10 +51,57 @@ export default function CheckoutPage() {
   const shippingCost = 5; // Ejemplo
   const total = subtotal + shippingCost;
   
-  const handleConfirmPurchase = (e: React.FormEvent) => {
+  const handleConfirmPurchase = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      // Lógica de compra iría aquí
-      router.push('/checkout/success');
+      setIsProcessing(true);
+
+      if (!firestore || !user) {
+          toast({
+              variant: 'destructive',
+              title: 'Error de autenticación',
+              description: 'Debes iniciar sesión para completar la compra.'
+          });
+          setIsProcessing(false);
+          return;
+      }
+      
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      const shippingAddress = {
+          name: formData.get('name') as string,
+          phone: formData.get('phone') as string,
+          address: formData.get('address') as string,
+          city: formData.get('city') as string,
+          postalCode: formData.get('postal-code') as string,
+          notes: formData.get('notes') as string,
+      };
+
+      const orderData = {
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+          totalAmount: total,
+          status: 'Pendiente',
+          shippingAddress,
+          items: cart.map(item => ({
+              productId: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity,
+          })),
+      };
+
+      try {
+          const docRef = await addDoc(collection(firestore, 'orders'), orderData);
+          router.push(`/checkout/success?orderId=${docRef.id}`);
+      } catch (error) {
+          const permissionError = new FirestorePermissionError({
+              path: 'orders',
+              operation: 'create',
+              requestResourceData: orderData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          setIsProcessing(false);
+      }
   }
 
   return (
@@ -59,27 +116,27 @@ export default function CheckoutPage() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre Completo</Label>
-                <Input id="name" required />
+                <Input id="name" name="name" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Número de Teléfono</Label>
-                <Input id="phone" type="tel" required />
+                <Input id="phone" name="phone" type="tel" required />
               </div>
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="address">Dirección</Label>
-                <Input id="address" required />
+                <Input id="address" name="address" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">Ciudad</Label>
-                <Input id="city" required />
+                <Input id="city" name="city" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="postal-code">Código Postal</Label>
-                <Input id="postal-code" />
+                <Input id="postal-code" name="postal-code" />
               </div>
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="notes">Notas Adicionales (Opcional)</Label>
-                <Input id="notes" placeholder="Ej: Dejar en portería"/>
+                <Input id="notes" name="notes" placeholder="Ej: Dejar en portería"/>
               </div>
             </CardContent>
           </Card>
@@ -90,16 +147,16 @@ export default function CheckoutPage() {
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="card-number">Número de Tarjeta</Label>
-                    <Input id="card-number" placeholder="XXXX XXXX XXXX XXXX" required/>
+                    <Input id="card-number" name="card-number" placeholder="XXXX XXXX XXXX XXXX" required/>
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="expiry-date">Fecha de Vencimiento</Label>
-                        <Input id="expiry-date" placeholder="MM/AA" required/>
+                        <Input id="expiry-date" name="expiry-date" placeholder="MM/AA" required/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" required/>
+                        <Input id="cvc" name="cvc" placeholder="123" required/>
                     </div>
                 </div>
             </CardContent>
@@ -143,9 +200,9 @@ export default function CheckoutPage() {
               </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" size="lg" className="w-full">
+            <Button type="submit" size="lg" className="w-full" disabled={isProcessing}>
               <CreditCard className="mr-2 h-5 w-5" />
-              Confirmar y Pagar
+              {isProcessing ? 'Procesando...' : 'Confirmar y Pagar'}
             </Button>
           </CardFooter>
         </Card>

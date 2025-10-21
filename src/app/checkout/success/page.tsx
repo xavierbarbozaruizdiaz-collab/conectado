@@ -5,19 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
 import { useCart } from "@/context/cart-context";
 
-export default function CheckoutSuccessPage() {
-    const router = useRouter();
+function CheckoutSuccessContent() {
+    const searchParams = useSearchParams();
+    const orderId = searchParams.get('orderId');
     const { clearCart } = useCart();
 
     useEffect(() => {
         // Limpia el carrito cuando el componente se monta
         clearCart();
     }, [clearCart]);
-
 
     return (
         <div className="container mx-auto px-4 md:px-6 py-24 flex items-center justify-center">
@@ -32,10 +32,12 @@ export default function CheckoutSuccessPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="p-4 bg-muted rounded-md text-sm">
-                        <p className="font-bold">Número de Pedido:</p>
-                        <p className="font-mono">#105-987654321</p>
-                    </div>
+                    {orderId && (
+                        <div className="p-4 bg-muted rounded-md text-sm">
+                            <p className="font-bold">Número de Pedido:</p>
+                            <p className="font-mono">#{orderId}</p>
+                        </div>
+                    )}
                     <div className="flex flex-col sm:flex-row gap-2">
                         <Button asChild className="flex-1" size="lg">
                             <Link href="/">
@@ -52,4 +54,13 @@ export default function CheckoutSuccessPage() {
             </Card>
         </div>
     );
+}
+
+
+export default function CheckoutSuccessPage() {
+    return (
+        <Suspense fallback={<div>Cargando confirmación...</div>}>
+            <CheckoutSuccessContent />
+        </Suspense>
+    )
 }

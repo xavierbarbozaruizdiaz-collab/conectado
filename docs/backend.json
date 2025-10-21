@@ -40,6 +40,62 @@
       },
       "required": ["uid", "email", "storeName"]
     },
+    "Product": {
+        "title": "Product",
+        "description": "Represents an item available for sale or auction.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "price": { "type": "number" },
+            "category": { "type": "string" },
+            "imageUrls": { "type": "array", "items": { "type": "string", "format": "uri" } },
+            "sellerId": { "type": "string" },
+            "isAuction": { "type": "boolean" },
+            "auctionEndDate": { "type": "string", "format": "date-time" },
+            "status": { "type": "string", "enum": ["Activo", "Vendido", "Pendiente"] }
+        },
+        "required": ["id", "name", "price", "sellerId", "imageUrls"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Represents a customer's order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pendiente", "Procesado", "Enviado", "Entregado", "Cancelado"] },
+        "shippingAddress": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "phone": { "type": "string" },
+            "address": { "type": "string" },
+            "city": { "type": "string" },
+            "postalCode": { "type": "string" },
+            "notes": { "type": "string" }
+          },
+          "required": ["name", "phone", "address", "city"]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "quantity": { "type": "number" }
+            },
+            "required": ["productId", "name", "price", "quantity"]
+          }
+        }
+      },
+      "required": ["id", "userId", "createdAt", "totalAmount", "status", "shippingAddress", "items"]
+    },
     "AffiliatePayment": {
       "title": "Affiliate Payment",
       "description": "Represents a single payment request or history for an affiliate.",
@@ -111,6 +167,12 @@
         "$ref": "#/entities/Product"
       },
       "description": "Stores all products available on the platform."
+    },
+    "/orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/Order"
+      },
+      "description": "Stores all customer orders."
     },
     "/affiliates/{affiliateId}": {
       "schema": {
