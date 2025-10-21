@@ -1,45 +1,44 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model for user profiles and uses public read with owner-only writes for products and banners.
- * Affiliate data and affiliate events are also protected with owner-only access. Platform settings and subscription tiers are read-only for all users. Orders are accessible by the user who placed the order.
+ * @fileoverview Firestore Security Rules for Prototyping.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes developer iteration speed by focusing on authorization.
+ * It enforces strict user-based access control and relational integrity where necessary,
+ * but it skips comprehensive data validation to allow for rapid schema changes.
  *
  * Data Structure:
- * - /users/{userId}: Stores public user profile information.
- * - /products/{productId}: Stores product information.
- * - /orders/{orderId}: Stores order information.
- * - /affiliates/{affiliateId}: Stores affiliate user data.
- * - /banners/{bannerId}: Stores banner information.
- * - /config/platform: Stores platform settings.
- * - /affiliateEvents/{eventId}: Stores affiliate event data.
- * - /subscriptionTiers/{tierId}: Stores subscription tier information.
+ * - `/users/{userId}`: Stores public user profile data, accessible only by the owning user.
+ * - `/products/{productId}`: Stores product data; publicly readable, owner-only write access.
+ * - `/orders/{orderId}`: Stores order data; publicly readable, but write operations are not permitted.
+ * - `/affiliates/{affiliateId}`: Stores affiliate data, accessible only by the affiliate.
+ * - `/banners/{bannerId}`: Stores promotional banners; publicly readable, write access is not permitted.
+ * - `/config/platform`: Stores platform-wide configuration, write access is not permitted.
+ * - `/affiliateEvents/{eventId}`: Stores affiliate event data, write access is not permitted.
+ * - `/subscriptionTiers/{tierId}`: Stores subscription tier information; publicly readable, write access is not permitted.
  *
  * Key Security Decisions:
- * - User profiles are owner-only (users can only read/write their own profile data).
- * - Products and banners are publicly readable, but only the owner can create, update, or delete them.
- * - Affiliate data and affiliate events are owner-only.
- * - Platform settings and subscription tiers are globally readable but not writable by clients.
- * - Orders are accessible only by the user who placed the order.
- * - Listing of users, affiliates, and affiliate events is disallowed.
+ * - User listing is disallowed for all collections to protect privacy.
+ * - Data validation is relaxed to speed up prototyping, focusing only on ownership and relational integrity.
+ * - Strict ownership is enforced for user profiles and write access to products.
+ * - The root level collections: orders, banners, config/platform, affiliateEvents and subscriptionTiers are publicly readable, with no write access.
  *
  * Denormalization for Authorization:
- * - Products have a `sellerId` field to determine ownership.
- * - Orders have a `userId` field to determine ownership.
+ *  - Products have a `sellerId` field to easily verify ownership during create, update, and delete operations.
  *
  * Structural Segregation:
- * - No explicit structural segregation is used.
+ *  - No specific segregation is implemented in this prototype.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
+     * @description Manages access to user profile data.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' creates their profile document with matching UID.
-     * @allow (get, update, delete) User with ID 'user123' reads/updates/deletes their own profile.
-     * @deny (create) User 'user456' attempts to create a profile document for 'user123'.
-     * @deny (get, update, delete) User 'user456' attempts to read/update/delete the profile of 'user123'.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with matching {userId} can create their profile.
+     * @allow (get, list, update, delete) User can only access their own profile.
+     * @deny (create) User cannot create a profile with a mismatched {userId}.
+     * @principle Enforces user-ownership for profile data.
      */
     match /users/{userId} {
       function isSignedIn() {
@@ -47,180 +46,150 @@ service cloud.firestore {
       }
 
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return isSignedIn() && request.auth.uid == userId;
       }
 
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to product documents. Products are publicly readable, but only the seller can modify them.
+     * @description Manages access to product data.
      * @path /products/{productId}
-     * @allow (get, list) Any user can read or list products.
-     * @allow (create) User with ID 'user123' creates a product with `sellerId: 'user123'`.
-     * @allow (update, delete) User with ID 'user123' updates/deletes a product where `resource.data.sellerId == 'user123'`.
-     * @deny (create) User with ID 'user456' creates a product with `sellerId: 'user123'`.
-     * @deny (update, delete) User with ID 'user456' attempts to update/delete a product where `resource.data.sellerId == 'user123'`.
-     * @principle Allows public read access but enforces document ownership for writes.
+     * @allow (get, list) Products are publicly readable.
+     * @allow (create) User can create a product if they are the seller.
+     * @allow (update, delete) User can only update or delete their own products.
+     * @deny (create) User cannot create a product with a mismatched sellerId.
+     * @principle Enforces document ownership for writes, allows public reads.
      */
     match /products/{productId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+        function isSignedIn() {
+            return request.auth != null;
+        }
 
-      function isOwner(sellerId) {
-        return request.auth.uid == sellerId;
-      }
+        function isOwner(sellerId) {
+            return isSignedIn() && request.auth.uid == sellerId;
+        }
 
-      function isExistingOwner(sellerId) {
-        return isSignedIn() && isOwner(sellerId) && resource != null;
-      }
+        function isExistingOwner(sellerId) {
+            return isOwner(sellerId) && resource != null;
+        }
 
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.sellerId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.sellerId == request.auth.uid;
+        allow get: if true;
+        allow list: if true;
+        allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+        allow update: if isExistingOwner(resource.data.sellerId);
+        allow delete: if isExistingOwner(resource.data.sellerId);
     }
 
     /**
-     * @description Controls access to order documents. Only the user who placed the order can read it, and no one can list all orders.
+     * @description Manages access to order data.
      * @path /orders/{orderId}
-     * @allow (get) User with ID 'user123' reads their order with `userId: 'user123'`.
-     * @deny (get) User with ID 'user456' attempts to read order where `userId: 'user123'`.
-     * @deny (list) Any user attempts to list all orders.
-     * @allow (create) Any signed-in user can create an order.
-     * @deny (update, delete) No one is allowed to update or delete an order after creation.
-     * @principle Restricts order access to the owning user and prevents listing.
+     * @allow (get, list) Orders are publicly readable.
+     * @deny (create, update, delete) Write operations are not permitted.
+     * @principle Orders are read-only in this prototype.
      */
     match /orders/{orderId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if false;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
+        allow get: if true;
+        allow list: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
 
     /**
-     * @description Controls access to affiliate documents.
+     * @description Manages access to affiliate data.
      * @path /affiliates/{affiliateId}
-     * @allow (create) User with ID 'user123' creates their affiliate document with matching UID.
-     * @allow (get, update, delete) User with ID 'user123' reads/updates/deletes their own affiliate data.
-     * @deny (create) User 'user456' attempts to create an affiliate document for 'user123'.
-     * @deny (get, update, delete) User 'user456' attempts to read/update/delete the affiliate data of 'user123'.
-     * @principle Enforces document ownership for all operations.
+     * @allow (get, update, delete) User can only access their own affiliate data.
+     * @allow (create) User with matching {affiliateId} can create their affiliate data.
+     * @deny (create) User cannot create an affiliate with a mismatched {affiliateId}.
+     * @deny list operations.
+     * @principle Enforces user-ownership for affiliate data.
      */
     match /affiliates/{affiliateId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+        function isSignedIn() {
+            return request.auth != null;
+        }
 
-      function isOwner(affiliateId) {
-        return request.auth.uid == affiliateId;
-      }
+        function isOwner(affiliateId) {
+            return isSignedIn() && request.auth.uid == affiliateId;
+        }
 
-       function isExistingOwner(affiliateId) {
-        return isSignedIn() && isOwner(affiliateId) && resource != null;
-      }
+        function isExistingOwner(affiliateId) {
+            return isOwner(affiliateId) && resource != null;
+        }
 
-      allow get: if isSignedIn() && isOwner(affiliateId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(affiliateId);
-      allow update: if isSignedIn() && isOwner(affiliateId);
-      allow delete: if isSignedIn() && isOwner(affiliateId);
+        allow get: if isOwner(affiliateId);
+        allow list: if false;
+        allow create: if isOwner(affiliateId) && request.resource.data.user.uid == affiliateId;
+        allow update: if isExistingOwner(affiliateId) && request.resource.data.user.uid == resource.data.user.uid;
+        allow delete: if isExistingOwner(affiliateId);
     }
 
     /**
-     * @description Controls access to banner documents. Banners are publicly readable, but only an admin can modify them.
+     * @description Manages access to banner data.
      * @path /banners/{bannerId}
-     * @allow (get, list) Any user can read or list banners.
-     * @allow (create) User with ID 'user123' creates a banner.
-     * @allow (update, delete) User with ID 'user123' updates/deletes a banner.
-     * @deny (create) User with ID 'user456' creates a banner.
-     * @deny (update, delete) User with ID 'user456' attempts to update/delete a banner.
-     * @principle Allows public read access but enforces document ownership for writes.
+     * @allow (get, list) Banners are publicly readable.
+     * @deny (create, update, delete) Write operations are not permitted.
+     * @principle Banners are read-only in this prototype.
      */
     match /banners/{bannerId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
-      allow update: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
-      allow delete: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+        allow get: if true;
+        allow list: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
 
     /**
-     * @description Controls access to the platform configuration. The configuration is globally readable, but not writable via the client.
+     * @description Manages access to platform configuration.
      * @path /config/platform
-     * @allow (get, list) Any user can read the platform configuration.
-     * @deny (create, update, delete) No user can create, update, or delete the platform configuration via the client.
-     * @principle Provides global read access but restricts write access.
+     * @allow (get) Platform configuration is publicly readable.
+     * @deny (list, create, update, delete) Write operations are not permitted.
+     * @principle Platform configuration is read-only in this prototype.
      */
     match /config/platform {
-      allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-   /**
-     * @description Controls access to affiliate event documents.
-     * @path /affiliateEvents/{eventId}
-     * @allow (create) User with ID 'user123' creates their affiliate event document with matching UID.
-     * @allow (get, update, delete) User with ID 'user123' reads/updates/deletes their own affiliate event data.
-     * @deny (create) User 'user456' attempts to create an affiliate event document for 'user123'.
-     * @deny (get, update, delete) User 'user456' attempts to read/update/delete the affiliate event data of 'user123'.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /affiliateEvents/{eventId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(affiliateId) {
-        return request.auth.uid == affiliateId;
-      }
-
-      allow get: if isSignedIn() && resource.data.affiliateId == request.auth.uid;
-      allow list: if false;
-      allow create: if isSignedIn() && request.resource.data.affiliateId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.affiliateId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.affiliateId == request.auth.uid;
+        allow get: if true;
+        allow list: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
 
     /**
-     * @description Controls access to subscription tier documents. The subscription tiers are globally readable, but not writable via the client.
-     * @path /subscriptionTiers/{tierId}
-     * @allow (get, list) Any user can read the subscription tiers.
-     * @deny (create, update, delete) No user can create, update, or delete the subscription tiers via the client.
-     * @principle Provides global read access but restricts write access.
+     * @description Manages access to affiliate event data.
+     * @path /affiliateEvents/{eventId}
+     * @allow (get, list) Affiliate events are publicly readable.
+     * @deny (create, update, delete) Write operations are not permitted.
      */
-    match /subscriptionTiers/{tierId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /affiliateEvents/{eventId} {
+        allow get: if true;
+        allow list: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
+
+      /**
+       * @description Manages access to subscription tier information.
+       * @path /subscriptionTiers/{tierId}
+       * @allow (get, list) Subscription tiers are publicly readable.
+       * @deny (create, update, delete) Write operations are not permitted.
+       * @principle Subscription tiers are read-only in this prototype.
+       */
+      match /subscriptionTiers/{tierId} {
+          allow get: if true;
+          allow list: if true;
+          allow create: if false;
+          allow update: if false;
+          allow delete: if false;
+      }
   }
 }
