@@ -82,7 +82,7 @@ export default function AffiliatePaymentsPage() {
     const updatedPaymentHistory = [...(affiliate.paymentHistory || []), newPaymentRequest];
     const updatedData = {
         paymentHistory: updatedPaymentHistory,
-        pendingBalance: 0,
+        pendingBalance: 0, // Reset balance to 0
     };
 
     updateDoc(affiliateDocRef, updatedData)
@@ -231,3 +231,5 @@ export default function AffiliatePaymentsPage() {
     </div>
   );
 }
+
+    
