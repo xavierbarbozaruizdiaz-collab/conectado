@@ -40,7 +40,7 @@ export function useDoc<T = DocumentData>(
     try {
       const docRef =
         typeof docPathOrRef === 'string'
-          ? doc(firestore, docPathOrfRef)
+          ? doc(firestore, docPathOrRef)
           : docPathOrRef;
 
       const unsubscribe = onSnapshot(
@@ -83,5 +83,4 @@ export function useDoc<T = DocumentData>(
 }
 
 // Re-export doc from firestore to be used in components
-import { doc as docRef } from 'firebase/firestore';
-export { docRef };
+export { doc as docRef } from 'firebase/firestore';

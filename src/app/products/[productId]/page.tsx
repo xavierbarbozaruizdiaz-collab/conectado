@@ -2,7 +2,8 @@
 'use client';
 
 import { notFound } from "next/navigation";
-import { useDoc, docRef, useFirestore, useCollection, collection } from "@/firebase";
+import { useFirestore, useCollection, collection } from "@/firebase";
+import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 import type { Product } from "@/lib/data";
 import ProductCard from "@/components/product-card";
 import ProductDetailsClient from "./ProductDetailsClient";

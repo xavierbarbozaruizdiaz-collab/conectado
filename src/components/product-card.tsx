@@ -6,7 +6,8 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useDoc, docRef, useFirestore } from "@/firebase";
+import { useFirestore } from "@/firebase";
+import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 import type { Product, User } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 

@@ -17,7 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store, MessageSquare } from "lucide-react";
 import { useState, useMemo } from "react";
 import logger from "@/lib/logger";
-import { useDoc, docRef, useFirestore } from "@/firebase";
+import { useFirestore } from "@/firebase";
+import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 
 function ProductImageGallery({ images, productName }: { images: string[], productName: string }) {
     const [selectedImage, setSelectedImage] = useState(0);

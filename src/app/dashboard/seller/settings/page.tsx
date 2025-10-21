@@ -11,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useDoc, docRef, useFirestore, useUser } from "@/firebase";
+import { useUser, useFirestore } from "@/firebase";
+import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 import type { User } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
