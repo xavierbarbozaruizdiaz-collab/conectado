@@ -72,6 +72,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
     firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null
   );
   const [bidAmount, setBidAmount] = useState<string>('');
+  const [isBidding, setIsBidding] = useState(false);
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -96,8 +97,11 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   
   const handleBidSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setIsBidding(true);
+
       if (!firestore || !user) {
           toast({ variant: 'destructive', title: 'Error de Autenticación', description: 'Debes iniciar sesión para poder pujar.'});
+          setIsBidding(false);
           return;
       }
       if(isBidInvalid) {
@@ -106,6 +110,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
               title: "Puja inválida",
               description: `Tu puja debe ser de al menos ${formatCurrency(minimumBid)}.`,
           });
+          setIsBidding(false);
           return;
       }
       
@@ -133,6 +138,8 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                 requestResourceData: { price: newPrice }
             });
             errorEmitter.emit('permission-error', permissionError);
+      }).finally(() => {
+          setIsBidding(false);
       });
   }
 
@@ -178,7 +185,9 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                         onChange={(e) => setBidAmount(e.target.value)}
                         min={minimumBid}
                     />
-                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isBidInvalid}>Pujar</Button>
+                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isBidInvalid || isBidding}>
+                      {isBidding ? 'Pujando...' : 'Pujar'}
+                    </Button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
                   {bidAmount && isBidInvalid
