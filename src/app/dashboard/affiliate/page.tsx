@@ -77,7 +77,7 @@ export default function AffiliateDashboardPage() {
     const updatedPaymentHistory = [...(affiliate.paymentHistory || []), newPaymentRequest];
     const updatedData = {
         paymentHistory: updatedPaymentHistory,
-        pendingBalance: 0, // Reset pending balance as it has been requested
+        pendingBalance: 0,
     };
 
     updateDoc(affiliateDocRef, updatedData)
@@ -105,7 +105,7 @@ export default function AffiliateDashboardPage() {
     return <div>No se encontró información de afiliado para tu cuenta.</div>
   }
   
-  const totalPaid = affiliate.totalEarnings - affiliate.pendingBalance;
+  const totalPaid = (affiliate.totalEarnings || 0) - (affiliate.pendingBalance || 0);
   
   return (
     <div className="space-y-8">
@@ -135,7 +135,7 @@ export default function AffiliateDashboardPage() {
         />
         <StatCard
           title="Comisión Total"
-          value={formatCurrency(affiliate.totalEarnings)}
+          value={formatCurrency(affiliate.totalEarnings || 0)}
           icon={BadgePercent}
           description="Ganancias de todos los tiempos"
         />
@@ -173,7 +173,7 @@ export default function AffiliateDashboardPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-baseline">
                 <span className="text-muted-foreground">Total Generado</span>
-                <span className="font-bold text-lg">{formatCurrency(affiliate.totalEarnings)}</span>
+                <span className="font-bold text-lg">{formatCurrency(affiliate.totalEarnings || 0)}</span>
             </div>
             <div className="flex justify-between items-baseline">
                 <span className="text-muted-foreground">Total Pagado</span>
@@ -181,9 +181,9 @@ export default function AffiliateDashboardPage() {
             </div>
             <div className="flex justify-between items-baseline text-primary">
                 <span >Saldo Pendiente</span>
-                <span className="font-bold text-lg">{formatCurrency(affiliate.pendingBalance)}</span>
+                <span className="font-bold text-lg">{formatCurrency(affiliate.pendingBalance || 0)}</span>
             </div>
-            <Button className="w-full" onClick={handleRequestPayout} disabled={affiliate.pendingBalance <= 0}>Solicitar Pago</Button>
+            <Button className="w-full" onClick={handleRequestPayout} disabled={(affiliate.pendingBalance || 0) <= 0}>Solicitar Pago</Button>
           </CardContent>
         </Card>
       </div>
