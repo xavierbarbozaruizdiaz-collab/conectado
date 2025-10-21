@@ -189,6 +189,20 @@
         "earnings": { "type": "number", "description": "Earnings generated from this event (only for conversions)." }
       },
       "required": ["affiliateId", "type", "timestamp"]
+    },
+    "SubscriptionTier": {
+      "title": "Subscription Tier",
+      "description": "Defines a subscription plan for users, typically for auction bidding.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "enum": ["Gratis", "Bronce", "Plata", "Oro"] },
+        "price": { "type": "number" },
+        "maxBidding": { "type": "number", "description": "Maximum bidding amount allowed. Use a very large number for infinity." },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "order": { "type": "number", "description": "The display order of the tier." }
+      },
+      "required": ["name", "price", "maxBidding", "features", "order"]
     }
   },
   "auth": {
@@ -230,6 +244,10 @@
     "/affiliateEvents/{eventId}": {
       "schema": { "$ref": "#/entities/AffiliateEvent" },
       "description": "Stores tracking events for affiliate links (clicks, conversions)."
+    },
+    "/subscriptionTiers/{tierId}": {
+        "schema": { "$ref": "#/entities/SubscriptionTier" },
+        "description": "Stores the available subscription plans for users."
     }
   }
 }

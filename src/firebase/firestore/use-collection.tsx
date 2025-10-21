@@ -8,7 +8,7 @@ import type {
   DocumentData,
   Query,
 } from 'firebase/firestore';
-import { onSnapshot, collection, query, where } from 'firebase/firestore';
+import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
 import { useFirestore } from '../';
 import { FirestorePermissionError } from '../errors';
 import { errorEmitter } from '../error-emitter';
@@ -80,4 +80,4 @@ export function useCollection<T = DocumentData>(
 }
 
 // Re-export collection from firestore to be used in components
-export { collection, query, where };
+export { collection, query, where, orderBy };

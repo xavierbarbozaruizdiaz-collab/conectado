@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -10,28 +9,17 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { subscriptionTiers as initialTiers, SubscriptionTier } from "@/lib/data";
+import type { SubscriptionTier } from "@/lib/types";
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Check, Pencil } from "lucide-react";
 import Link from "next/link";
-
-const TIERS_STORAGE_KEY = 'subscriptionTiers';
+import { useCollection, collection, useFirestore, query, orderBy } from "@/firebase";
 
 export default function AdminSubscriptionsPage() {
-  const [currentTiers, setCurrentTiers] = useState<SubscriptionTier[]>(initialTiers);
-
-  useEffect(() => {
-    try {
-        const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
-        if (savedTiers) {
-            setCurrentTiers(JSON.parse(savedTiers));
-        }
-    } catch (error) {
-        console.error("Failed to parse tiers from localStorage", error);
-    }
-  }, []);
-
+  const firestore = useFirestore();
+  const tiersQuery = firestore ? query(collection(firestore, 'subscriptionTiers'), orderBy('order')) : null;
+  const { data: currentTiers, loading } = useCollection<SubscriptionTier>(tiersQuery);
 
   return (
     <div className="space-y-8">
@@ -58,38 +46,41 @@ export default function AdminSubscriptionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {currentTiers.map((tier) => (
-              <Card key={tier.name} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle className="flex justify-between items-center">
-                    <span>{tier.name}</span>
-                    {tier.name === 'Gratis' ? (
-                      <Badge variant="secondary">Default</Badge>
-                    ) : (
-                      <Badge variant="default" className="bg-primary">{formatCurrency(tier.price)}/mes</Badge>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {tier.maxBidding === Infinity
-                      ? "Puja máxima ilimitada"
-                      : `Puja máxima: ${formatCurrency(tier.maxBidding)}`}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow space-y-3">
-                    <p className="text-sm font-medium text-muted-foreground">Características:</p>
-                    <ul className="space-y-2">
-                        {tier.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm">
-                            <Check className="h-4 w-4 mt-0.5 text-green-500 flex-shrink-0" />
-                            <span>{feature}</span>
-                        </li>
-                        ))}
-                    </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {loading && <p>Cargando planes...</p>}
+          {!loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {(currentTiers || []).map((tier) => (
+                <Card key={tier.id} className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex justify-between items-center">
+                      <span>{tier.name}</span>
+                      {tier.name === 'Gratis' ? (
+                        <Badge variant="secondary">Default</Badge>
+                      ) : (
+                        <Badge variant="default" className="bg-primary">{formatCurrency(tier.price)}/mes</Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      {tier.maxBidding === Infinity || tier.maxBidding > 999999999
+                        ? "Puja máxima ilimitada"
+                        : `Puja máxima: ${formatCurrency(tier.maxBidding)}`}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-3">
+                      <p className="text-sm font-medium text-muted-foreground">Características:</p>
+                      <ul className="space-y-2">
+                          {tier.features.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                              <Check className="h-4 w-4 mt-0.5 text-green-500 flex-shrink-0" />
+                              <span>{feature}</span>
+                          </li>
+                          ))}
+                      </ul>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

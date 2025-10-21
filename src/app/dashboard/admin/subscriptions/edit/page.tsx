@@ -10,42 +10,43 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { subscriptionTiers as initialTiers, SubscriptionTier } from "@/lib/data";
+import type { SubscriptionTier } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const TIERS_STORAGE_KEY = 'subscriptionTiers';
+import { useCollection, collection, useFirestore, query, orderBy, doc, writeBatch } from "@/firebase";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function EditSubscriptionsPage() {
-  const [tiers, setTiers] = useState<SubscriptionTier[]>(initialTiers);
+  const firestore = useFirestore();
+  const tiersQuery = firestore ? query(collection(firestore, 'subscriptionTiers'), orderBy('order')) : null;
+  const { data: initialTiers, loading } = useCollection<SubscriptionTier>(tiersQuery);
+  
+  const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
-      if (savedTiers) {
-        setTiers(JSON.parse(savedTiers));
-      }
-    } catch (error) {
-      console.error("Failed to parse tiers from localStorage", error);
+    if (initialTiers) {
+      setTiers(initialTiers);
     }
-  }, []);
+  }, [initialTiers]);
 
-  const handleTierChange = (tierName: string, field: string, value: string | number) => {
+  const handleTierChange = (tierId: string, field: keyof SubscriptionTier, value: string | number) => {
     setTiers(prevTiers =>
       prevTiers.map(tier =>
-        tier.name === tierName ? { ...tier, [field]: value } : tier
+        tier.id === tierId ? { ...tier, [field]: value } : tier
       )
     );
   };
   
-  const handleFeatureChange = (tierName: string, featureIndex: number, value: string) => {
+  const handleFeatureChange = (tierId: string, featureIndex: number, value: string) => {
     setTiers(prevTiers =>
       prevTiers.map(tier =>
-        tier.name === tierName
+        tier.id === tierId
           ? {
               ...tier,
               features: tier.features.map((feature, index) =>
@@ -57,18 +58,18 @@ export default function EditSubscriptionsPage() {
     );
   };
   
-  const addFeature = (tierName: string) => {
+  const addFeature = (tierId: string) => {
     setTiers(prevTiers =>
       prevTiers.map(tier =>
-        tier.name === tierName ? { ...tier, features: [...tier.features, ''] } : tier
+        tier.id === tierId ? { ...tier, features: [...tier.features, ''] } : tier
       )
     );
   };
   
-  const removeFeature = (tierName: string, featureIndex: number) => {
+  const removeFeature = (tierId: string, featureIndex: number) => {
      setTiers(prevTiers =>
       prevTiers.map(tier =>
-        tier.name === tierName
+        tier.id === tierId
           ? {
               ...tier,
               features: tier.features.filter((_, index) => index !== featureIndex),
@@ -78,23 +79,48 @@ export default function EditSubscriptionsPage() {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!firestore) return;
+    setIsSaving(true);
+    
     try {
-        localStorage.setItem(TIERS_STORAGE_KEY, JSON.stringify(tiers));
+        const batch = writeBatch(firestore);
+        tiers.forEach(tier => {
+            const { id, ...tierData } = tier;
+            // Handle Infinity case for Firestore
+            if (tierData.maxBidding === Infinity) {
+                tierData.maxBidding = 1.7976931348623157e+308; // Max number in JS
+            }
+            const docRef = doc(firestore, 'subscriptionTiers', id!);
+            batch.set(docRef, tierData);
+        });
+        await batch.commit();
+
         toast({
-        title: "Planes guardados",
-        description: "Los cambios en los planes de suscripción han sido guardados.",
+            title: "Planes guardados",
+            description: "Los cambios en los planes de suscripción han sido guardados.",
         });
         router.push('/dashboard/admin/subscriptions');
     } catch (error) {
-        console.error("Failed to save tiers to localStorage", error);
+        console.error("Failed to save tiers to Firestore", error);
+        const permissionError = new FirestorePermissionError({
+            path: 'subscriptionTiers',
+            operation: 'write'
+        });
+        errorEmitter.emit('permission-error', permissionError);
         toast({
             variant: "destructive",
             title: "Error al guardar",
             description: "No se pudieron guardar los cambios. Revisa la consola para más detalles."
-        })
+        });
+    } finally {
+        setIsSaving(false);
     }
   };
+  
+  if (loading) {
+      return <p>Cargando planes para edición...</p>
+  }
 
   return (
     <div className="space-y-8">
@@ -107,31 +133,31 @@ export default function EditSubscriptionsPage() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {tiers.map(tier => (
-          <Card key={tier.name}>
+          <Card key={tier.id}>
             <CardHeader>
               <CardTitle>{tier.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor={`price-${tier.name}`}>Precio (Gs. / mes)</Label>
+                <Label htmlFor={`price-${tier.id}`}>Precio (Gs. / mes)</Label>
                 <Input
-                  id={`price-${tier.name}`}
+                  id={`price-${tier.id}`}
                   type="number"
                   value={tier.price}
-                  onChange={(e) => handleTierChange(tier.name, 'price', Number(e.target.value))}
+                  onChange={(e) => handleTierChange(tier.id!, 'price', Number(e.target.value))}
                   disabled={tier.name === 'Gratis'}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`maxBidding-${tier.name}`}>Puja Máxima (Gs.)</Label>
+                <Label htmlFor={`maxBidding-${tier.id}`}>Puja Máxima (Gs.)</Label>
                 <Input
-                  id={`maxBidding-${tier.name}`}
+                  id={`maxBidding-${tier.id}`}
                   type="number"
-                  value={tier.maxBidding === Infinity ? '' : tier.maxBidding}
-                  placeholder={tier.maxBidding === Infinity ? 'Ilimitado' : ''}
+                  value={tier.maxBidding === Infinity || tier.maxBidding > 999999999 ? '' : tier.maxBidding}
+                  placeholder="Ilimitado"
                   onChange={(e) => {
                     const value = e.target.value;
-                    handleTierChange(tier.name, 'maxBidding', value === '' ? Infinity : Number(value))
+                    handleTierChange(tier.id!, 'maxBidding', value === '' ? Infinity : Number(value))
                   }}
                 />
                  <p className="text-xs text-muted-foreground">Dejar en blanco para puja ilimitada.</p>
@@ -142,14 +168,14 @@ export default function EditSubscriptionsPage() {
                   <div key={index} className="flex gap-2 items-center">
                     <Input
                       value={feature}
-                      onChange={(e) => handleFeatureChange(tier.name, index, e.target.value)}
+                      onChange={(e) => handleFeatureChange(tier.id!, index, e.target.value)}
                     />
-                    <Button variant="ghost" size="icon" onClick={() => removeFeature(tier.name, index)}>
+                    <Button variant="ghost" size="icon" onClick={() => removeFeature(tier.id!, index)}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => addFeature(tier.name)}>
+                <Button variant="outline" size="sm" onClick={() => addFeature(tier.id!)}>
                   Añadir Característica
                 </Button>
               </div>
@@ -159,7 +185,9 @@ export default function EditSubscriptionsPage() {
       </div>
       
       <div className="flex justify-end">
-        <Button size="lg" onClick={handleSave}>Guardar Cambios</Button>
+        <Button size="lg" onClick={handleSave} disabled={isSaving || loading}>
+            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+        </Button>
       </div>
     </div>
   );
