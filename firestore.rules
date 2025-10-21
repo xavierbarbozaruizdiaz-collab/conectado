@@ -1,0 +1,52 @@
+/**
+ * @fileoverview Firestore Security Rules for Prototyping.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user profiles.
+ * Only the authenticated user can read or write their own profile data.
+ *
+ * Data Structure:
+ * User profile data is stored under `/users/{userId}`, where `{userId}` matches the Firebase Authentication UID.
+ *
+ * Key Security Decisions:
+ * - User profiles are private. Listing all user profiles is disallowed.
+ * - Data shape validation is relaxed to allow for rapid prototyping. Only authorization-critical fields are validated.
+ * - Updates will enforce immutability of the `uid` field to maintain relational integrity.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profile information.
+     * @path /users/{userId}
+     * @allow (create) User with UID 'user_abc' can create their profile at /users/user_abc if the document's uid field matches.
+     * @allow (get) User with UID 'user_abc' can read their profile at /users/user_abc.
+     * @allow (update) User with UID 'user_abc' can update their profile at /users/user_abc.
+     * @allow (delete) User with UID 'user_abc' can delete their profile at /users/user_abc.
+     * @deny (create) User with UID 'user_xyz' cannot create a profile at /users/user_abc.
+     * @deny (get) User with UID 'user_xyz' cannot read the profile at /users/user_abc.
+     * @principle Enforces document ownership, ensuring users can only access their own profile data.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
