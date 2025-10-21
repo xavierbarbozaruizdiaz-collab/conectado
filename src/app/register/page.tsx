@@ -80,11 +80,12 @@ export default function RegisterPage() {
     } catch (e: any) {
       logger.error(e, { component: 'RegisterPage' });
       
-      const permissionError = new FirestorePermissionError({ path: `users/${(auth.currentUser?.uid || 'unknown')}`, operation: 'create' });
-      errorEmitter.emit('permission-error', permissionError);
-
       if (e.code === 'auth/email-already-in-use') {
-        setError('Este correo electrónico ya está en uso.');
+        setError('Este correo electrónico ya está registrado. Intenta iniciar sesión.');
+      } else if (e.code === 'firestore/permission-denied') {
+         const permissionError = new FirestorePermissionError({ path: `users/${(auth.currentUser?.uid || 'unknown')}`, operation: 'create' });
+         errorEmitter.emit('permission-error', permissionError);
+         setError('Error de permisos al crear el perfil. Contacta a soporte.');
       } else {
         setError('No se pudo crear la cuenta. Inténtalo de nuevo.');
       }
@@ -96,12 +97,13 @@ export default function RegisterPage() {
   const handleGoogleLogin = async () => {
     if (!auth || !firestore) return;
     setIsSubmitting(true);
+    setError(null);
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       const user = userCredential.user;
 
-       // Create user profile in Firestore
+       // Create or update user profile in Firestore
       const userRef = doc(firestore, 'users', user.uid);
       const userData = {
         uid: user.uid,
@@ -122,7 +124,11 @@ export default function RegisterPage() {
       router.push('/dashboard/seller');
     } catch (e: any) {
        logger.error(e, { component: 'RegisterPage', flow: 'GoogleLogin' });
-       setError('No se pudo registrar con Google.');
+       if (e.code === 'auth/account-exists-with-different-credential') {
+           setError('Ya existe una cuenta con este email pero con un método de inicio de sesión diferente.');
+       } else {
+           setError('No se pudo registrar con Google.');
+       }
     } finally {
         setIsSubmitting(false);
     }
@@ -171,6 +177,7 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isSubmitting}
