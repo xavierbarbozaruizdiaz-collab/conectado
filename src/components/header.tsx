@@ -1,8 +1,8 @@
 
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   Menu,
   Moon,
@@ -10,24 +10,32 @@ import {
   Sun,
   Search,
   LogIn,
-} from "lucide-react";
-import * as React from "react";
-import { useCart } from "@/context/cart-context";
-import CartDrawer from "./cart-drawer";
-import LogoIcon from "./logo-icon";
-import { Input } from "./ui/input";
+  User as UserIcon,
+  LogOut,
+  LayoutDashboard,
+} from 'lucide-react';
+import * as React from 'react';
+import { useCart } from '@/context/cart-context';
+import CartDrawer from './cart-drawer';
+import LogoIcon from './logo-icon';
+import { Input } from './ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { categories } from "@/lib/data";
-import { useRouter } from "next/navigation";
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { categories } from '@/lib/data';
+import { useRouter } from 'next/navigation';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import logger from '@/lib/logger';
 
 function SearchBar() {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +49,11 @@ function SearchBar() {
       <div className="absolute left-0 top-0 flex h-full items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-full w-10 rounded-r-none border-r border-input">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-full w-10 rounded-r-none border-r border-input"
+            >
               <Menu className="h-5 w-5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
@@ -57,18 +69,103 @@ function SearchBar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <Input 
-        placeholder="Buscar productos, marcas y más..." 
+      <Input
+        placeholder="Buscar productos, marcas y más..."
         className="pl-12 pr-10 h-10"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-      <Button type="submit" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
-          <Search className="h-5 w-5 text-muted-foreground" />
+      <Button
+        type="submit"
+        variant="ghost"
+        size="icon"
+        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+      >
+        <Search className="h-5 w-5 text-muted-foreground" />
       </Button>
     </form>
   );
 }
+
+function UserNav() {
+  const { user, loading } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      logger.error(error as Error, { component: 'UserNav' });
+    }
+  };
+
+  if (loading) {
+    return null; // O un skeleton
+  }
+
+  if (!user) {
+    return (
+      <div className="hidden md:flex items-center gap-2">
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/seller">Vender</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/login">
+            <LogIn className="mr-2 h-4 w-4" />
+            Acceder
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'Usuario'} />
+            <AvatarFallback>
+              {user.displayName
+                ? user.displayName.charAt(0)
+                : user.email
+                ? user.email.charAt(0)
+                : '?'}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuItem className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">
+              {user.displayName || 'Usuario'}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/seller">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <span>Mi Panel</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Cerrar Sesión</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 
 export default function Header() {
   const [isClient, setIsClient] = React.useState(false);
@@ -77,11 +174,10 @@ export default function Header() {
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center gap-4">
-        
         {/* Mobile Logo */}
         <div className="md:hidden">
           <Link href="/" className="flex items-center space-x-2">
@@ -101,31 +197,19 @@ export default function Header() {
 
         {/* Search Bar */}
         <div className="flex-1 flex justify-center px-4">
-            <SearchBar />
+          <SearchBar />
         </div>
-        
+
         <div className="flex items-center justify-end space-x-2">
-           <div className="hidden md:flex items-center gap-2">
-                <Button variant="outline" asChild>
-                    <Link href="/dashboard/seller">
-                        Vender
-                    </Link>
-                </Button>
-                <Button asChild>
-                    <Link href="/login">
-                        <LogIn className="mr-2 h-4 w-4"/>
-                        Acceder
-                    </Link>
-                </Button>
-            </div>
           {isClient && (
             <>
+              <UserNav />
               <ThemeToggle />
               <CartDrawer>
                 <Button variant="ghost" size="icon" className="relative">
                   <ShoppingCart className="h-5 w-5" />
                   {cart.length > 0 && (
-                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                       {cart.reduce((acc, item) => acc + item.quantity, 0)}
                     </span>
                   )}
@@ -141,20 +225,24 @@ export default function Header() {
 }
 
 function ThemeToggle() {
-    // A simple implementation of theme toggle. A real implementation would use next-themes.
-    const [theme, setTheme] = React.useState('dark');
+  // A simple implementation of theme toggle. A real implementation would use next-themes.
+  const [theme, setTheme] = React.useState('dark');
 
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-        document.documentElement.classList.toggle('dark', newTheme === 'dark');
-        document.documentElement.classList.toggle('light', newTheme === 'light');
-    }
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    document.documentElement.classList.toggle('light', newTheme === 'light');
+  };
 
-    return (
-        <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            <span className="sr-only">Activar tema</span>
-        </Button>
-    );
+  return (
+    <Button variant="ghost" size="icon" onClick={toggleTheme}>
+      {theme === 'light' ? (
+        <Sun className="h-5 w-5" />
+      ) : (
+        <Moon className="h-5 w-5" />
+      )}
+      <span className="sr-only">Activar tema</span>
+    </Button>
+  );
 }
