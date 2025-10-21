@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store, MessageSquare } from "lucide-react";
 import { users } from "@/lib/data";
 import { useState, useMemo } from "react";
+import logger from "@/lib/logger";
 
 function ProductImageGallery({ images, productName }: { images: string[], productName: string }) {
     const [selectedImage, setSelectedImage] = useState(0);
@@ -92,7 +93,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
           return;
       }
       // En una app real, aquí se enviaría la puja al servidor.
-      console.log('Puja enviada:', bidAmount);
+      logger.info('Bid submitted:', { productId: product.id, amount: bidAmount });
       toast({
           title: "¡Puja realizada!",
           description: `Has pujado ${formatCurrency(Number(bidAmount))} por ${product.name}.`,

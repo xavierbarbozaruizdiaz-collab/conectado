@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Percent } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import logger from '@/lib/logger';
 
 export default function AdminSettingsPage() {
   const { toast } = useToast();
@@ -24,12 +25,13 @@ export default function AdminSettingsPage() {
 
   const handleSave = () => {
     // In a real app, you would save these settings to a database.
-    console.log({
+    const settings = {
       directSaleCommission,
       auctionSellerCommission,
       auctionBuyerCommission,
       affiliateShare,
-    });
+    };
+    logger.info("Saving settings:", settings);
     toast({
       title: "Configuración guardada",
       description: "Los porcentajes de comisión han sido actualizados.",
