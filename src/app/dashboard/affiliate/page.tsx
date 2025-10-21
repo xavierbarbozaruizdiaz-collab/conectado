@@ -62,26 +62,29 @@ export default function AffiliateDashboardPage() {
   const { data: affiliate, loading } = useDoc<Affiliate>(affiliateDocRef);
 
   const handleRequestPayout = () => {
-    if (!affiliateDocRef || !affiliate) return;
+    if (!affiliateDocRef || !affiliate || affiliate.pendingBalance <= 0) return;
+
+    const amountToRequest = affiliate.pendingBalance;
 
     const newPaymentRequest = {
       id: `pay_req_${new Date().getTime()}`,
       date: new Date().toISOString().split('T')[0],
-      amount: affiliate.pendingBalance,
+      amount: amountToRequest,
       status: 'Pendiente' as const,
       method: 'Transferencia Bancaria', // Default method
     };
 
     const updatedPaymentHistory = [...(affiliate.paymentHistory || []), newPaymentRequest];
     const updatedData = {
-        paymentHistory: updatedPaymentHistory
+        paymentHistory: updatedPaymentHistory,
+        pendingBalance: 0, // Reset pending balance as it has been requested
     };
 
     updateDoc(affiliateDocRef, updatedData)
         .then(() => {
             toast({
                 title: 'Solicitud Enviada',
-                description: `Tu solicitud de pago por ${formatCurrency(affiliate.pendingBalance)} ha sido enviada.`,
+                description: `Tu solicitud de pago por ${formatCurrency(amountToRequest)} ha sido enviada.`,
             });
         })
         .catch(e => {
