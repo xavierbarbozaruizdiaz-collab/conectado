@@ -14,15 +14,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LogoIcon from '@/components/logo-icon';
 import { useState } from 'react';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  updateProfile,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import logger from '@/lib/logger';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function RegisterPage() {
   const [storeName, setStoreName] = useState('');
@@ -30,16 +34,46 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!auth) return;
+    if (!auth || !firestore) return;
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // En una app real, aquí guardaríamos el storeName en Firestore.
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Update Firebase Auth profile
+      await updateProfile(user, { displayName: storeName });
+
+      // Create user profile in Firestore
+      const userRef = doc(firestore, 'users', user.uid);
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        storeName: storeName,
+        storeDescription: '',
+        profilePictureUrl: user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`,
+        bannerUrl: `https://picsum.photos/seed/${user.uid}/1200/400`,
+        whatsappNumber: '',
+      };
+      
+      setDoc(userRef, userData, { merge: true }).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: userData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
       toast({
         title: '¡Cuenta Creada!',
         description: 'Tu cuenta ha sido creada exitosamente.',
@@ -56,10 +90,34 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = async () => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+       // Create user profile in Firestore
+      const userRef = doc(firestore, 'users', user.uid);
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        storeName: user.displayName,
+        storeDescription: '',
+        profilePictureUrl: user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`,
+        bannerUrl: `https://picsum.photos/seed/${user.uid}/1200/400`,
+        whatsappNumber: '',
+      };
+      
+      setDoc(userRef, userData, { merge: true }).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: userData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+
+
       toast({ title: '¡Bienvenido!' });
       router.push('/dashboard/seller');
     } catch (e: any) {
