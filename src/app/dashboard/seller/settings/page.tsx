@@ -21,6 +21,7 @@ import { setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { Label } from "@/components/ui/label";
 
 
 export default function SellerSettingsPage() {
@@ -37,9 +38,9 @@ export default function SellerSettingsPage() {
 
   useEffect(() => {
     if (seller) {
-      setStoreName(seller.storeName);
-      setStoreDescription(seller.storeDescription);
-      setWhatsappNumber(seller.whatsappNumber);
+      setStoreName(seller.storeName || '');
+      setStoreDescription(seller.storeDescription || '');
+      setWhatsappNumber(seller.whatsappNumber || '');
     }
   }, [seller]);
 
@@ -97,26 +98,27 @@ export default function SellerSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="storeName" className="text-sm font-medium">
+                <Label htmlFor="storeName">
                   Nombre de la Tienda
-                </label>
+                </Label>
                 <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label htmlFor="storeDesc" className="text-sm font-medium">
+                <Label htmlFor="storeDesc">
                   Descripción de la Tienda
-                </label>
+                </Label>
                 <Textarea
                   id="storeDesc"
                   value={storeDescription}
                   onChange={(e) => setStoreDescription(e.target.value)}
                   className="min-h-[120px]"
+                  placeholder="Describe brevemente tu tienda, qué vendes y qué te hace especial."
                 />
               </div>
                <div className="space-y-2">
-                <label htmlFor="whatsapp" className="text-sm font-medium">
+                <Label htmlFor="whatsapp">
                   Número de WhatsApp
-                </label>
+                </Label>
                 <Input id="whatsapp" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="Ej: 595981123456" />
                 <p className="text-xs text-muted-foreground">Incluye el código de país, sin el signo '+'.</p>
               </div>
@@ -131,9 +133,9 @@ export default function SellerSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="shippingPolicy" className="text-sm font-medium">
+                <Label htmlFor="shippingPolicy">
                   Política de Envíos
-                </label>
+                </Label>
                 <Textarea
                   id="shippingPolicy"
                   placeholder="Ej: Envíos a todo el país. El costo varía según la ubicación..."
@@ -141,9 +143,9 @@ export default function SellerSettingsPage() {
                 />
               </div>
                <div className="space-y-2">
-                <label htmlFor="returnPolicy" className="text-sm font-medium">
+                <Label htmlFor="returnPolicy">
                   Política de Devoluciones
-                </label>
+                </Label>
                 <Textarea
                   id="returnPolicy"
                    placeholder="Ej: Se aceptan devoluciones dentro de los 7 días posteriores a la compra..."
@@ -162,7 +164,7 @@ export default function SellerSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-2 text-center">
-                    <label className="text-sm font-medium">Foto de Perfil</label>
+                    <Label>Foto de Perfil</Label>
                     <Avatar className="h-32 w-32 mx-auto border-4 border-muted">
                         <AvatarImage src={seller.profilePictureUrl} />
                         <AvatarFallback>{seller.storeName.charAt(0)}</AvatarFallback>
@@ -170,7 +172,7 @@ export default function SellerSettingsPage() {
                      <Button variant="outline" className="w-full">Cambiar Foto</Button>
                 </div>
                  <div className="space-y-2 text-center">
-                    <label className="text-sm font-medium">Banner de la Tienda</label>
+                    <Label>Banner de la Tienda</Label>
                     <div className="relative aspect-video w-full rounded-md overflow-hidden border">
                          <Image src={seller.bannerUrl} alt="Banner" fill className="object-cover"/>
                     </div>
