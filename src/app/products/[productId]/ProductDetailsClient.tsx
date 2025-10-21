@@ -138,6 +138,11 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                 requestResourceData: { price: newPrice }
             });
             errorEmitter.emit('permission-error', permissionError);
+            toast({
+              variant: "destructive",
+              title: "Error al realizar la puja",
+              description: "No se pudo procesar tu puja. Por favor, inténtalo de nuevo.",
+            });
       }).finally(() => {
           setIsBidding(false);
       });
