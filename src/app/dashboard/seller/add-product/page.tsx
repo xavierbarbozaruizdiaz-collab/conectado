@@ -105,11 +105,6 @@ export default function AddProductPage() {
             requestResourceData: productData
         });
         errorEmitter.emit('permission-error', permissionError);
-        toast({
-          variant: 'destructive',
-          title: 'Error al guardar',
-          description: 'No se pudo crear el producto. Por favor, inténtalo de nuevo.',
-        });
       } finally {
         setIsSaving(false);
       }
@@ -225,5 +220,3 @@ export default function AddProductPage() {
     </form>
   );
 }
-
-    

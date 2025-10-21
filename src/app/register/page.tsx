@@ -80,15 +80,10 @@ export default function RegisterPage() {
     } catch (e: any) {
       logger.error(e, { component: 'RegisterPage' });
       
-      // Check if it is a firestore error
-       if (e.name === 'FirestorePermissionError' || (e.code && e.code.includes('firestore'))) {
-          const permissionError = new FirestorePermissionError({
-              path: `users/${e.uid}`,
-              operation: 'create',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-          setError('No se pudo guardar tu perfil. Contacta a soporte.');
-      } else if (e.code === 'auth/email-already-in-use') {
+      const permissionError = new FirestorePermissionError({ path: `users/${(auth.currentUser?.uid || 'unknown')}`, operation: 'create' });
+      errorEmitter.emit('permission-error', permissionError);
+
+      if (e.code === 'auth/email-already-in-use') {
         setError('Este correo electrónico ya está en uso.');
       } else {
         setError('No se pudo crear la cuenta. Inténtalo de nuevo.');
@@ -118,19 +113,16 @@ export default function RegisterPage() {
         whatsappNumber: '',
       };
       
-      await setDoc(userRef, userData, { merge: true });
+      setDoc(userRef, userData, { merge: true }).catch(e => {
+        const permissionError = new FirestorePermissionError({ path: `users/${user.uid}`, operation: 'create' });
+        errorEmitter.emit('permission-error', permissionError);
+      });
 
       toast({ title: '¡Bienvenido!' });
       router.push('/dashboard/seller');
     } catch (e: any) {
        logger.error(e, { component: 'RegisterPage', flow: 'GoogleLogin' });
-       if (e.name === 'FirestorePermissionError' || (e.code && e.code.includes('firestore'))) {
-            const permissionError = new FirestorePermissionError({ path: `users/${e.uid}`, operation: 'create' });
-            errorEmitter.emit('permission-error', permissionError);
-            setError('No se pudo guardar tu perfil con Google. Contacta a soporte.');
-       } else {
-           setError('No se pudo registrar con Google.');
-       }
+       setError('No se pudo registrar con Google.');
     } finally {
         setIsSubmitting(false);
     }
@@ -203,5 +195,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    
