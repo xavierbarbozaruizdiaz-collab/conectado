@@ -87,7 +87,7 @@ export default function CheckoutPage() {
               name: item.product.name,
               price: item.product.price,
               quantity: item.quantity,
-              sellerId: item.product.sellerId,
+              sellerId: item.product.sellerId, // Asegurándose de que sellerId se guarda
           })),
       };
 
