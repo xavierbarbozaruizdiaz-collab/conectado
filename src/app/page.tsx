@@ -5,8 +5,8 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, collection } from '@/firebase/firestore/use-collection';
-import type { Product, User } from '@/lib/data';
-import type { Banner } from '@/lib/types';
+import type { Product } from '@/lib/data';
+import type { Banner, UserProfile } from '@/lib/types';
 import ProductCard from '@/components/product-card';
 import {
   Carousel,
@@ -26,7 +26,7 @@ export default function Home() {
   const { data: products, loading: productsLoading } = useCollection<Product>(
     firestore ? collection(firestore, 'products') : null
   );
-  const { data: users, loading: usersLoading } = useCollection<User>(
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
     firestore ? collection(firestore, 'users') : null
   );
   const { data: banners, loading: bannersLoading } = useCollection<Banner>(
@@ -125,7 +125,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
                 {(users || []).slice(0, 6).map(user => (
-                  <Link href={`/store/${user.id}`} key={user.id} className="group flex flex-col items-center gap-2 text-center">
+                  <Link href={`/store/${user.uid}`} key={user.uid} className="group flex flex-col items-center gap-2 text-center">
                     <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-transparent group-hover:border-primary transition-all duration-300">
                         <AvatarImage src={user.profilePictureUrl} />
                         <AvatarFallback>{user.storeName.charAt(0)}</AvatarFallback>
