@@ -151,6 +151,31 @@
         }
       },
       "required": ["user", "affiliateCode"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "Represents a promotional banner for the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "alt": { "type": "string" },
+        "src": { "type": "string", "format": "uri" },
+        "link": { "type": "string" },
+        "status": { "type": "string", "enum": ["Activo", "Inactivo"] }
+      },
+      "required": ["alt", "src", "status"]
+    },
+    "PlatformSettings": {
+        "title": "Platform Settings",
+        "description": "Stores global configuration for the platform, like commissions.",
+        "type": "object",
+        "properties": {
+            "directSaleCommission": { "type": "number" },
+            "auctionSellerCommission": { "type": "number" },
+            "auctionBuyerCommission": { "type": "number" },
+            "affiliateShare": { "type": "number" }
+        },
+        "required": ["directSaleCommission", "auctionSellerCommission", "auctionBuyerCommission", "affiliateShare"]
     }
   },
   "auth": {
@@ -180,6 +205,14 @@
         "$ref": "#/entities/Affiliate"
       },
       "description": "Stores data for each affiliate user."
+    },
+    "/banners/{bannerId}": {
+        "schema": { "$ref": "#/entities/Banner" },
+        "description": "Stores promotional banners for the homepage."
+    },
+    "/config/platform": {
+        "schema": { "$ref": "#/entities/PlatformSettings" },
+        "description": "A single document to store global platform settings."
     }
   }
 }

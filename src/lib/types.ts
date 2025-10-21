@@ -54,3 +54,18 @@ export type Order = {
   shippingAddress: ShippingAddress;
   items: OrderItem[];
 };
+
+export type Banner = {
+  id?: string;
+  alt: string;
+  src: string;
+  link: string;
+  status: 'Activo' | 'Inactivo';
+};
+
+export type PlatformSettings = {
+    directSaleCommission: number;
+    auctionSellerCommission: number;
+    auctionBuyerCommission: number;
+    affiliateShare: number;
+};

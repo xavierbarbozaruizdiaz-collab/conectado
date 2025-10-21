@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -14,28 +14,64 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Percent } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import logger from '@/lib/logger';
+import { useFirestore, useDoc, docRef } from '@/firebase';
+import type { PlatformSettings } from '@/lib/types';
+import { doc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
+const SETTINGS_DOC_PATH = 'config/platform';
 
 export default function AdminSettingsPage() {
   const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const settingsDocRef = firestore ? doc(firestore, SETTINGS_DOC_PATH) : null;
+  const { data: settings, loading } = useDoc<PlatformSettings>(settingsDocRef);
+  
   const [directSaleCommission, setDirectSaleCommission] = useState(10);
   const [auctionSellerCommission, setAuctionSellerCommission] = useState(12.5);
   const [auctionBuyerCommission, setAuctionBuyerCommission] = useState(12.5);
   const [affiliateShare, setAffiliateShare] = useState(25);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+      if (settings) {
+          setDirectSaleCommission(settings.directSaleCommission);
+          setAuctionSellerCommission(settings.auctionSellerCommission);
+          setAuctionBuyerCommission(settings.auctionBuyerCommission);
+          setAffiliateShare(settings.affiliateShare);
+      }
+  }, [settings]);
 
   const handleSave = () => {
-    // In a real app, you would save these settings to a database.
-    const settings = {
+    if (!settingsDocRef) return;
+    setIsSaving(true);
+    const updatedSettings = {
       directSaleCommission,
       auctionSellerCommission,
       auctionBuyerCommission,
       affiliateShare,
     };
-    logger.info("Saving settings:", settings);
-    toast({
-      title: "Configuración guardada",
-      description: "Los porcentajes de comisión han sido actualizados.",
-    });
+    
+    setDoc(settingsDocRef, updatedSettings, { merge: true })
+        .then(() => {
+            toast({
+              title: "Configuración guardada",
+              description: "Los porcentajes de comisión han sido actualizados.",
+            });
+        })
+        .catch(e => {
+            const permissionError = new FirestorePermissionError({
+                path: settingsDocRef.path,
+                operation: 'update',
+                requestResourceData: updatedSettings
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setIsSaving(false);
+        });
   };
 
   return (
@@ -66,6 +102,7 @@ export default function AdminSettingsPage() {
                 min="0"
                 max="100"
                 className="w-24"
+                disabled={loading}
               />
               <span className="text-muted-foreground">%</span>
             </div>
@@ -84,6 +121,7 @@ export default function AdminSettingsPage() {
                 min="0"
                 max="100"
                 className="w-24"
+                disabled={loading}
               />
               <span className="text-muted-foreground">%</span>
             </div>
@@ -102,6 +140,7 @@ export default function AdminSettingsPage() {
                 min="0"
                 max="100"
                 className="w-24"
+                disabled={loading}
               />
               <span className="text-muted-foreground">%</span>
             </div>
@@ -132,6 +171,7 @@ export default function AdminSettingsPage() {
                         className="w-24"
                         min="0"
                         max="100"
+                        disabled={loading}
                     />
                     <span className="text-muted-foreground">%</span>
                 </div>
@@ -141,7 +181,9 @@ export default function AdminSettingsPage() {
       </Card>
 
       <div className="flex justify-end">
-        <Button size="lg" onClick={handleSave}>Guardar Toda la Configuración</Button>
+        <Button size="lg" onClick={handleSave} disabled={loading || isSaving}>
+            {isSaving ? 'Guardando...' : 'Guardar Toda la Configuración'}
+        </Button>
       </div>
     </div>
   );

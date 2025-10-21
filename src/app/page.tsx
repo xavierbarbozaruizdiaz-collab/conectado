@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, collection } from '@/firebase/firestore/use-collection';
 import type { Product, User } from '@/lib/data';
+import type { Banner } from '@/lib/types';
 import ProductCard from '@/components/product-card';
 import {
   Carousel,
@@ -28,29 +29,13 @@ export default function Home() {
   const { data: users, loading: usersLoading } = useCollection<User>(
     firestore ? collection(firestore, 'users') : null
   );
+  const { data: banners, loading: bannersLoading } = useCollection<Banner>(
+    firestore ? collection(firestore, 'banners') : null
+  );
 
   const directSaleProducts = products?.filter((p) => !p.isAuction) || [];
   const auctionProducts = products?.filter((p) => p.isAuction) || [];
-  const bannerImages = [
-    {
-      id: 1,
-      src: 'https://picsum.photos/seed/b1/1600/400',
-      alt: 'Promoción de envío gratis',
-      hint: 'delivery promotion',
-    },
-    {
-      id: 2,
-      src: 'https://picsum.photos/seed/b2/1600/400',
-      alt: 'Ofertas de tiempo limitado',
-      hint: 'limited time offer',
-    },
-    {
-      id: 3,
-      src: 'https://picsum.photos/seed/b3/1600/400',
-      alt: 'Nuevos arribos en tecnología',
-      hint: 'tech sale',
-    },
-  ];
+  const activeBanners = banners?.filter(b => b.status === 'Activo') || [];
 
   const autoplayPlugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
@@ -61,26 +46,33 @@ export default function Home() {
       <section className="w-full">
         <Carousel 
             plugins={[autoplayPlugin.current]}
-            opts={{ loop: true }} 
+            opts={{ loop: (activeBanners.length || 0) > 1 }} 
             className="w-full"
             onMouseEnter={autoplayPlugin.current.stop}
             onMouseLeave={autoplayPlugin.current.reset}
         >
           <CarouselContent>
-            {bannerImages.map((img) => (
-              <CarouselItem key={img.id}>
-                <div className="relative aspect-[4/1] w-full">
-                  <Image
-                    src={img.src}
-                    alt={img.alt}
-                    fill
-                    className="object-cover"
-                    data-ai-hint={img.hint}
-                    priority={img.id === 1}
-                  />
-                </div>
+            {(bannersLoading || activeBanners.length === 0) ? (
+              <CarouselItem>
+                <div className="relative aspect-[4/1] w-full bg-muted animate-pulse" />
               </CarouselItem>
-            ))}
+            ) : (
+              activeBanners.map((banner, index) => (
+                <CarouselItem key={banner.id}>
+                  <Link href={banner.link || '#'}>
+                    <div className="relative aspect-[4/1] w-full">
+                      <Image
+                        src={banner.src}
+                        alt={banner.alt}
+                        fill
+                        className="object-cover"
+                        priority={index === 0}
+                      />
+                    </div>
+                  </Link>
+                </CarouselItem>
+              ))
+            )}
           </CarouselContent>
           <CarouselPrevious className="hidden lg:flex left-4" />
           <CarouselNext className="hidden lg:flex right-4" />
