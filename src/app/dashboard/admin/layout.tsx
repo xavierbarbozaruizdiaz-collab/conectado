@@ -21,10 +21,12 @@ import {
   BadgePercent,
   Settings,
   GalleryHorizontal,
+  ShoppingCart,
 } from "lucide-react";
 
 const adminLinks = [
     { href: "/dashboard/admin", label: "Resumen", icon: LayoutDashboard },
+    { href: "/dashboard/admin/orders", label: "Pedidos", icon: ShoppingCart },
     { href: "/dashboard/admin/users", label: "Usuarios", icon: Users },
     { href: "/dashboard/admin/products", label: "Productos", icon: Package },
     { href: "/dashboard/admin/subscriptions", label: "Suscripciones", icon: Award },

@@ -1,4 +1,6 @@
 
+import type { Timestamp } from 'firebase/firestore';
+
 export type UserProfile = {
   uid: string;
   email: string;
@@ -25,3 +27,29 @@ export type Affiliate = {
     pendingBalance: number;
     paymentHistory: AffiliatePayment[];
 }
+
+export type ShippingAddress = {
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  notes: string;
+};
+
+export type OrderItem = {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type Order = {
+  id?: string; // Firestore document ID
+  userId: string;
+  createdAt: Timestamp | Date;
+  totalAmount: number;
+  status: 'Pendiente' | 'Procesado' | 'Enviado' | 'Entregado' | 'Cancelado';
+  shippingAddress: ShippingAddress;
+  items: OrderItem[];
+};

@@ -21,11 +21,14 @@ import {
   Settings,
   BadgePercent,
   Plus,
+  ShoppingCart,
 } from "lucide-react";
 import { useUser } from "@/firebase";
 
 const sellerLinks = [
     { href: "/dashboard/seller", label: "Resumen", icon: LayoutDashboard },
+    { href: "/dashboard/seller/orders", label: "Mis Ventas", icon: ShoppingCart },
+    { href: "/dashboard/seller/products", label: "Mis Productos", icon: Package },
     { href: "/dashboard/seller/add-product", label: "Añadir Producto", icon: Plus },
     { href: "/dashboard/seller/settings", label: "Configuración", icon: Settings },
 ];
