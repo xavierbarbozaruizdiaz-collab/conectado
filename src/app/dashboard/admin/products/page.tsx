@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCollection, collection, useFirestore } from '@/firebase';
-import type { Product, User } from '@/lib/data';
+import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useFirestore } from '@/firebase';
+import type { Product } from '@/lib/data';
+import type { UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
@@ -38,7 +40,7 @@ export default function AdminProductsPage() {
   const { data: products, loading: productsLoading } = useCollection<Product>(
     firestore ? collection(firestore, 'products') : null
   );
-  const { data: users, loading: usersLoading } = useCollection<User>(
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
     firestore ? collection(firestore, 'users') : null
   );
 
@@ -95,7 +97,7 @@ export default function AdminProductsPage() {
             </TableHeader>
             <TableBody>
               {filteredProducts.map((product) => {
-                const seller = (users || []).find(u => u.id === product.sellerId);
+                const seller = (users || []).find(u => u.uid === product.sellerId);
                 return (
                     <TableRow key={product.id}>
                     <TableCell>

@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, Search } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { affiliates, Affiliate } from '@/lib/data';
+import type { UserProfile } from '@/lib/types';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -52,9 +53,10 @@ export default function AdminAffiliatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentAffiliates, setCurrentAffiliates] = useState<Affiliate[]>(affiliates);
 
+  // This would need to be updated to fetch real affiliate data
   const filteredAffiliates = currentAffiliates.filter(
     (affiliate) =>
-      affiliate.user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (affiliate.user as any).storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       affiliate.affiliateCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
   

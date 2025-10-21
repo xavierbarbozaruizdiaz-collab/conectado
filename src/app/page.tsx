@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, collection } from '@/firebase';
+import { useCollection, collection } from '@/firebase/firestore/use-collection';
 import type { Product, User } from '@/lib/data';
 import ProductCard from '@/components/product-card';
 import {
@@ -162,7 +162,6 @@ export default function Home() {
               </Link>
             </div>
             <Carousel
-              plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
               opts={{ align: 'start', loop: directSaleProducts.length > 4 }}
               className="w-full"
             >
@@ -195,7 +194,6 @@ export default function Home() {
               </Link>
             </div>
             <Carousel
-              plugins={[Autoplay({ delay: 5500, stopOnInteraction: true })]}
               opts={{ align: 'start', loop: auctionProducts.length > 4 }}
               className="w-full"
             >

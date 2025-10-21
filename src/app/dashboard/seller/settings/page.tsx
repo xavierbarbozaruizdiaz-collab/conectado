@@ -13,17 +13,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser, useFirestore } from "@/firebase";
 import { useDoc, docRef } from "@/firebase/firestore/use-doc";
-import type { User } from '@/lib/data';
+import type { UserProfile } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { setDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
+
 
 export default function SellerSettingsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { data: seller, loading } = useDoc<User>(
-    user && firestore ? docRef(firestore, "users", user.uid) : null
-  );
+  const { toast } = useToast();
+  
+  const userDocRef = user && firestore ? docRef(firestore, "users", user.uid) : null;
+  const { data: seller, loading } = useDoc<UserProfile>(userDocRef);
 
   const [storeName, setStoreName] = useState('');
   const [storeDescription, setStoreDescription] = useState('');
@@ -36,6 +42,32 @@ export default function SellerSettingsPage() {
       setWhatsappNumber(seller.whatsappNumber);
     }
   }, [seller]);
+
+  const handleSaveChanges = () => {
+    if (!userDocRef) return;
+
+    const updatedData = {
+        storeName,
+        storeDescription,
+        whatsappNumber,
+    };
+
+    setDoc(userDocRef, updatedData, { merge: true })
+      .then(() => {
+        toast({
+            title: "Configuración guardada",
+            description: "La información de tu tienda ha sido actualizada.",
+        });
+      })
+      .catch((e) => {
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'update',
+            requestResourceData: updatedData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
 
   if (loading) {
     return <div>Cargando configuración...</div>;
@@ -149,7 +181,7 @@ export default function SellerSettingsPage() {
         </div>
       </div>
        <div className="flex justify-end">
-          <Button size="lg">Guardar Cambios</Button>
+          <Button size="lg" onClick={handleSaveChanges}>Guardar Cambios</Button>
       </div>
     </div>
   );

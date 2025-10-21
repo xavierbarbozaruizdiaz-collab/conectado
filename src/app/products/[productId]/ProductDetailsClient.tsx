@@ -4,7 +4,8 @@
 import Image from "next/image";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import type { Product, User } from "@/lib/data";
+import type { Product } from "@/lib/data";
+import type { UserProfile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +64,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   const { addToCart } = useCart();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { data: seller, loading: sellerLoading } = useDoc<User>(
+  const { data: seller, loading: sellerLoading } = useDoc<UserProfile>(
     firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null
   );
   const [bidAmount, setBidAmount] = useState<string>('');
@@ -186,7 +187,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/store/${seller.id}`}>
+                            <Link href={`/store/${seller.uid}`}>
                                 <Store className="mr-2 h-4 w-4" /> Visitar Tienda
                             </Link>
                         </Button>

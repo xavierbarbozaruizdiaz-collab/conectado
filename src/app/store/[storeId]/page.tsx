@@ -3,8 +3,11 @@
 
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { useDoc, docRef, useFirestore, useCollection, collection, query, where } from "@/firebase/firestore/use-collection";
-import type { User, Product } from "@/lib/data";
+import { useDoc, docRef } from "@/firebase/firestore/use-doc";
+import { useCollection, collection, query, where } from "@/firebase/firestore/use-collection";
+import { useFirestore } from "@/firebase";
+import type { UserProfile } from '@/lib/types';
+import type { Product } from "@/lib/data";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
@@ -13,7 +16,7 @@ import StoreProducts from "./StoreProducts";
 export default function StorePage({ params }: { params: { storeId: string } }) {
   const firestore = useFirestore();
 
-  const { data: seller, loading: sellerLoading } = useDoc<User>(
+  const { data: seller, loading: sellerLoading } = useDoc<UserProfile>(
     firestore ? docRef(firestore, "users", params.storeId) : null
   );
 

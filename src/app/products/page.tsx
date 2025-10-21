@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from 'next/navigation';
-import { useCollection, collection, useFirestore } from '@/firebase';
+import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useFirestore } from '@/firebase';
 import type { Product } from '@/lib/data';
 import ProductCard from "@/components/product-card";
 import {
@@ -54,9 +55,10 @@ const useProductFilters = () => {
                     case "price-desc":
                         return b.price - a.price;
                     case "newest":
+                        // Assuming newer products have greater IDs (like timestamps)
                         return (b.id || "").localeCompare(a.id || "");
                     default:
-                        return 0;
+                        return 0; // or some other default logic
                 }
             });
     }, [searchTerm, productType, sortBy, category, products]);

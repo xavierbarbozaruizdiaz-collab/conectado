@@ -19,8 +19,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCollection, collection, useFirestore } from '@/firebase';
-import type { User } from '@/lib/data';
+import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useFirestore } from '@/firebase';
+import type { UserProfile } from '@/lib/types';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,13 +34,13 @@ import {
 export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const firestore = useFirestore();
-  const { data: users, loading } = useCollection<User>(
+  const { data: users, loading } = useCollection<UserProfile>(
     firestore ? collection(firestore, 'users') : null
   );
 
   const filteredUsers = (users || []).filter(user => 
     user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.id.toLowerCase().includes(searchTerm.toLowerCase())
+    user.uid.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -89,7 +90,7 @@ export default function AdminUsersPage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.uid}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -99,7 +100,7 @@ export default function AdminUsersPage() {
                       <span className="font-medium">{user.storeName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{user.id}</TableCell>
+                  <TableCell className="font-mono text-xs">{user.uid}</TableCell>
                    <TableCell>{user.whatsappNumber}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

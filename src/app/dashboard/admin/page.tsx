@@ -25,15 +25,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { useCollection, collection, useFirestore } from '@/firebase';
-import type { Product, User } from '@/lib/data';
+import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useFirestore } from '@/firebase';
+import type { Product } from '@/lib/data';
+import type { UserProfile } from '@/lib/types';
+
 
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
   const { data: products, loading: productsLoading } = useCollection<Product>(
     firestore ? collection(firestore, 'products') : null
   );
-  const { data: users, loading: usersLoading } = useCollection<User>(
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
     firestore ? collection(firestore, 'users') : null
   );
 
@@ -94,9 +97,9 @@ export default function AdminDashboardPage() {
               </TableHeader>
               <TableBody>
                 {recentUsers.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.uid}>
                     <TableCell className="font-medium">{user.storeName}</TableCell>
-                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.uid}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -125,7 +128,7 @@ export default function AdminDashboardPage() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
-                      {(users || []).find(u => u.id === product.sellerId)?.storeName}
+                      {(users || []).find(u => u.uid === product.sellerId)?.storeName}
                     </TableCell>
                     <TableCell>{formatCurrency(product.price)}</TableCell>
                   </TableRow>

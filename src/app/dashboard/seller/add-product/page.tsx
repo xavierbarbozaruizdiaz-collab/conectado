@@ -21,14 +21,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { categories } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth, useFirestore, useUser } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 export default function AddProductPage() {
+  const [productName, setProductName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [category, setCategory] = useState('');
   const [isAuction, setIsAuction] = useState(false);
+  const [auctionEndDate, setAuctionEndDate] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  
+  const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -43,6 +56,7 @@ export default function AddProductPage() {
         });
         return;
       }
+      // For now, we'll use placeholder images. Real upload would happen here.
       const newImages = Array.from(e.target.files).map(file => URL.createObjectURL(file));
       setImages(prev => [...prev, ...newImages]);
     }
@@ -52,14 +66,44 @@ export default function AddProductPage() {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      // En una app real, aquí se enviarían los datos al servidor.
-      toast({
-          title: "Producto añadido",
-          description: "Tu nuevo producto ha sido creado exitosamente.",
-      });
-      router.push('/dashboard/seller');
+      if (!firestore || !user) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No estás autenticado o la base de datos no está disponible.',
+        });
+        return;
+      }
+
+      const productData = {
+        name: productName,
+        description: description,
+        price: Number(price),
+        category: category,
+        imageUrls: images.length > 0 ? images : ['https://picsum.photos/seed/placeholder/600/400'], // Placeholder if no images
+        sellerId: user.uid,
+        isAuction: isAuction,
+        auctionEndDate: isAuction ? auctionEndDate : null,
+        status: 'Activo',
+      };
+
+      try {
+        const docRef = await addDoc(collection(firestore, 'products'), productData);
+        toast({
+            title: "Producto añadido",
+            description: "Tu nuevo producto ha sido creado exitosamente.",
+        });
+        router.push('/dashboard/seller');
+      } catch (e: any) {
+        const permissionError = new FirestorePermissionError({
+            path: 'products',
+            operation: 'create',
+            requestResourceData: productData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
   };
 
   return (
@@ -83,7 +127,7 @@ export default function AddProductPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="product-name">Nombre del Producto</Label>
-                <Input id="product-name" placeholder="Ej: Camisa de Lino" required />
+                <Input id="product-name" placeholder="Ej: Camisa de Lino" required value={productName} onChange={(e) => setProductName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Descripción</Label>
@@ -92,6 +136,8 @@ export default function AddProductPage() {
                   placeholder="Describe las características, estado y detalles de tu producto."
                   className="min-h-[150px]"
                   required
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </CardContent>
@@ -131,7 +177,7 @@ export default function AddProductPage() {
             <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="category">Categoría</Label>
-                    <Select required>
+                    <Select required onValueChange={setCategory} value={category}>
                     <SelectTrigger id="category">
                         <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
@@ -153,12 +199,12 @@ export default function AddProductPage() {
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="price">{isAuction ? "Precio de Salida" : "Precio"}</Label>
-                    <Input id="price" type="number" placeholder="Gs. 100.000" required/>
+                    <Input id="price" type="number" placeholder="Gs. 100.000" required value={price} onChange={(e) => setPrice(e.target.value)}/>
                 </div>
                 {isAuction && (
                     <div className="space-y-2">
                         <Label htmlFor="auction-end">Fecha de finalización de la subasta</Label>
-                        <Input id="auction-end" type="datetime-local" required/>
+                        <Input id="auction-end" type="datetime-local" required={isAuction} value={auctionEndDate} onChange={(e) => setAuctionEndDate(e.target.value)} />
                     </div>
                 )}
             </CardContent>

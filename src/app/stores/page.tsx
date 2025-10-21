@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useCollection, collection, useFirestore } from '@/firebase';
+import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useFirestore } from '@/firebase';
 import type { User } from '@/lib/data';
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

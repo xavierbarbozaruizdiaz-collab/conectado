@@ -2,6 +2,8 @@
 import type { LucideIcon } from 'lucide-react';
 import { Shirt, Car, Home, Laptop, Gamepad2, Dumbbell, ToyBrick, BookOpen, Music, Dices } from 'lucide-react';
 
+// This User type is now deprecated and will be replaced by UserProfile in lib/types.ts
+// We keep it here temporarily to avoid breaking changes in components that still use it.
 export type User = {
   id: string;
   storeName: string;
@@ -20,7 +22,7 @@ export type Product = {
   imageUrls: string[];
   sellerId: string;
   isAuction: boolean;
-  auctionEndDate?: string;
+  auctionEndDate?: string | null;
   status: 'Activo' | 'Vendido' | 'Pendiente';
 };
 
@@ -53,7 +55,8 @@ export type Affiliate = {
     paymentHistory: AffiliatePayment[];
 }
 
-
+// These are now just for fallback or default values.
+// All dynamic data should come from Firestore.
 export const users: User[] = [];
 
 export const products: Product[] = [];
