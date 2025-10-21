@@ -30,8 +30,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreHorizontal, Search } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { affiliates, Affiliate } from '@/lib/data';
-import type { UserProfile } from '@/lib/types';
+import type { Affiliate, AffiliatePayment } from '@/lib/types';
+import { useFirestore, useCollection, collection } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -51,25 +55,58 @@ const getStatusBadge = (status: string) => {
 
 export default function AdminAffiliatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentAffiliates, setCurrentAffiliates] = useState<Affiliate[]>(affiliates);
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
-  // This would need to be updated to fetch real affiliate data
-  const filteredAffiliates = currentAffiliates.filter(
+  const { data: affiliates, loading: affiliatesLoading, error } = useCollection<Affiliate>(
+    firestore ? collection(firestore, 'affiliates') : null
+  );
+
+  const filteredAffiliates = (affiliates || []).filter(
     (affiliate) =>
-      (affiliate.user as any).storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      affiliate.user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       affiliate.affiliateCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const handleMarkAsPaid = (paymentId: string) => {
-      // In a real app, this would be an API call.
-      // Here we just update the local state.
-      setCurrentAffiliates(prev => prev.map(aff => ({
-          ...aff,
-          paymentHistory: aff.paymentHistory.map(p => p.id === paymentId ? {...p, status: 'Pagado'} : p)
-      })))
+  const handleMarkAsPaid = (affiliateId: string, paymentId: string) => {
+      if (!firestore || !affiliates) return;
+
+      const affiliate = affiliates.find(a => a.id === affiliateId);
+      if (!affiliate) return;
+
+      const affiliateRef = doc(firestore, 'affiliates', affiliateId);
+      const updatedPaymentHistory = affiliate.paymentHistory.map(p => 
+          p.id === paymentId ? { ...p, status: 'Pagado' as const } : p
+      );
+      
+      const updatedAffiliate = {
+          ...affiliate,
+          paymentHistory: updatedPaymentHistory
+      };
+
+      updateDoc(affiliateRef, { paymentHistory: updatedPaymentHistory })
+        .then(() => {
+            toast({
+                title: "Pago actualizado",
+                description: "El estado del pago ha sido marcado como 'Pagado'."
+            })
+        })
+        .catch(e => {
+            const permissionError = new FirestorePermissionError({
+                path: affiliateRef.path,
+                operation: 'update',
+                requestResourceData: { paymentHistory: updatedPaymentHistory }
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
+  const allPayments = (affiliates || []).flatMap(aff => aff.paymentHistory.map(p => ({...p, user: aff.user, affiliateId: aff.id || '' }))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  if (affiliatesLoading) {
+      return <div>Cargando afiliados...</div>;
+  }
+  
   return (
     <div className="space-y-8">
       <div>
@@ -85,7 +122,7 @@ export default function AdminAffiliatesPage() {
             <div>
               <CardTitle>Afiliados</CardTitle>
               <CardDescription>
-                {currentAffiliates.length} afiliados en total.
+                {filteredAffiliates.length} afiliados en total.
               </CardDescription>
             </div>
             <div className="relative w-full max-w-sm">
@@ -112,7 +149,7 @@ export default function AdminAffiliatesPage() {
             </TableHeader>
             <TableBody>
               {filteredAffiliates.map((affiliate) => (
-                <TableRow key={affiliate.user.id}>
+                <TableRow key={affiliate.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -126,7 +163,7 @@ export default function AdminAffiliatesPage() {
                   <TableCell>{formatCurrency(affiliate.totalEarnings)}</TableCell>
                   <TableCell className="font-semibold text-primary">{formatCurrency(affiliate.pendingBalance)}</TableCell>
                   <TableCell className="text-right">
-                     <Button variant="outline" size="sm">Asignar Afiliado</Button>
+                     <Button variant="outline" size="sm">Ver Detalles</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -153,7 +190,7 @@ export default function AdminAffiliatesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentAffiliates.flatMap(aff => aff.paymentHistory.map(p => ({...p, user: aff.user}))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(payment => (
+              {allPayments.map(payment => (
                   <TableRow key={payment.id}>
                       <TableCell>{payment.date}</TableCell>
                       <TableCell>{payment.user.storeName}</TableCell>
@@ -170,7 +207,7 @@ export default function AdminAffiliatesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones de Pago</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleMarkAsPaid(payment.id)}>
+                                <DropdownMenuItem onClick={() => handleMarkAsPaid(payment.affiliateId, payment.id)}>
                                     Marcar como Pagado
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>Ver detalles del Afiliado</DropdownMenuItem>
