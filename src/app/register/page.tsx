@@ -78,8 +78,6 @@ export default function RegisterPage() {
       });
       router.push('/dashboard/seller');
     } catch (e: any) {
-      logger.error(e, { component: 'RegisterPage' });
-      
       if (e.code === 'auth/email-already-in-use') {
         setError('Este correo electrónico ya está registrado. Intenta iniciar sesión.');
       } else if (e.code === 'firestore/permission-denied') {
@@ -87,6 +85,7 @@ export default function RegisterPage() {
          errorEmitter.emit('permission-error', permissionError);
          setError('Error de permisos al crear el perfil. Contacta a soporte.');
       } else {
+        logger.error(e, { component: 'RegisterPage' });
         setError('No se pudo crear la cuenta. Inténtalo de nuevo.');
       }
     } finally {
@@ -123,10 +122,10 @@ export default function RegisterPage() {
       toast({ title: '¡Bienvenido!' });
       router.push('/dashboard/seller');
     } catch (e: any) {
-       logger.error(e, { component: 'RegisterPage', flow: 'GoogleLogin' });
        if (e.code === 'auth/account-exists-with-different-credential') {
            setError('Ya existe una cuenta con este email pero con un método de inicio de sesión diferente.');
        } else {
+           logger.error(e, { component: 'RegisterPage', flow: 'GoogleLogin' });
            setError('No se pudo registrar con Google.');
        }
     } finally {
