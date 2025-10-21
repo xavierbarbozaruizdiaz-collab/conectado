@@ -68,7 +68,7 @@ export default function AdminAffiliatesPage() {
       affiliate.affiliateCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const handleMarkAsPaid = (affiliateId: string, paymentId: string) => {
+  const handlePaymentStatusUpdate = (affiliateId: string, paymentId: string, status: AffiliatePayment['status']) => {
       if (!firestore || !affiliates) return;
 
       const affiliate = affiliates.find(a => a.id === affiliateId);
@@ -76,26 +76,33 @@ export default function AdminAffiliatesPage() {
 
       const affiliateRef = doc(firestore, 'affiliates', affiliateId);
       const updatedPaymentHistory = affiliate.paymentHistory.map(p => 
-          p.id === paymentId ? { ...p, status: 'Pagado' as const } : p
+          p.id === paymentId ? { ...p, status } : p
       );
       
-      const updatedAffiliate = {
-          ...affiliate,
-          paymentHistory: updatedPaymentHistory
-      };
+      const updateData: any = { paymentHistory: updatedPaymentHistory };
 
-      updateDoc(affiliateRef, { paymentHistory: updatedPaymentHistory })
+      // Si el pago es "Pagado", no es necesario ajustar el totalEarnings ni pendingBalance aquí,
+      // porque el saldo pendiente ya se redujo cuando el afiliado hizo la solicitud.
+      // Si el pago es "Rechazado", devolvemos el monto al saldo pendiente del afiliado.
+      if (status === 'Rechazado') {
+          const payment = affiliate.paymentHistory.find(p => p.id === paymentId);
+          if (payment) {
+              updateData.pendingBalance = (affiliate.pendingBalance || 0) + payment.amount;
+          }
+      }
+
+      updateDoc(affiliateRef, updateData)
         .then(() => {
             toast({
                 title: "Pago actualizado",
-                description: "El estado del pago ha sido marcado como 'Pagado'."
+                description: `El estado del pago ha sido marcado como '${status}'.`
             })
         })
         .catch(e => {
             const permissionError = new FirestorePermissionError({
                 path: affiliateRef.path,
                 operation: 'update',
-                requestResourceData: { paymentHistory: updatedPaymentHistory }
+                requestResourceData: updateData
             });
             errorEmitter.emit('permission-error', permissionError);
         });
@@ -207,11 +214,15 @@ export default function AdminAffiliatesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones de Pago</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleMarkAsPaid(payment.affiliateId, payment.id)}>
+                                <DropdownMenuItem onClick={() => handlePaymentStatusUpdate(payment.affiliateId, payment.id, 'Procesando')}>
+                                    Marcar como Procesando
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handlePaymentStatusUpdate(payment.affiliateId, payment.id, 'Pagado')}>
                                     Marcar como Pagado
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>Ver detalles del Afiliado</DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">Rechazar Pago</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handlePaymentStatusUpdate(payment.affiliateId, payment.id, 'Rechazado')}>
+                                    Rechazar Pago
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

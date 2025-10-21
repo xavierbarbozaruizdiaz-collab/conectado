@@ -29,7 +29,10 @@ import { MoreHorizontal } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Order, UserProfile } from '@/lib/types';
 import { useFirestore, useCollection, collection } from '@/firebase';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -54,6 +57,7 @@ const formatDate = (timestamp: Timestamp | Date) => {
 
 export default function AdminOrdersPage() {
   const firestore = useFirestore();
+  const { toast } = useToast();
   
   const { data: orders, loading: ordersLoading } = useCollection<Order>(
     firestore ? collection(firestore, 'orders') : null
@@ -66,6 +70,26 @@ export default function AdminOrdersPage() {
   const getUserName = (userId: string) => {
       return users?.find(u => u.uid === userId)?.storeName || userId;
   }
+
+  const handleUpdateStatus = (orderId: string, status: Order['status']) => {
+    if (!firestore) return;
+    const orderRef = doc(firestore, 'orders', orderId);
+    updateDoc(orderRef, { status })
+      .then(() => {
+        toast({
+          title: "Estado actualizado",
+          description: `El pedido ha sido marcado como "${status}".`
+        });
+      })
+      .catch((e) => {
+        const permissionError = new FirestorePermissionError({
+          path: orderRef.path,
+          operation: 'update',
+          requestResourceData: { status }
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
 
   if (ordersLoading || usersLoading) {
     return <div>Cargando pedidos...</div>;
@@ -117,10 +141,18 @@ export default function AdminOrdersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Ver Detalles del Pedido</DropdownMenuItem>
-                        <DropdownMenuItem>Marcar como Enviado</DropdownMenuItem>
-                        <DropdownMenuItem>Marcar como Entregado</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Cancelar Pedido</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(order.id!, 'Procesado')}>
+                          Marcar como Procesando
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(order.id!, 'Enviado')}>
+                          Marcar como Enviado
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(order.id!, 'Entregado')}>
+                          Marcar como Entregado
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleUpdateStatus(order.id!, 'Cancelado')}>
+                          Cancelar Pedido
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
