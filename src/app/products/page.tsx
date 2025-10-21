@@ -37,8 +37,7 @@ const useProductFilters = () => {
     }, [search]);
 
     const filteredProducts = useMemo(() => {
-        if (!products) return [];
-        return products
+        return (products || [])
             .filter((product) => {
                 const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
                 const typeMatch =

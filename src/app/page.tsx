@@ -33,9 +33,9 @@ export default function Home() {
     firestore ? collection(firestore, 'banners') : null
   );
 
-  const directSaleProducts = products?.filter((p) => !p.isAuction) || [];
-  const auctionProducts = products?.filter((p) => p.isAuction) || [];
-  const activeBanners = banners?.filter(b => b.status === 'Activo') || [];
+  const directSaleProducts = (products || []).filter((p) => !p.isAuction);
+  const auctionProducts = (products || []).filter((p) => p.isAuction);
+  const activeBanners = (banners || []).filter(b => b.status === 'Activo');
 
   const autoplayPlugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
