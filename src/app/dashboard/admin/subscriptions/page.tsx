@@ -22,9 +22,13 @@ export default function AdminSubscriptionsPage() {
   const [currentTiers, setCurrentTiers] = useState<SubscriptionTier[]>(initialTiers);
 
   useEffect(() => {
-    const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
-    if (savedTiers) {
-      setCurrentTiers(JSON.parse(savedTiers));
+    try {
+        const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
+        if (savedTiers) {
+            setCurrentTiers(JSON.parse(savedTiers));
+        }
+    } catch (error) {
+        console.error("Failed to parse tiers from localStorage", error);
     }
   }, []);
 

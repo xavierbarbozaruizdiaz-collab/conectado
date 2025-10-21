@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { subscriptionTiers as initialTiers, SubscriptionTier } from "@/lib/data";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -25,9 +24,13 @@ export default function EditSubscriptionsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
-    if (savedTiers) {
-      setTiers(JSON.parse(savedTiers));
+    try {
+      const savedTiers = localStorage.getItem(TIERS_STORAGE_KEY);
+      if (savedTiers) {
+        setTiers(JSON.parse(savedTiers));
+      }
+    } catch (error) {
+      console.error("Failed to parse tiers from localStorage", error);
     }
   }, []);
 
@@ -76,12 +79,21 @@ export default function EditSubscriptionsPage() {
   };
 
   const handleSave = () => {
-    localStorage.setItem(TIERS_STORAGE_KEY, JSON.stringify(tiers));
-    toast({
-      title: "Planes guardados",
-      description: "Los cambios en los planes de suscripción han sido guardados.",
-    });
-    router.push('/dashboard/admin/subscriptions');
+    try {
+        localStorage.setItem(TIERS_STORAGE_KEY, JSON.stringify(tiers));
+        toast({
+        title: "Planes guardados",
+        description: "Los cambios en los planes de suscripción han sido guardados.",
+        });
+        router.push('/dashboard/admin/subscriptions');
+    } catch (error) {
+        console.error("Failed to save tiers to localStorage", error);
+        toast({
+            variant: "destructive",
+            title: "Error al guardar",
+            description: "No se pudieron guardar los cambios. Revisa la consola para más detalles."
+        })
+    }
   };
 
   return (
