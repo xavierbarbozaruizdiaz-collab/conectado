@@ -83,20 +83,21 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   
   const minimumBid = useMemo(() => {
     if (!product.isAuction) return 0;
-    // La puja mínima es un 10% sobre la puja actual o el precio de salida
+    // La puja mínima es un 5% sobre la puja actual o el precio de salida
     const currentPrice = product.price;
     return Math.ceil(currentPrice * 1.05);
   }, [product.price, product.isAuction]);
 
   const isBidInvalid = useMemo(() => {
+      if (!bidAmount) return true;
       const bid = Number(bidAmount);
-      return bid < minimumBid;
+      return isNaN(bid) || bid < minimumBid;
   }, [bidAmount, minimumBid])
   
   const handleBidSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!firestore || !user) {
-          toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para pujar.'});
+          toast({ variant: 'destructive', title: 'Error de Autenticación', description: 'Debes iniciar sesión para poder pujar.'});
           return;
       }
       if(isBidInvalid) {
@@ -108,28 +109,31 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
           return;
       }
       
-      // En una app real, aquí se validaría el plan de suscripción del usuario.
-      // Por ahora, asumimos que el usuario puede pujar.
       const productRef = doc(firestore, 'products', product.id);
       const newPrice = Number(bidAmount);
 
-      try {
-          await updateDoc(productRef, { 
-              price: newPrice,
-          });
+      // Aquí se debería validar el plan de suscripción del usuario contra el monto de la puja
+      // const { data: userProfile } = useDoc(...)
+      // if (userProfile.subscription.maxBidding < newPrice) { ... }
+      // Por ahora, asumimos que el usuario puede pujar.
+
+      updateDoc(productRef, { 
+          price: newPrice,
+          // Opcional: guardar el último pujador: lastBidder: user.uid
+      }).then(() => {
           toast({
-              title: "¡Puja realizada!",
-              description: `Has pujado ${formatCurrency(newPrice)} por ${product.name}.`,
+              title: "¡Puja realizada con éxito!",
+              description: `Has pujado ${formatCurrency(newPrice)} por ${product.name}. ¡Buena suerte!`,
           });
           setBidAmount(''); // Limpiar el input después de una puja exitosa
-      } catch (error) {
+      }).catch((error) => {
             const permissionError = new FirestorePermissionError({
                 path: productRef.path,
                 operation: 'update',
                 requestResourceData: { price: newPrice }
             });
             errorEmitter.emit('permission-error', permissionError);
-      }
+      });
   }
 
   return (
@@ -174,7 +178,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                         onChange={(e) => setBidAmount(e.target.value)}
                         min={minimumBid}
                     />
-                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={!bidAmount || isBidInvalid}>Pujar</Button>
+                    <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isBidInvalid}>Pujar</Button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
                   {bidAmount && isBidInvalid
