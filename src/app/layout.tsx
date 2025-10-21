@@ -6,8 +6,6 @@ import Footer from '@/components/footer';
 import { CartProvider } from '@/context/cart-context';
 import {
   FirebaseClientProvider,
-  FirebaseProvider,
-  initializeFirebase,
 } from '@/firebase';
 import FirebaseErrorListener from '@/components/FirebaseErrorListener';
 
@@ -15,8 +13,6 @@ export const metadata: Metadata = {
   title: 'Mercadito Xbar',
   description: 'Tu moderno mercado en línea para ventas directas y subastas.',
 };
-
-const { app, auth, firestore } = initializeFirebase();
 
 export default function RootLayout({
   children,
@@ -34,19 +30,17 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseProvider app={app} auth={auth} firestore={firestore}>
-          <FirebaseClientProvider>
-            <CartProvider>
-              <div className="relative flex min-h-dvh flex-col bg-background">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-              <Toaster />
-            </CartProvider>
-            <FirebaseErrorListener />
-          </FirebaseClientProvider>
-        </FirebaseProvider>
+        <FirebaseClientProvider>
+          <CartProvider>
+            <div className="relative flex min-h-dvh flex-col bg-background">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
+          </CartProvider>
+          <FirebaseErrorListener />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
