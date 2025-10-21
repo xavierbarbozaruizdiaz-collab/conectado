@@ -1,12 +1,13 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import StatCard from "@/components/stat-card";
 import {
   DollarSign,
   Package,
   CreditCard,
-  CircleHelp,
+  Wallet,
   Plus,
   Settings
 } from "lucide-react";
@@ -28,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, collection, useFirestore, useUser, query, where } from '@/firebase';
-import type { Product } from '@/lib/data';
+import type { Product, Order } from '@/lib/types';
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
@@ -37,10 +38,51 @@ export default function SellerDashboardPage() {
   const firestore = useFirestore();
 
   const productsQuery = user && firestore ? query(collection(firestore, "products"), where("sellerId", "==", user.uid)) : null;
-  const { data: sellerProducts, loading } = useCollection<Product>(productsQuery);
+  const { data: sellerProducts, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  const ordersQuery = user && firestore ? query(collection(firestore, 'orders')) : null;
+  const { data: allOrders, loading: ordersLoading } = useCollection<Order>(ordersQuery);
+
+  const { totalRevenue, totalSales, pendingBalance } = useMemo(() => {
+    if (!allOrders || !user) return { totalRevenue: 0, totalSales: 0, pendingBalance: 0 };
+    
+    let revenue = 0;
+    let salesCount = 0;
+    
+    // Filtra los pedidos que contienen productos del vendedor
+    const sellerOrders = allOrders.filter(order => 
+      order.items.some(item => item.sellerId === user.uid)
+    );
+    
+    sellerOrders.forEach(order => {
+      const sellerItemsInOrder = order.items.filter(item => item.sellerId === user.uid);
+      const revenueFromOrder = sellerItemsInOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      revenue += revenueFromOrder;
+      // Contamos la orden como una venta si el vendedor tiene al menos un item en ella.
+      salesCount++; 
+    });
+
+    // Nota: El 'pendingBalance' real debería venir de un agregado en el backend o de la entidad 'Affiliate'
+    // Por ahora lo dejaremos como un cálculo basado en órdenes no pagadas.
+    // Esto es una simplificación.
+    const unpaidRevenue = sellerOrders
+      .filter(o => o.status !== 'Entregado' && o.status !== 'Cancelado')
+      .reduce((sum, order) => {
+          const itemsValue = order.items
+            .filter(item => item.sellerId === user.uid)
+            .reduce((itemSum, item) => itemSum + item.price * item.quantity, 0);
+          return sum + itemsValue;
+      }, 0);
+
+
+    return { totalRevenue: revenue, totalSales: salesCount, pendingBalance: unpaidRevenue };
+
+  }, [allOrders, user]);
+
+  const loading = productsLoading || ordersLoading;
 
   if (loading) {
-    return <div>Cargando...</div>
+    return <div>Cargando tu resumen de ventas...</div>
   }
 
   return (
@@ -61,21 +103,21 @@ export default function SellerDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Ingresos Totales"
-          value="Gs. 45.231.890"
+          value={loading ? "Cargando..." : formatCurrency(totalRevenue)}
           icon={DollarSign}
-          description="+20.1% desde el mes pasado"
+          description="Ingresos brutos de todos los tiempos"
         />
         <StatCard
           title="Ventas"
-          value="+12.234"
+          value={loading ? "Cargando..." : totalSales.toString()}
           icon={CreditCard}
-          description="+19% desde el mes pasado"
+          description="Número total de órdenes"
         />
         <StatCard
           title="Saldo Pendiente"
-          value="Gs. 2.350.000"
-          icon={CircleHelp}
-          description="Esperando pago"
+          value={loading ? "Cargando..." : formatCurrency(pendingBalance)}
+          icon={Wallet}
+          description="Pagos por procesar"
         />
         <StatCard
           title="Productos Totales"

@@ -8,6 +8,7 @@ import {
   Users,
   Package,
   Activity,
+  CreditCard,
 } from "lucide-react";
 import {
   Card,
@@ -25,23 +26,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { useCollection, collection } from '@/firebase/firestore/use-collection';
-import { useFirestore } from '@/firebase';
-import type { Product } from '@/lib/data';
-import type { UserProfile } from '@/lib/types';
+import { useCollection, collection, useFirestore } from '@/firebase';
+import type { Product, UserProfile, Order } from '@/lib/types';
 
 
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
+  
   const { data: products, loading: productsLoading } = useCollection<Product>(
     firestore ? collection(firestore, 'products') : null
   );
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(
     firestore ? collection(firestore, 'users') : null
   );
+  const { data: orders, loading: ordersLoading } = useCollection<Order>(
+      firestore ? collection(firestore, 'orders') : null
+  );
 
   const recentUsers = (users || []).slice(0, 5);
   const recentProducts = (products || []).slice(0, 5);
+
+  const totalRevenue = (orders || []).reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalSales = orders?.length || 0;
+  
+  const loading = productsLoading || usersLoading || ordersLoading;
 
   return (
     <div className="space-y-8">
@@ -55,27 +63,27 @@ export default function AdminDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Ingresos Totales"
-          value={formatCurrency(125430500)}
+          value={loading ? "Cargando..." : formatCurrency(totalRevenue)}
           icon={DollarSign}
           description="Ingresos de todos los tiempos"
         />
         <StatCard
           title="Usuarios Totales"
-          value={(users?.length || 0).toString()}
+          value={loading ? "Cargando..." : (users?.length || 0).toString()}
           icon={Users}
-          description="+10% este mes"
+          description="Usuarios registrados"
         />
         <StatCard
           title="Productos Totales"
-          value={(products?.length || 0).toString()}
+          value={loading ? "Cargando..." : (products?.length || 0).toString()}
           icon={Package}
           description="En toda la plataforma"
         />
         <StatCard
-          title="Ventas del Mes"
-          value="1.284"
-          icon={Activity}
-          description="+5% vs el mes pasado"
+          title="Ventas Totales"
+          value={loading ? "Cargando..." : totalSales.toString()}
+          icon={CreditCard}
+          description="Pedidos completados y pendientes"
         />
       </div>
 
@@ -96,7 +104,9 @@ export default function AdminDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentUsers.map((user) => (
+                {loading ? Array(5).fill(0).map((_, i) => (
+                    <TableRow key={i}><TableCell><div className="h-4 bg-muted rounded w-3/4 animate-pulse" /></TableCell><TableCell><div className="h-4 bg-muted rounded w-full animate-pulse" /></TableCell></TableRow>
+                )) : recentUsers.map((user) => (
                   <TableRow key={user.uid}>
                     <TableCell className="font-medium">{user.storeName}</TableCell>
                     <TableCell>{user.uid}</TableCell>
@@ -124,7 +134,9 @@ export default function AdminDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentProducts.map((product) => (
+                 {loading ? Array(5).fill(0).map((_, i) => (
+                    <TableRow key={i}><TableCell><div className="h-4 bg-muted rounded w-3/4 animate-pulse" /></TableCell><TableCell><div className="h-4 bg-muted rounded w-1/2 animate-pulse" /></TableCell><TableCell><div className="h-4 bg-muted rounded w-1/4 animate-pulse" /></TableCell></TableRow>
+                )) : recentProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>

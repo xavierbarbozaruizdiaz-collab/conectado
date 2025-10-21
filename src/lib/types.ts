@@ -3,8 +3,8 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type UserProfile = {
   uid: string;
-  email: string;
-  storeName: string;
+  email: string | null;
+  storeName: string | null;
   storeDescription: string;
   profilePictureUrl: string;
   bannerUrl: string;
@@ -86,4 +86,24 @@ export type SubscriptionTier = {
   maxBidding: number;
   features: string[];
   order: number;
+};
+
+// This type is used in product-card and is a subset of UserProfile
+export type User = {
+  id: string;
+  storeName: string;
+  profilePictureUrl: string;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  imageUrls: string[];
+  sellerId: string;
+  isAuction: boolean;
+  auctionEndDate?: string | null;
+  status: 'Activo' | 'Vendido' | 'Pendiente';
 };

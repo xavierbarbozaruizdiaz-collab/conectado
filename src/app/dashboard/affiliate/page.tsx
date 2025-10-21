@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import StatCard from "@/components/stat-card";
 import {
   DollarSign,
@@ -29,10 +30,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser, useFirestore, useCollection, collection, query, where } from "@/firebase";
 import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 import { updateDoc } from 'firebase/firestore';
-import type { Affiliate } from '@/lib/types';
+import type { Affiliate, AffiliateEvent } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -59,7 +60,22 @@ export default function AffiliateDashboardPage() {
   const { toast } = useToast();
 
   const affiliateDocRef = user && firestore ? docRef(firestore, "affiliates", user.uid) : null;
-  const { data: affiliate, loading } = useDoc<Affiliate>(affiliateDocRef);
+  const { data: affiliate, loading: affiliateLoading } = useDoc<Affiliate>(affiliateDocRef);
+  
+  const eventsQuery = useMemo(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'affiliateEvents'), where('affiliateId', '==', user.uid));
+  }, [user, firestore]);
+  const { data: events, loading: eventsLoading } = useCollection<AffiliateEvent>(eventsQuery);
+
+  const { totalClicks, totalConversions } = useMemo(() => {
+    if (!events) return { totalClicks: 0, totalConversions: 0 };
+    return events.reduce((acc, event) => {
+        if (event.type === 'click') acc.totalClicks++;
+        if (event.type === 'conversion') acc.totalConversions++;
+        return acc;
+    }, { totalClicks: 0, totalConversions: 0 });
+  }, [events]);
 
   const handleRequestPayout = () => {
     if (!affiliateDocRef || !affiliate || affiliate.pendingBalance <= 0) return;
@@ -97,11 +113,14 @@ export default function AffiliateDashboardPage() {
         });
   };
 
+  const loading = affiliateLoading || eventsLoading;
+
   if (loading) {
     return <div>Cargando tu panel de afiliado...</div>
   }
 
   if (!affiliate) {
+    // TODO: Add a component to allow user to register as an affiliate
     return <div>No se encontró información de afiliado para tu cuenta.</div>
   }
   
@@ -117,26 +136,26 @@ export default function AffiliateDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Clics Totales"
-          value="12.832"
+          value={loading ? "Cargando..." : totalClicks.toString()}
           icon={MousePointerClick}
-          description="+15% desde el mes pasado"
+          description="Clics en tus enlaces"
         />
         <StatCard
-          title="Registros"
-          value="1.204"
+          title="Conversiones"
+          value={loading ? "Cargando..." : totalConversions.toString()}
           icon={Users}
-          description="+8% desde el mes pasado"
+          description="Ventas generadas"
         />
         <StatCard
-          title="Ventas"
-          value="458"
-          icon={DollarSign}
-          description="+12% desde el mes pasado"
+          title="Tasa de Conversión"
+          value={loading ? "Cargando..." : `${totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(2) : 0}%`}
+          icon={BadgePercent}
+          description="Clics que se vuelven ventas"
         />
         <StatCard
           title="Comisión Total"
-          value={formatCurrency(affiliate.totalEarnings || 0)}
-          icon={BadgePercent}
+          value={loading ? "Cargando..." : formatCurrency(affiliate.totalEarnings || 0)}
+          icon={DollarSign}
           description="Ganancias de todos los tiempos"
         />
       </div>
@@ -204,7 +223,7 @@ export default function AffiliateDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {affiliate.paymentHistory.map(payment => (
+                {affiliate.paymentHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(payment => (
                   <TableRow key={payment.id}>
                     <TableCell>{payment.date}</TableCell>
                     <TableCell>{formatCurrency(payment.amount)}</TableCell>
@@ -220,5 +239,3 @@ export default function AffiliateDashboardPage() {
     </div>
   );
 }
-
-    
