@@ -8,37 +8,34 @@ import sharp from "sharp";
 
 admin.initializeApp();
 
-const BUCKET_NAME = `${process.env.GCLOUD_PROJECT}.appspot.com`;
-
 export const optimizeImages = functions
-  .region("us-central1") // You can change this to your preferred region
+  .region("us-central1") // Puedes cambiar esto a tu región preferida
   .storage
   .object()
   .onFinalize(async (object) => {
-    // Exit if this is triggered on a file that is not an image.
-    if (!object.contentType?.startsWith("image/")) {
-      functions.logger.log("This is not an image.");
+    const bucket = admin.storage().bucket(object.bucket);
+    const filePath = object.name;
+    const contentType = object.contentType;
+
+    // 1. Validar que la función debe ejecutarse
+    if (!filePath || !contentType || !contentType.startsWith("image/")) {
+      functions.logger.log("No es una imagen, abortando optimización.");
       return null;
     }
 
-    // Exit if the image is not in a 'products' folder.
-    const filePath = object.name;
-    if (!filePath || !filePath.startsWith("products/")) {
-        functions.logger.log("Not a product image, skipping optimization.");
-        return null;
+    if (!filePath.startsWith("products/")) {
+      functions.logger.log("No es una imagen de producto, abortando optimización.");
+      return null;
     }
     
-    // Exit if the image is already optimized.
     if (object.metadata?.optimized === "true") {
-      functions.logger.log("Image is already optimized.");
+      functions.logger.log("La imagen ya está optimizada.");
       return null;
     }
 
-    const bucket = admin.storage().bucket(BUCKET_NAME);
     const tempFilePath = path.join(os.tmpdir(), path.basename(filePath));
     const metadata = {
-      contentType: object.contentType,
-      // Add a custom metadata flag to prevent infinite loops
+      contentType: contentType,
       metadata: {
         ...object.metadata,
         optimized: "true",
@@ -46,29 +43,29 @@ export const optimizeImages = functions
     };
 
     try {
-      // Download file from bucket to a temporary location
-      await bucket.file(filePath).download({destination: tempFilePath});
-      functions.logger.log("Image downloaded locally to", tempFilePath);
+      // 2. Descargar la imagen a un entorno temporal
+      await bucket.file(filePath).download({ destination: tempFilePath });
+      functions.logger.log("Imagen descargada localmente a", tempFilePath);
 
-      // Resize the image using sharp
+      // 3. Procesar la imagen (redimensionar y comprimir)
       const resizedBuffer = await sharp(tempFilePath)
-        .resize({width: 1080, withoutEnlargement: true})
-        .jpeg({quality: 80})
+        .resize({ width: 1080, withoutEnlargement: true }) // Redimensiona si es más ancha de 1080px
+        .jpeg({ quality: 80 }) // Comprime a 80% de calidad
         .toBuffer();
         
-      functions.logger.log("Image resized successfully.");
+      functions.logger.log("Imagen redimensionada y comprimida exitosamente.");
 
-      // Upload the resized image back to the same path
+      // 4. Subir la versión optimizada, sobrescribiendo la original
       await bucket.file(filePath).save(resizedBuffer, {
         metadata: metadata,
       });
 
-      functions.logger.log("Optimized image uploaded to bucket.");
+      functions.logger.log("Imagen optimizada subida al bucket.");
 
-      // Clean up the temporary file
+      // 5. Limpiar el archivo temporal
       return fs.unlinkSync(tempFilePath);
     } catch (error) {
-      functions.logger.error("Error optimizing image:", error);
+      functions.logger.error("Error optimizando imagen:", error);
       return null;
     }
   });
