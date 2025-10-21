@@ -66,6 +66,15 @@ export type Banner = {
 export type PlatformSettings = {
     directSaleCommission: number;
     auctionSellerCommission: number;
-    auctionBuyerCommission: number;
+agenciaBBuyerCommission: number;
     affiliateShare: number;
+};
+
+export type AffiliateEvent = {
+  id?: string;
+  affiliateId: string;
+  campaign: string;
+  type: 'click' | 'conversion';
+  timestamp: Timestamp | Date;
+  earnings?: number;
 };

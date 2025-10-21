@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -32,33 +32,76 @@ import { DateRangePicker } from "@/components/date-range-picker";
 import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-
-const performanceData = [
-  { date: "2023-10-01", clicks: 120, signups: 15, conversions: 5 },
-  { date: "2023-10-02", clicks: 150, signups: 18, conversions: 7 },
-  { date: "2023-10-03", clicks: 130, signups: 12, conversions: 4 },
-  { date: "2023-10-04", clicks: 180, signups: 25, conversions: 10 },
-  { date: "2023-10-05", clicks: 210, signups: 30, conversions: 12 },
-  { date: "2023-10-06", clicks: 190, signups: 22, conversions: 9 },
-  { date: "2023-10-07", clicks: 250, signups: 35, conversions: 15 },
-];
-
-const campaignPerformance = [
-    { id: '1', name: 'promo_redessociales', clicks: 1850, signups: 250, conversions: 80, earnings: 450000 },
-    { id: '2', name: 'newsletter_octubre', clicks: 950, signups: 120, conversions: 45, earnings: 280000 },
-    { id: '3', name: 'blog_review_dron', clicks: 2200, signups: 310, conversions: 110, earnings: 650000 },
-    { id: '4', name: 'default', clicks: 832, signups: 90, conversions: 32, earnings: 150000 },
-];
-
-const trafficLog = [
-    { id: 't1', timestamp: '2023-10-15 10:30 AM', campaign: 'promo_redessociales', converted: true },
-    { id: 't2', timestamp: '2023-10-15 10:28 AM', campaign: 'blog_review_dron', converted: false },
-    { id: 't3', timestamp: '2023-10-15 10:25 AM', campaign: 'blog_review_dron', converted: true },
-    { id: 't4', timestamp: '2023-10-15 10:22 AM', campaign: 'newsletter_octubre', converted: false },
-    { id: 't5', timestamp: '2023-10-15 10:19 AM', campaign: 'default', converted: false },
-]
+import { useUser, useFirestore, useCollection, collection, query, where } from "@/firebase";
+import type { AffiliateEvent } from "@/lib/types";
+import { Timestamp } from "firebase/firestore";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function AffiliateReportsPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const eventsQuery = useMemo(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'affiliateEvents'), where('affiliateId', '==', user.uid));
+  }, [user, firestore]);
+
+  const { data: events, loading } = useCollection<AffiliateEvent>(eventsQuery);
+
+  const performanceData = useMemo(() => {
+    if (!events) return [];
+    
+    const dailyData: { [key: string]: { date: string, clicks: number, conversions: number } } = {};
+
+    events.forEach(event => {
+      const date = format((event.timestamp as Timestamp).toDate(), 'yyyy-MM-dd');
+      if (!dailyData[date]) {
+        dailyData[date] = { date, clicks: 0, conversions: 0 };
+      }
+      if (event.type === 'click') {
+        dailyData[date].clicks += 1;
+      } else if (event.type === 'conversion') {
+        dailyData[date].conversions += 1;
+      }
+    });
+
+    return Object.values(dailyData).sort((a,b) => a.date.localeCompare(b.date));
+  }, [events]);
+
+  const campaignPerformance = useMemo(() => {
+    if (!events) return [];
+
+    const campaigns: { [key: string]: { name: string, clicks: number, conversions: number, earnings: number } } = {};
+
+    events.forEach(event => {
+      const campaignName = event.campaign || 'default';
+      if (!campaigns[campaignName]) {
+        campaigns[campaignName] = { name: campaignName, clicks: 0, conversions: 0, earnings: 0 };
+      }
+      if (event.type === 'click') {
+        campaigns[campaignName].clicks += 1;
+      } else if (event.type === 'conversion') {
+        campaigns[campaignName].conversions += 1;
+        campaigns[campaignName].earnings += event.earnings || 0;
+      }
+    });
+
+    return Object.values(campaigns);
+  }, [events]);
+
+  const trafficLog = useMemo(() => {
+      if (!events) return [];
+      return events
+        .filter(e => e.type === 'click')
+        .sort((a,b) => (b.timestamp as Timestamp).toMillis() - (a.timestamp as Timestamp).toMillis())
+        .slice(0, 10);
+  }, [events]);
+  
+  if (loading) {
+      return <div>Cargando reportes...</div>
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -88,21 +131,17 @@ export default function AffiliateReportsPage() {
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={performanceData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
+              <XAxis dataKey="date" tickFormatter={(str) => format(new Date(str), 'dd MMM', { locale: es })}/>
               <YAxis />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--background))",
                   borderColor: "hsl(var(--border))",
                 }}
+                 labelFormatter={(label) => format(new Date(label), 'eeee, d MMM yyyy', { locale: es })}
               />
               <Legend />
               <Bar dataKey="clicks" fill="hsl(var(--primary))" name="Clics" />
-              <Bar
-                dataKey="signups"
-                fill="hsl(var(--chart-2))"
-                name="Registros"
-              />
               <Bar
                 dataKey="conversions"
                 fill="hsl(var(--accent))"
@@ -126,17 +165,15 @@ export default function AffiliateReportsPage() {
                 <TableRow>
                   <TableHead>Nombre de Campaña</TableHead>
                   <TableHead>Clics</TableHead>
-                  <TableHead>Registros</TableHead>
                   <TableHead>Conversiones</TableHead>
                   <TableHead>Ganancias</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {campaignPerformance.map(campaign => (
-                    <TableRow key={campaign.id}>
+                    <TableRow key={campaign.name}>
                         <TableCell className="font-medium">{campaign.name}</TableCell>
                         <TableCell>{campaign.clicks}</TableCell>
-                        <TableCell>{campaign.signups}</TableCell>
                         <TableCell>{campaign.conversions}</TableCell>
                         <TableCell>{formatCurrency(campaign.earnings)}</TableCell>
                     </TableRow>
@@ -165,10 +202,10 @@ export default function AffiliateReportsPage() {
               <TableBody>
                 {trafficLog.map(log => (
                      <TableRow key={log.id}>
-                        <TableCell>{log.timestamp}</TableCell>
-                        <TableCell>{log.campaign}</TableCell>
+                        <TableCell>{format((log.timestamp as Timestamp).toDate(), "d MMM yyyy, HH:mm:ss", { locale: es })}</TableCell>
+                        <TableCell>{log.campaign || 'default'}</TableCell>
                         <TableCell>
-                            {log.converted ? <Badge className="bg-green-500/20 text-green-700 dark:text-green-400">Convertido</Badge> : <Badge variant="outline">Clic</Badge>}
+                           <Badge variant="outline">Clic</Badge>
                         </TableCell>
                     </TableRow>
                 ))}

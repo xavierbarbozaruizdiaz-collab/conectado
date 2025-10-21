@@ -176,6 +176,19 @@
             "affiliateShare": { "type": "number" }
         },
         "required": ["directSaleCommission", "auctionSellerCommission", "auctionBuyerCommission", "affiliateShare"]
+    },
+    "AffiliateEvent": {
+      "title": "Affiliate Event",
+      "description": "Represents a single tracking event for an affiliate link.",
+      "type": "object",
+      "properties": {
+        "affiliateId": { "type": "string", "description": "The UID of the affiliate." },
+        "campaign": { "type": "string", "description": "The campaign tag, if any." },
+        "type": { "type": "string", "enum": ["click", "conversion"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "earnings": { "type": "number", "description": "Earnings generated from this event (only for conversions)." }
+      },
+      "required": ["affiliateId", "type", "timestamp"]
     }
   },
   "auth": {
@@ -213,6 +226,10 @@
     "/config/platform": {
         "schema": { "$ref": "#/entities/PlatformSettings" },
         "description": "A single document to store global platform settings."
+    },
+    "/affiliateEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/AffiliateEvent" },
+      "description": "Stores tracking events for affiliate links (clicks, conversions)."
     }
   }
 }
