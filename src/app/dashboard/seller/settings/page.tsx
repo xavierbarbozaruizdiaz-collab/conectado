@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   Card,
   CardContent,
@@ -8,12 +11,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { users } from "@/lib/data";
+import { useDoc, docRef, useFirestore, useUser } from "@/firebase";
+import type { User } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 export default function SellerSettingsPage() {
-  const seller = users.find((u) => u.id === 'user1');
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { data: seller, loading } = useDoc<User>(
+    user && firestore ? docRef(firestore, "users", user.uid) : null
+  );
+
+  const [storeName, setStoreName] = useState('');
+  const [storeDescription, setStoreDescription] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+
+  useEffect(() => {
+    if (seller) {
+      setStoreName(seller.storeName);
+      setStoreDescription(seller.storeDescription);
+      setWhatsappNumber(seller.whatsappNumber);
+    }
+  }, [seller]);
+
+  if (loading) {
+    return <div>Cargando configuración...</div>;
+  }
 
   if (!seller) {
     return <div>Vendedor no encontrado.</div>;
@@ -42,7 +67,7 @@ export default function SellerSettingsPage() {
                 <label htmlFor="storeName" className="text-sm font-medium">
                   Nombre de la Tienda
                 </label>
-                <Input id="storeName" defaultValue={seller.storeName} />
+                <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="storeDesc" className="text-sm font-medium">
@@ -50,7 +75,8 @@ export default function SellerSettingsPage() {
                 </label>
                 <Textarea
                   id="storeDesc"
-                  defaultValue={seller.storeDescription}
+                  value={storeDescription}
+                  onChange={(e) => setStoreDescription(e.target.value)}
                   className="min-h-[120px]"
                 />
               </div>
@@ -58,7 +84,7 @@ export default function SellerSettingsPage() {
                 <label htmlFor="whatsapp" className="text-sm font-medium">
                   Número de WhatsApp
                 </label>
-                <Input id="whatsapp" defaultValue={seller.whatsappNumber} placeholder="Ej: 595981123456" />
+                <Input id="whatsapp" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="Ej: 595981123456" />
                 <p className="text-xs text-muted-foreground">Incluye el código de país, sin el signo '+'.</p>
               </div>
             </CardContent>

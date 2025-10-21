@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from "next/link";
 import {
   SidebarProvider,
@@ -20,7 +22,7 @@ import {
   BadgePercent,
   Plus,
 } from "lucide-react";
-import { users } from "@/lib/data";
+import { useUser } from "@/firebase";
 
 const sellerLinks = [
     { href: "/dashboard/seller", label: "Resumen", icon: LayoutDashboard },
@@ -35,21 +37,25 @@ export default function SellerDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const seller = users.find(u => u.id === 'user1');
+  const { user, loading } = useUser();
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   return (
     <SidebarProvider>
       <div className="flex min-h-[calc(100vh-3.5rem)]">
         <Sidebar>
           <SidebarHeader>
-             {seller && (
+             {user && (
                 <div className="flex items-center gap-2">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={seller.profilePictureUrl} />
-                    <AvatarFallback>{seller.storeName.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user.photoURL || undefined} />
+                    <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                    <span className="font-semibold">{seller.storeName}</span>
+                    <span className="font-semibold">{user.displayName}</span>
                     <span className="text-xs text-muted-foreground">Vendedor</span>
                 </div>
                 </div>

@@ -1,3 +1,6 @@
+
+'use client';
+
 import React from "react";
 import StatCard from "@/components/stat-card";
 import {
@@ -22,11 +25,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { products, users } from "@/lib/data";
+import { useCollection, collection, useFirestore } from '@/firebase';
+import type { Product, User } from '@/lib/data';
 
 export default function AdminDashboardPage() {
-  const recentUsers = users.slice(0, 5);
-  const recentProducts = products.slice(0, 5);
+  const firestore = useFirestore();
+  const { data: products, loading: productsLoading } = useCollection<Product>(
+    firestore ? collection(firestore, 'products') : null
+  );
+  const { data: users, loading: usersLoading } = useCollection<User>(
+    firestore ? collection(firestore, 'users') : null
+  );
+
+  const recentUsers = (users || []).slice(0, 5);
+  const recentProducts = (products || []).slice(0, 5);
 
   return (
     <div className="space-y-8">
@@ -46,13 +58,13 @@ export default function AdminDashboardPage() {
         />
         <StatCard
           title="Usuarios Totales"
-          value={users.length.toString()}
+          value={(users?.length || 0).toString()}
           icon={Users}
           description="+10% este mes"
         />
         <StatCard
           title="Productos Totales"
-          value={products.length.toString()}
+          value={(products?.length || 0).toString()}
           icon={Package}
           description="En toda la plataforma"
         />
@@ -113,7 +125,7 @@ export default function AdminDashboardPage() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
-                      {users.find(u => u.id === product.sellerId)?.storeName}
+                      {(users || []).find(u => u.id === product.sellerId)?.storeName}
                     </TableCell>
                     <TableCell>{formatCurrency(product.price)}</TableCell>
                   </TableRow>

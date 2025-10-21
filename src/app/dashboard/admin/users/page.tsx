@@ -1,3 +1,4 @@
+
 "use client"
 import { useState } from 'react';
 import {
@@ -18,7 +19,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { users } from "@/lib/data";
+import { useCollection, collection, useFirestore } from '@/firebase';
+import type { User } from '@/lib/data';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,11 +32,19 @@ import {
 
 export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const firestore = useFirestore();
+  const { data: users, loading } = useCollection<User>(
+    firestore ? collection(firestore, 'users') : null
+  );
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = (users || []).filter(user => 
     user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return <div>Cargando...</div>
+  }
 
   return (
     <div className="space-y-8">
@@ -53,7 +63,7 @@ export default function AdminUsersPage() {
                 <div>
                     <CardTitle>Todos los Usuarios</CardTitle>
                     <CardDescription>
-                        {users.length} usuarios en total.
+                        {users?.length || 0} usuarios en total.
                     </CardDescription>
                 </div>
                  <div className="relative w-full max-w-sm">

@@ -16,10 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { products, users } from "@/lib/data";
+import { useCollection, collection, useFirestore } from '@/firebase';
+import type { Product, User } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
@@ -34,11 +34,22 @@ import Image from 'next/image';
 
 export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const firestore = useFirestore();
+  const { data: products, loading: productsLoading } = useCollection<Product>(
+    firestore ? collection(firestore, 'products') : null
+  );
+  const { data: users, loading: usersLoading } = useCollection<User>(
+    firestore ? collection(firestore, 'users') : null
+  );
 
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = (products || []).filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (productsLoading || usersLoading) {
+    return <div>Cargando...</div>
+  }
 
   return (
     <div className="space-y-8">
@@ -57,7 +68,7 @@ export default function AdminProductsPage() {
                 <div>
                     <CardTitle>Todos los Productos</CardTitle>
                     <CardDescription>
-                        {products.length} productos en total.
+                        {products?.length || 0} productos en total.
                     </CardDescription>
                 </div>
                  <div className="relative w-full max-w-sm">
@@ -84,7 +95,7 @@ export default function AdminProductsPage() {
             </TableHeader>
             <TableBody>
               {filteredProducts.map((product) => {
-                const seller = users.find(u => u.id === product.sellerId);
+                const seller = (users || []).find(u => u.id === product.sellerId);
                 return (
                     <TableRow key={product.id}>
                     <TableCell>

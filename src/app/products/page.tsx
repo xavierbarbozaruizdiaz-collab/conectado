@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from 'next/navigation';
-import { products } from "@/lib/data";
+import { useCollection, collection, useFirestore } from '@/firebase';
+import type { Product } from '@/lib/data';
 import ProductCard from "@/components/product-card";
 import {
   Select,
@@ -18,6 +19,11 @@ type ProductType = "all" | "direct" | "auction";
 
 const useProductFilters = () => {
     const searchParams = useSearchParams();
+    const firestore = useFirestore();
+    const { data: products, loading } = useCollection<Product>(
+      firestore ? collection(firestore, 'products') : null
+    );
+
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("featured");
     
@@ -30,6 +36,7 @@ const useProductFilters = () => {
     }, [search]);
 
     const filteredProducts = useMemo(() => {
+        if (!products) return [];
         return products
             .filter((product) => {
                 const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -47,12 +54,12 @@ const useProductFilters = () => {
                     case "price-desc":
                         return b.price - a.price;
                     case "newest":
-                        return b.id.localeCompare(a.id);
+                        return (b.id || "").localeCompare(a.id || "");
                     default:
                         return 0;
                 }
             });
-    }, [searchTerm, productType, sortBy, category]);
+    }, [searchTerm, productType, sortBy, category, products]);
     
     const pageTitle = useMemo(() => {
         if (category) {
@@ -72,11 +79,15 @@ const useProductFilters = () => {
     }, [category, searchTerm, filteredProducts.length]);
 
 
-    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription };
+    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading };
 };
 
 function ProductsPageContent() {
-  const { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription } = useProductFilters();
+  const { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading } = useProductFilters();
+
+  if (loading) {
+      return <div>Cargando productos...</div>
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">

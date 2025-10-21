@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from "next/link";
 import {
   SidebarProvider,
@@ -20,7 +22,7 @@ import {
   BarChart,
   Store,
 } from "lucide-react";
-import { users } from "@/lib/data";
+import { useUser } from '@/firebase';
 
 const affiliateLinks = [
     { href: "/dashboard/affiliate", label: "Resumen", icon: LayoutDashboard },
@@ -34,7 +36,7 @@ export default function AffiliateDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = users.find(u => u.id === 'user1');
+  const { user, loading } = useUser();
 
   return (
     <SidebarProvider>
@@ -44,11 +46,11 @@ export default function AffiliateDashboardLayout({
              {user && (
                 <div className="flex items-center gap-2">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.profilePictureUrl} />
-                    <AvatarFallback>{user.storeName.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user.photoURL || undefined} />
+                    <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                    <span className="font-semibold">{user.storeName}</span>
+                    <span className="font-semibold">{user.displayName}</span>
                     <span className="text-xs text-muted-foreground">Afiliado</span>
                 </div>
                 </div>

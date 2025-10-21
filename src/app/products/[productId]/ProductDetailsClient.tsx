@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import type { Product } from "@/lib/data";
+import type { Product, User } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,9 @@ import CircularAuctionTimer from "@/components/circular-auction-timer";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store, MessageSquare } from "lucide-react";
-import { users } from "@/lib/data";
 import { useState, useMemo } from "react";
 import logger from "@/lib/logger";
+import { useDoc, docRef, useFirestore } from "@/firebase";
 
 function ProductImageGallery({ images, productName }: { images: string[], productName: string }) {
     const [selectedImage, setSelectedImage] = useState(0);
@@ -61,7 +61,10 @@ function ProductImageGallery({ images, productName }: { images: string[], produc
 export default function ProductDetailsClient({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const seller = users.find((u) => u.id === product.sellerId);
+  const firestore = useFirestore();
+  const { data: seller, loading: sellerLoading } = useDoc<User>(
+    firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null
+  );
   const [bidAmount, setBidAmount] = useState<string>('');
 
   const handleAddToCart = () => {

@@ -4,7 +4,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { products, users } from '@/lib/data';
+import { useCollection, collection } from '@/firebase';
+import type { Product, User } from '@/lib/data';
 import ProductCard from '@/components/product-card';
 import {
   Carousel,
@@ -17,10 +18,19 @@ import { CreditCard, ShieldCheck, Truck, Store } from 'lucide-react';
 import Autoplay from "embla-carousel-autoplay"
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useFirestore } from '@/firebase';
 
 export default function Home() {
-  const directSaleProducts = products.filter((p) => !p.isAuction);
-  const auctionProducts = products.filter((p) => p.isAuction);
+  const firestore = useFirestore();
+  const { data: products, loading: productsLoading } = useCollection<Product>(
+    firestore ? collection(firestore, 'products') : null
+  );
+  const { data: users, loading: usersLoading } = useCollection<User>(
+    firestore ? collection(firestore, 'users') : null
+  );
+
+  const directSaleProducts = products?.filter((p) => !p.isAuction) || [];
+  const auctionProducts = products?.filter((p) => p.isAuction) || [];
   const bannerImages = [
     {
       id: 1,
@@ -122,7 +132,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                {users.slice(0, 6).map(user => (
+                {(users || []).slice(0, 6).map(user => (
                   <Link href={`/store/${user.id}`} key={user.id} className="group flex flex-col items-center gap-2 text-center">
                     <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-transparent group-hover:border-primary transition-all duration-300">
                         <AvatarImage src={user.profilePictureUrl} />

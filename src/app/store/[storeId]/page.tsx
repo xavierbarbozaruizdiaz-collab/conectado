@@ -1,20 +1,32 @@
+
+'use client';
+
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { users, products as allProducts } from "@/lib/data";
+import { useDoc, docRef, useFirestore, useCollection, collection, query, where } from "@/firebase/firestore/use-collection";
+import type { User, Product } from "@/lib/data";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Search } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import StoreProducts from "./StoreProducts";
 
 export default function StorePage({ params }: { params: { storeId: string } }) {
-  const seller = users.find((u) => u.id === params.storeId);
+  const firestore = useFirestore();
 
-  if (!seller) {
-    notFound();
+  const { data: seller, loading: sellerLoading } = useDoc<User>(
+    firestore ? docRef(firestore, "users", params.storeId) : null
+  );
+
+  const productsQuery = firestore ? query(collection(firestore, "products"), where("sellerId", "==", params.storeId)) : null;
+  const { data: storeProducts, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  if (sellerLoading || productsLoading) {
+    return <div>Cargando tienda...</div>;
   }
 
-  const storeProducts = allProducts.filter((p) => p.sellerId === seller.id);
+  if (!seller) {
+    return notFound();
+  }
 
   return (
     <div>
@@ -50,7 +62,7 @@ export default function StorePage({ params }: { params: { storeId: string } }) {
       </div>
       
       <main className="container mx-auto px-4 md:px-6 py-12">
-        <StoreProducts products={storeProducts} storeName={seller.storeName} />
+        <StoreProducts products={storeProducts || []} storeName={seller.storeName} />
       </main>
     </div>
   );

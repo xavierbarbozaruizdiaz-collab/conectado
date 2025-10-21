@@ -1,27 +1,35 @@
 
-import Image from "next/image";
-import Link from "next/link";
+'use client';
+
 import { notFound } from "next/navigation";
-import { products, users } from "@/lib/data";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useDoc, docRef, useFirestore, useCollection, collection } from "@/firebase";
+import type { Product } from "@/lib/data";
 import ProductCard from "@/components/product-card";
-import { Store, MessageSquare } from "lucide-react";
 import ProductDetailsClient from "./ProductDetailsClient";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import ProductAuctionNavigation from "./ProductAuctionNavigation";
 
-
 export default function ProductPage({ params }: { params: { productId: string } }) {
-  const product = products.find((p) => p.id === params.productId);
+  const firestore = useFirestore();
 
+  const { data: product, loading: productLoading } = useDoc<Product>(
+    firestore ? docRef(firestore, "products", params.productId) : null
+  );
+
+  const { data: products, loading: productsLoading } = useCollection<Product>(
+    firestore ? collection(firestore, 'products') : null
+  );
+
+  if (productLoading || productsLoading) {
+    return <div>Cargando...</div>;
+  }
+  
   if (!product) {
-    notFound();
+    return notFound();
   }
 
   // --- Auction Navigation Logic ---
-  const auctionProducts = products
-    .filter(p => p.isAuction)
+  const auctionProducts = (products || [])
+    .filter(p => p.isAuction && p.auctionEndDate)
     .sort((a, b) => new Date(a.auctionEndDate!).getTime() - new Date(b.auctionEndDate!).getTime());
   
   const currentIndex = auctionProducts.findIndex(p => p.id === product.id);
@@ -39,8 +47,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
   }
   // --- End Logic ---
 
-  const seller = users.find((u) => u.id === product.sellerId);
-  const relatedProducts = products.filter(p => p.sellerId === product.sellerId && p.id !== product.id).slice(0, 3);
+  const relatedProducts = (products || []).filter(p => p.sellerId === product.sellerId && p.id !== product.id).slice(0, 3);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 relative">
@@ -53,7 +60,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
       
       {relatedProducts.length > 0 && (
         <div className="mt-16 lg:mt-24">
-          <h2 className="text-2xl font-bold tracking-tight mb-8">Más de {seller?.storeName}</h2>
+          <h2 className="text-2xl font-bold tracking-tight mb-8">Más productos de esta tienda</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
           </div>

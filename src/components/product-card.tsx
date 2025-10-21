@@ -1,11 +1,13 @@
 
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { users } from "@/lib/data";
-import type { Product } from "@/lib/data";
+import { useDoc, docRef, useFirestore } from "@/firebase";
+import type { Product, User } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 
 type ProductCardProps = {
@@ -13,7 +15,10 @@ type ProductCardProps = {
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const seller = users.find((user) => user.id === product.sellerId);
+  const firestore = useFirestore();
+  const { data: seller, loading } = useDoc<User>(
+    firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null
+  );
 
   return (
     <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">

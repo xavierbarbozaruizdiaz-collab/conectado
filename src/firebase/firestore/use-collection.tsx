@@ -8,7 +8,7 @@ import type {
   DocumentData,
   Query,
 } from 'firebase/firestore';
-import { onSnapshot } from 'firebase/firestore';
+import { onSnapshot, collection, query, where } from 'firebase/firestore';
 import { useFirestore } from '../';
 import { FirestorePermissionError } from '../errors';
 import { errorEmitter } from '../error-emitter';
@@ -18,7 +18,7 @@ interface UseCollectionOptions {
 }
 
 export function useCollection<T = DocumentData>(
-  collectionPathOrRef: string | CollectionReference | Query | null
+  collectionQuery: Query | null
 ) {
   const firestore = useFirestore() as Firestore;
   const [data, setData] = useState<T[] | null>(null);
@@ -28,7 +28,7 @@ export function useCollection<T = DocumentData>(
   const unsubscribeRef = useRef<() => void>();
 
   useEffect(() => {
-    if (!firestore || !collectionPathOrRef) {
+    if (!firestore || !collectionQuery) {
       setLoading(false);
       return;
     }
@@ -39,13 +39,8 @@ export function useCollection<T = DocumentData>(
     }
 
     try {
-      const collectionRef =
-        typeof collectionPathOrRef === 'string'
-          ? collection(firestore, collectionPathOrRef)
-          : collectionPathOrRef;
-
       const unsubscribe = onSnapshot(
-        collectionRef as Query,
+        collectionQuery,
         (snapshot) => {
           const items = snapshot.docs.map((doc) => ({
             id: doc.id,
@@ -55,8 +50,9 @@ export function useCollection<T = DocumentData>(
           setLoading(false);
         },
         (err) => {
+          const path = (collectionQuery as any)._query?.path?.segments.join('/') || 'unknown path';
           const permissionError = new FirestorePermissionError({
-            path: (collectionRef as CollectionReference).path,
+            path: path,
             operation: 'list'
           });
           errorEmitter.emit('permission-error', permissionError);
@@ -78,11 +74,10 @@ export function useCollection<T = DocumentData>(
             unsubscribeRef.current();
         }
     }
-  }, [firestore, collectionPathOrRef]);
+  }, [firestore, collectionQuery]);
 
   return { data, loading, error };
 }
 
 // Re-export collection from firestore to be used in components
-import { collection } from 'firebase/firestore';
-export { collection };
+export { collection, query, where };
