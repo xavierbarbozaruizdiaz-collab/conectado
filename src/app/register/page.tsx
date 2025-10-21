@@ -32,6 +32,7 @@ export default function RegisterPage() {
   const [storeName, setStoreName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
   const firestore = useFirestore();
@@ -41,7 +42,11 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!auth || !firestore) return;
+    setIsSubmitting(true);
+    if (!auth || !firestore) {
+        setIsSubmitting(false);
+        return;
+    };
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -65,14 +70,7 @@ export default function RegisterPage() {
         whatsappNumber: '',
       };
       
-      setDoc(userRef, userData, { merge: true }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'create',
-            requestResourceData: userData
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+      await setDoc(userRef, userData, { merge: true });
 
       toast({
         title: '¡Cuenta Creada!',
@@ -81,16 +79,28 @@ export default function RegisterPage() {
       router.push('/dashboard/seller');
     } catch (e: any) {
       logger.error(e, { component: 'RegisterPage' });
-      if (e.code === 'auth/email-already-in-use') {
+      
+      // Check if it is a firestore error
+       if (e.name === 'FirestorePermissionError' || (e.code && e.code.includes('firestore'))) {
+          const permissionError = new FirestorePermissionError({
+              path: `users/${e.uid}`,
+              operation: 'create',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          setError('No se pudo guardar tu perfil. Contacta a soporte.');
+      } else if (e.code === 'auth/email-already-in-use') {
         setError('Este correo electrónico ya está en uso.');
       } else {
         setError('No se pudo crear la cuenta. Inténtalo de nuevo.');
       }
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     if (!auth || !firestore) return;
+    setIsSubmitting(true);
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
@@ -108,24 +118,21 @@ export default function RegisterPage() {
         whatsappNumber: '',
       };
       
-      setDoc(userRef, userData, { merge: true }).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'create',
-            requestResourceData: userData
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-
+      await setDoc(userRef, userData, { merge: true });
 
       toast({ title: '¡Bienvenido!' });
       router.push('/dashboard/seller');
     } catch (e: any) {
-      logger.error(e, {
-        component: 'RegisterPage',
-        flow: 'GoogleLogin',
-      });
-      setError('No se pudo registrar con Google.');
+       logger.error(e, { component: 'RegisterPage', flow: 'GoogleLogin' });
+       if (e.name === 'FirestorePermissionError' || (e.code && e.code.includes('firestore'))) {
+            const permissionError = new FirestorePermissionError({ path: `users/${e.uid}`, operation: 'create' });
+            errorEmitter.emit('permission-error', permissionError);
+            setError('No se pudo guardar tu perfil con Google. Contacta a soporte.');
+       } else {
+           setError('No se pudo registrar con Google.');
+       }
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -151,6 +158,7 @@ export default function RegisterPage() {
                 required
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className="grid gap-2">
@@ -162,6 +170,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className="grid gap-2">
@@ -172,13 +181,14 @@ export default function RegisterPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
              {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full">
-              Crear Cuenta
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Creando cuenta...' : 'Crear Cuenta'}
             </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin} disabled={isSubmitting}>
               Registrarse con Google
             </Button>
           </form>
@@ -193,3 +203,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

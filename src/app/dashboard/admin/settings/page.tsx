@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Percent } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useDoc, docRef } from '@/firebase';
+import { useFirestore, useDoc } from '@/firebase';
 import type { PlatformSettings } from '@/lib/types';
 import { doc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -29,18 +29,18 @@ export default function AdminSettingsPage() {
   const settingsDocRef = firestore ? doc(firestore, SETTINGS_DOC_PATH) : null;
   const { data: settings, loading } = useDoc<PlatformSettings>(settingsDocRef);
   
-  const [directSaleCommission, setDirectSaleCommission] = useState(10);
-  const [auctionSellerCommission, setAuctionSellerCommission] = useState(12.5);
-  const [auctionBuyerCommission, setAuctionBuyerCommission] = useState(12.5);
-  const [affiliateShare, setAffiliateShare] = useState(25);
+  const [directSaleCommission, setDirectSaleCommission] = useState(0);
+  const [auctionSellerCommission, setAuctionSellerCommission] = useState(0);
+  const [auctionBuyerCommission, setAuctionBuyerCommission] = useState(0);
+  const [affiliateShare, setAffiliateShare] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
       if (settings) {
-          setDirectSaleCommission(settings.directSaleCommission);
-          setAuctionSellerCommission(settings.auctionSellerCommission);
-          setAuctionBuyerCommission(settings.auctionBuyerCommission);
-          setAffiliateShare(settings.affiliateShare);
+          setDirectSaleCommission(settings.directSaleCommission || 0);
+          setAuctionSellerCommission(settings.auctionSellerCommission || 0);
+          setAuctionBuyerCommission(settings.auctionBuyerCommission || 0);
+          setAffiliateShare(settings.affiliateShare || 0);
       }
   }, [settings]);
 
@@ -68,6 +68,11 @@ export default function AdminSettingsPage() {
                 requestResourceData: updatedSettings
             });
             errorEmitter.emit('permission-error', permissionError);
+             toast({
+                variant: 'destructive',
+                title: 'Error al guardar',
+                description: 'No se pudo actualizar la configuración.',
+            });
         })
         .finally(() => {
             setIsSaving(false);
@@ -102,7 +107,7 @@ export default function AdminSettingsPage() {
                 min="0"
                 max="100"
                 className="w-24"
-                disabled={loading}
+                disabled={loading || isSaving}
               />
               <span className="text-muted-foreground">%</span>
             </div>
@@ -121,7 +126,7 @@ export default function AdminSettingsPage() {
                 min="0"
                 max="100"
                 className="w-24"
-                disabled={loading}
+                disabled={loading || isSaving}
               />
               <span className="text-muted-foreground">%</span>
             </div>
@@ -140,7 +145,7 @@ export default function AdminSettingsPage() {
                 min="0"
                 max="100"
                 className="w-24"
-                disabled={loading}
+                disabled={loading || isSaving}
               />
               <span className="text-muted-foreground">%</span>
             </div>
@@ -171,7 +176,7 @@ export default function AdminSettingsPage() {
                         className="w-24"
                         min="0"
                         max="100"
-                        disabled={loading}
+                        disabled={loading || isSaving}
                     />
                     <span className="text-muted-foreground">%</span>
                 </div>
@@ -188,3 +193,5 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+
+    

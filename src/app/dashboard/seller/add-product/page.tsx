@@ -39,6 +39,7 @@ export default function AddProductPage() {
   const [isAuction, setIsAuction] = useState(false);
   const [auctionEndDate, setAuctionEndDate] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { user } = useUser();
   const firestore = useFirestore();
@@ -71,11 +72,12 @@ export default function AddProductPage() {
       if (!firestore || !user) {
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: 'No estás autenticado o la base de datos no está disponible.',
+          title: 'Error de autenticación',
+          description: 'Debes iniciar sesión para añadir un producto.',
         });
         return;
       }
+      setIsSaving(true);
 
       const productData = {
         name: productName,
@@ -103,6 +105,13 @@ export default function AddProductPage() {
             requestResourceData: productData
         });
         errorEmitter.emit('permission-error', permissionError);
+        toast({
+          variant: 'destructive',
+          title: 'Error al guardar',
+          description: 'No se pudo crear el producto. Por favor, inténtalo de nuevo.',
+        });
+      } finally {
+        setIsSaving(false);
       }
   };
 
@@ -115,7 +124,9 @@ export default function AddProductPage() {
             Completa los detalles para poner tu producto a la venta.
           </p>
         </div>
-        <Button type="submit" size="lg">Guardar Producto</Button>
+        <Button type="submit" size="lg" disabled={isSaving}>
+          {isSaving ? 'Guardando...' : 'Guardar Producto'}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -214,3 +225,5 @@ export default function AddProductPage() {
     </form>
   );
 }
+
+    

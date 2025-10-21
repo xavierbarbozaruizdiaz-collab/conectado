@@ -35,6 +35,7 @@ export default function SellerSettingsPage() {
   const [storeName, setStoreName] = useState('');
   const [storeDescription, setStoreDescription] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (seller) {
@@ -46,6 +47,7 @@ export default function SellerSettingsPage() {
 
   const handleSaveChanges = () => {
     if (!userDocRef) return;
+    setIsSaving(true);
 
     const updatedData = {
         storeName,
@@ -67,6 +69,14 @@ export default function SellerSettingsPage() {
             requestResourceData: updatedData
         });
         errorEmitter.emit('permission-error', permissionError);
+        toast({
+            variant: 'destructive',
+            title: 'Error al guardar',
+            description: 'No se pudo actualizar la información de tu tienda.',
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
   };
 
@@ -101,7 +111,7 @@ export default function SellerSettingsPage() {
                 <Label htmlFor="storeName">
                   Nombre de la Tienda
                 </Label>
-                <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
+                <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} disabled={isSaving}/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="storeDesc">
@@ -113,13 +123,14 @@ export default function SellerSettingsPage() {
                   onChange={(e) => setStoreDescription(e.target.value)}
                   className="min-h-[120px]"
                   placeholder="Describe brevemente tu tienda, qué vendes y qué te hace especial."
+                  disabled={isSaving}
                 />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="whatsapp">
                   Número de WhatsApp
                 </Label>
-                <Input id="whatsapp" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="Ej: 595981123456" />
+                <Input id="whatsapp" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="Ej: 595981123456" disabled={isSaving}/>
                 <p className="text-xs text-muted-foreground">Incluye el código de país, sin el signo '+'.</p>
               </div>
             </CardContent>
@@ -140,6 +151,7 @@ export default function SellerSettingsPage() {
                   id="shippingPolicy"
                   placeholder="Ej: Envíos a todo el país. El costo varía según la ubicación..."
                   className="min-h-[100px]"
+                  disabled={isSaving}
                 />
               </div>
                <div className="space-y-2">
@@ -150,6 +162,7 @@ export default function SellerSettingsPage() {
                   id="returnPolicy"
                    placeholder="Ej: Se aceptan devoluciones dentro de los 7 días posteriores a la compra..."
                   className="min-h-[100px]"
+                   disabled={isSaving}
                 />
               </div>
             </CardContent>
@@ -169,22 +182,26 @@ export default function SellerSettingsPage() {
                         <AvatarImage src={seller.profilePictureUrl} />
                         <AvatarFallback>{seller.storeName.charAt(0)}</AvatarFallback>
                     </Avatar>
-                     <Button variant="outline" className="w-full">Cambiar Foto</Button>
+                     <Button variant="outline" className="w-full" disabled={isSaving}>Cambiar Foto</Button>
                 </div>
                  <div className="space-y-2 text-center">
                     <Label>Banner de la Tienda</Label>
                     <div className="relative aspect-video w-full rounded-md overflow-hidden border">
                          <Image src={seller.bannerUrl} alt="Banner" fill className="object-cover"/>
                     </div>
-                     <Button variant="outline" className="w-full">Cambiar Banner</Button>
+                     <Button variant="outline" className="w-full" disabled={isSaving}>Cambiar Banner</Button>
                 </div>
             </CardContent>
           </Card>
         </div>
       </div>
        <div className="flex justify-end">
-          <Button size="lg" onClick={handleSaveChanges}>Guardar Cambios</Button>
+          <Button size="lg" onClick={handleSaveChanges} disabled={loading || isSaving}>
+            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+          </Button>
       </div>
     </div>
   );
 }
+
+    
