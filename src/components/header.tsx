@@ -27,11 +27,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { Category } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser, useCollection } from '@/firebase';
+import {
+  useAuth,
+  useUser,
+  useCollection,
+  useFirestore,
+  collection,
+  query,
+  orderBy,
+} from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import logger from '@/lib/logger';
-import { collection, query, orderBy } from 'firebase/firestore';
 import * as LucideIcons from 'lucide-react';
 
 function SearchBar() {
@@ -254,5 +261,3 @@ function ThemeToggle() {
     </Button>
   );
 }
-
-    
