@@ -9,8 +9,8 @@ export type UserProfile = {
   profilePictureUrl: string;
   bannerUrl: string;
   whatsappNumber: string;
-  city?: string;
   department?: string;
+  city?: string;
 };
 
 export type AffiliatePayment = {
@@ -118,3 +118,18 @@ export type Product = {
   status: 'Activo' | 'Vendido' | 'Pendiente';
   wholesalePricing?: WholesalePrice[];
 };
+
+export type Category = {
+    id: string;
+    name: string;
+    icon: string;
+}
+
+export type Location = {
+    id: string;
+    name: string;
+    parentId: string | null;
+    level: number;
+}
+
+    

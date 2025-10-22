@@ -2,10 +2,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useCollection, collection, query, orderBy } from '@/firebase/firestore/use-collection';
 import { useFirestore } from '@/firebase';
-import type { User, Product } from '@/lib/data';
-import type { UserProfile } from '@/lib/types';
+import type { Product, UserProfile, Category, Location } from '@/lib/types';
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -16,13 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { categories } from '@/lib/data';
-
-const departments = [
-    "Asunción", "Concepción", "San Pedro", "Cordillera", "Guairá", "Caaguazú", 
-    "Caazapá", "Itapúa", "Misiones", "Paraguarí", "Alto Paraná", "Central", 
-    "Ñeembucú", "Amambay", "Canindeyú", "Presidente Hayes", "Boquerón", "Alto Paraguay"
-];
 
 export default function StoresPage() {
   const firestore = useFirestore();
@@ -33,8 +25,34 @@ export default function StoresPage() {
   const productsQuery = useMemo(() => (firestore ? collection(firestore, 'products') : null), [firestore]);
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
+  const categoriesQuery = useMemo(() => (firestore ? query(collection(firestore, 'categories'), orderBy('name')) : null), [firestore]);
+  const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
+
+  const locationsQuery = useMemo(() => (firestore ? query(collection(firestore, 'locations'), orderBy('name')) : null), [firestore]);
+  const { data: locations, loading: locationsLoading } = useCollection<Location>(locationsQuery);
+
+  const { departments, subLocations } = useMemo(() => {
+    if (!locations) return { departments: [], subLocations: [] };
+    return {
+        departments: locations.filter(l => l.level === 0),
+        subLocations: locations.filter(l => l.level === 1),
+    };
+  }, [locations]);
+
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [subLocationFilter, setSubLocationFilter] = useState<string>('all');
+  
+  const filteredSubLocations = useMemo(() => {
+      if (departmentFilter === 'all') return [];
+      const departmentId = departments.find(d => d.name === departmentFilter)?.id;
+      return subLocations.filter(s => s.parentId === departmentId);
+  }, [departmentFilter, departments, subLocations]);
+
+  useEffect(() => {
+    setSubLocationFilter('all');
+  }, [departmentFilter]);
+
 
   const storeCategories = useMemo(() => {
     if (!products) return {};
@@ -53,11 +71,12 @@ export default function StoresPage() {
     return users.filter(user => {
       const categoryMatch = categoryFilter === 'all' || (storeCategories[user.uid] && storeCategories[user.uid].has(categoryFilter));
       const departmentMatch = departmentFilter === 'all' || user.department === departmentFilter;
-      return categoryMatch && departmentMatch;
+      const subLocationMatch = subLocationFilter === 'all' || user.city === subLocationFilter;
+      return categoryMatch && departmentMatch && subLocationMatch;
     });
-  }, [users, categoryFilter, departmentFilter, storeCategories]);
+  }, [users, categoryFilter, departmentFilter, subLocationFilter, storeCategories]);
 
-  const loading = usersLoading || productsLoading;
+  const loading = usersLoading || productsLoading || categoriesLoading || locationsLoading;
 
   if (loading) {
       return <div>Cargando tiendas...</div>
@@ -79,7 +98,7 @@ export default function StoresPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas las categorías</SelectItem>
-            {categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+            {categories?.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select onValueChange={setDepartmentFilter} value={departmentFilter}>
@@ -88,7 +107,16 @@ export default function StoresPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los departamentos</SelectItem>
-            {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
+            {departments?.map(dep => <SelectItem key={dep.id} value={dep.name}>{dep.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select onValueChange={setSubLocationFilter} value={subLocationFilter} disabled={departmentFilter === 'all'}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filtrar por zona" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las zonas</SelectItem>
+            {filteredSubLocations.map(sub => <SelectItem key={sub.id} value={sub.name}>{sub.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -118,3 +146,5 @@ export default function StoresPage() {
     </div>
   );
 }
+
+    

@@ -22,6 +22,8 @@ import {
   Settings,
   GalleryHorizontal,
   ShoppingCart,
+  Map,
+  List,
 } from "lucide-react";
 
 const adminLinks = [
@@ -32,6 +34,8 @@ const adminLinks = [
     { href: "/dashboard/admin/subscriptions", label: "Suscripciones", icon: Award },
     { href: "/dashboard/admin/affiliates", label: "Afiliados", icon: BadgePercent },
     { href: "/dashboard/admin/banners", label: "Banners", icon: GalleryHorizontal },
+    { href: "/dashboard/admin/categories", label: "Categorías", icon: List },
+    { href: "/dashboard/admin/locations", label: "Ubicaciones", icon: Map },
     { href: "/dashboard/admin/settings", label: "Configuración", icon: Settings },
 ];
 
@@ -96,3 +100,5 @@ export default function AdminDashboardLayout({
     </SidebarProvider>
   );
 }
+
+    

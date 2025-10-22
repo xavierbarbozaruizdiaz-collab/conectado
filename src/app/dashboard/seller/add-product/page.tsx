@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -22,16 +22,15 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Upload, X, Plus, Trash2 } from 'lucide-react';
-import { categories } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useStorage, useUser, useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useStorage, useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, addDoc, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
-import type { WholesalePrice } from '@/lib/types';
+import type { WholesalePrice, Category } from '@/lib/types';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState('');
@@ -52,6 +51,8 @@ export default function AddProductPage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  const categoriesQuery = useMemo(() => firestore ? query(collection(firestore, 'categories'), orderBy('name')) : null, [firestore]);
+  const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -271,12 +272,12 @@ export default function AddProductPage() {
             <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="category">Categoría</Label>
-                    <Select required onValueChange={setCategory} value={category}>
+                    <Select required onValueChange={setCategory} value={category} disabled={categoriesLoading}>
                     <SelectTrigger id="category">
                         <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                        {categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+                        {categories?.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
                     </SelectContent>
                     </Select>
                 </div>
@@ -322,3 +323,5 @@ export default function AddProductPage() {
     </form>
   );
 }
+
+    

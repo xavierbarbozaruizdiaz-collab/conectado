@@ -10,9 +10,8 @@ import {
   Sun,
   Search,
   LogIn,
-  User as UserIcon,
-  LogOut,
   LayoutDashboard,
+  Package,
 } from 'lucide-react';
 import * as React from 'react';
 import { useCart } from '@/context/cart-context';
@@ -26,16 +25,22 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { categories } from '@/lib/data';
+import type { Category } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useCollection } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import logger from '@/lib/logger';
+import { collection, query, orderBy } from 'firebase/firestore';
+import * as LucideIcons from 'lucide-react';
 
 function SearchBar() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState('');
+  
+  const firestore = useFirestore();
+  const categoriesQuery = React.useMemo(() => (firestore ? query(collection(firestore, 'categories'), orderBy('name')) : null), [firestore]);
+  const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,14 +63,17 @@ function SearchBar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            {categories.map((category) => (
-              <DropdownMenuItem key={category.id} asChild>
-                <Link href={`/products?category=${category.name}`}>
-                  <category.icon className="mr-2 h-4 w-4" />
-                  <span>{category.name}</span>
-                </Link>
-              </DropdownMenuItem>
-            ))}
+            {categories?.map((category) => {
+                const Icon = LucideIcons[category.icon as keyof typeof LucideIcons] || Package;
+                return (
+                  <DropdownMenuItem key={category.id} asChild>
+                    <Link href={`/products?category=${category.name}`}>
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{category.name}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -158,7 +166,7 @@ function UserNav() {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
+          <LucideIcons.LogOut className="mr-2 h-4 w-4" />
           <span>Cerrar Sesión</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -246,3 +254,5 @@ function ThemeToggle() {
     </Button>
   );
 }
+
+    

@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from 'next/navigation';
-import { useCollection, collection } from '@/firebase/firestore/use-collection';
+import { useCollection, collection, query, orderBy } from '@/firebase/firestore/use-collection';
 import { useFirestore } from '@/firebase';
-import type { Product } from '@/lib/data';
+import type { Product, Category } from '@/lib/types';
 import ProductCard from "@/components/product-card";
 import {
   Select,
@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { categories } from "@/lib/data";
 
 type ProductType = "all" | "direct" | "auction";
 
@@ -25,7 +24,12 @@ const useProductFilters = () => {
     const productsQuery = useMemo(() => {
       return firestore ? collection(firestore, 'products') : null;
     }, [firestore]);
-    const { data: products, loading } = useCollection<Product>(productsQuery);
+    const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+    const categoriesQuery = useMemo(() => {
+        return firestore ? query(collection(firestore, 'categories'), orderBy('name')) : null;
+    }, [firestore]);
+    const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("featured");
@@ -82,7 +86,7 @@ const useProductFilters = () => {
     }, [category, searchTerm, filteredProducts.length]);
 
 
-    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading };
+    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading: productsLoading || categoriesLoading };
 };
 
 function ProductsPageContent() {
@@ -139,3 +143,5 @@ export default function ProductsPage() {
         </React.Suspense>
     );
 }
+
+    

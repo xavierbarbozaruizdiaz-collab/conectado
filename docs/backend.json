@@ -37,13 +37,13 @@
             "type": "string",
             "description": "The user's WhatsApp contact number."
         },
-        "city": {
-            "type": "string",
-            "description": "The city where the store is located."
-        },
         "department": {
             "type": "string",
             "description": "The department/state where the store is located."
+        },
+        "city": {
+            "type": "string",
+            "description": "The city/sub-location where the store is located."
         }
       },
       "required": ["uid", "email", "storeName"]
@@ -224,6 +224,27 @@
         "order": { "type": "number", "description": "The display order of the tier." }
       },
       "required": ["name", "price", "maxBidding", "features", "order"]
+    },
+    "Category": {
+      "title": "Product Category",
+      "description": "Defines a product category.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "icon": { "type": "string", "description": "Lucide-react icon name" }
+      },
+      "required": ["name"]
+    },
+    "Location": {
+      "title": "Location",
+      "description": "Defines a geographical location, which can be hierarchical.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "parentId": { "type": "string", "description": "ID of the parent location (e.g., a department for a city). Null for top-level locations." },
+        "level": { "type": "number", "description": "0 for departments, 1 for cities/sub-locations" }
+      },
+      "required": ["name", "level"]
     }
   },
   "auth": {
@@ -269,6 +290,16 @@
     "/subscriptionTiers/{tierId}": {
         "schema": { "$ref": "#/entities/SubscriptionTier" },
         "description": "Stores the available subscription plans for users."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Stores all product categories, manageable by admins."
+    },
+    "/locations/{locationId}": {
+        "schema": { "$ref": "#/entities/Location" },
+        "description": "Stores geographical locations like departments and cities/sub-locations."
     }
   }
 }
+
+    

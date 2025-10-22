@@ -11,18 +11,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useDoc, docRef } from "@/firebase/firestore/use-doc";
-import type { UserProfile } from '@/lib/types';
+import type { UserProfile, Location } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { setDoc } from "firebase/firestore";
+import { useState, useEffect, useMemo } from "react";
+import { setDoc, collection, query, where, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { Label } from "@/components/ui/label";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function SellerSettingsPage() {
   const { user } = useUser();
@@ -30,24 +36,51 @@ export default function SellerSettingsPage() {
   const { toast } = useToast();
   
   const userDocRef = user && firestore ? docRef(firestore, "users", user.uid) : null;
-  const { data: seller, loading } = useDoc<UserProfile>(userDocRef);
+  const { data: seller, loading: sellerLoading } = useDoc<UserProfile>(userDocRef);
+
+  const locationsQuery = useMemo(() => firestore ? query(collection(firestore, 'locations'), orderBy('name')) : null, [firestore]);
+  const { data: locations, loading: locationsLoading } = useCollection<Location>(locationsQuery);
+
+  const { departments, subLocations } = useMemo(() => {
+    if (!locations) return { departments: [], subLocations: [] };
+    return {
+        departments: locations.filter(l => l.level === 0),
+        subLocations: locations.filter(l => l.level === 1),
+    };
+  }, [locations]);
 
   const [storeName, setStoreName] = useState('');
   const [storeDescription, setStoreDescription] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [city, setCity] = useState('');
-  const [department, setDepartment] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const filteredSubLocations = useMemo(() => {
+      if (!selectedDepartment) return [];
+      const departmentId = departments.find(d => d.name === selectedDepartment)?.id;
+      return subLocations.filter(s => s.parentId === departmentId);
+  }, [selectedDepartment, departments, subLocations]);
 
   useEffect(() => {
     if (seller) {
       setStoreName(seller.storeName || '');
       setStoreDescription(seller.storeDescription || '');
       setWhatsappNumber(seller.whatsappNumber || '');
-      setCity(seller.city || '');
-      setDepartment(seller.department || '');
+      setSelectedDepartment(seller.department || '');
+      setSelectedCity(seller.city || '');
     }
   }, [seller]);
+
+  useEffect(() => {
+    // Reset city if department changes and the current city is not valid for the new department
+    if (selectedDepartment && filteredSubLocations.length > 0) {
+        const cityExistsInNewDepartment = filteredSubLocations.some(c => c.name === selectedCity);
+        if (!cityExistsInNewDepartment) {
+            setSelectedCity('');
+        }
+    }
+  }, [selectedDepartment, filteredSubLocations, selectedCity]);
 
   const handleSaveChanges = () => {
     if (!userDocRef) return;
@@ -57,8 +90,8 @@ export default function SellerSettingsPage() {
         storeName,
         storeDescription,
         whatsappNumber,
-        city,
-        department,
+        department: selectedDepartment,
+        city: selectedCity,
     };
 
     setDoc(userDocRef, updatedData, { merge: true })
@@ -85,6 +118,8 @@ export default function SellerSettingsPage() {
         setIsSaving(false);
       });
   };
+
+  const loading = sellerLoading || locationsLoading;
 
   if (loading) {
     return <div>Cargando configuración...</div>;
@@ -114,15 +149,11 @@ export default function SellerSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="storeName">
-                  Nombre de la Tienda
-                </Label>
+                <Label htmlFor="storeName">Nombre de la Tienda</Label>
                 <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} disabled={isSaving}/>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="storeDesc">
-                  Descripción de la Tienda
-                </Label>
+                <Label htmlFor="storeDesc">Descripción de la Tienda</Label>
                 <Textarea
                   id="storeDesc"
                   value={storeDescription}
@@ -134,22 +165,26 @@ export default function SellerSettingsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="space-y-2">
-                  <Label htmlFor="department">
-                    Departamento
-                  </Label>
-                  <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Ej: Central" disabled={isSaving}/>
+                  <Label htmlFor="department">Departamento</Label>
+                   <Select value={selectedDepartment} onValueChange={setSelectedDepartment} disabled={isSaving}>
+                      <SelectTrigger><SelectValue placeholder="Selecciona un departamento" /></SelectTrigger>
+                      <SelectContent>
+                        {departments.map(dep => <SelectItem key={dep.id} value={dep.name}>{dep.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                 </div>
                  <div className="space-y-2">
-                  <Label htmlFor="city">
-                    Ciudad
-                  </Label>
-                  <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ej: Asunción" disabled={isSaving}/>
+                  <Label htmlFor="city">Ciudad / Sub-Ubicación</Label>
+                   <Select value={selectedCity} onValueChange={setSelectedCity} disabled={isSaving || !selectedDepartment}>
+                      <SelectTrigger><SelectValue placeholder="Selecciona una sub-ubicación" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredSubLocations.map(city => <SelectItem key={city.id} value={city.name}>{city.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                 </div>
               </div>
                <div className="space-y-2">
-                <Label htmlFor="whatsapp">
-                  Número de WhatsApp
-                </Label>
+                <Label htmlFor="whatsapp">Número de WhatsApp</Label>
                 <Input id="whatsapp" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="Ej: 595981123456" disabled={isSaving}/>
                 <p className="text-xs text-muted-foreground">Incluye el código de país, sin el signo '+'.</p>
               </div>
@@ -164,9 +199,7 @@ export default function SellerSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="shippingPolicy">
-                  Política de Envíos
-                </Label>
+                <Label htmlFor="shippingPolicy">Política de Envíos</Label>
                 <Textarea
                   id="shippingPolicy"
                   placeholder="Ej: Envíos a todo el país. El costo varía según la ubicación..."
@@ -175,9 +208,7 @@ export default function SellerSettingsPage() {
                 />
               </div>
                <div className="space-y-2">
-                <Label htmlFor="returnPolicy">
-                  Política de Devoluciones
-                </Label>
+                <Label htmlFor="returnPolicy">Política de Devoluciones</Label>
                 <Textarea
                   id="returnPolicy"
                    placeholder="Ej: Se aceptan devoluciones dentro de los 7 días posteriores a la compra..."
