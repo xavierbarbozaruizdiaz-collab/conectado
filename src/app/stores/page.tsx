@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCollection, collection, query, orderBy } from '@/firebase/firestore/use-collection';
 import { useFirestore } from '@/firebase';
 import type { Product, UserProfile, Category, Location } from '@/lib/types';
@@ -147,4 +147,3 @@ export default function StoresPage() {
   );
 }
 
-    
