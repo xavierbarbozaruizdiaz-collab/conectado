@@ -36,6 +36,14 @@
         "whatsappNumber": {
             "type": "string",
             "description": "The user's WhatsApp contact number."
+        },
+        "city": {
+            "type": "string",
+            "description": "The city where the store is located."
+        },
+        "department": {
+            "type": "string",
+            "description": "The department/state where the store is located."
         }
       },
       "required": ["uid", "email", "storeName"]

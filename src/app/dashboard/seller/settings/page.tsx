@@ -35,6 +35,8 @@ export default function SellerSettingsPage() {
   const [storeName, setStoreName] = useState('');
   const [storeDescription, setStoreDescription] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [city, setCity] = useState('');
+  const [department, setDepartment] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -42,6 +44,8 @@ export default function SellerSettingsPage() {
       setStoreName(seller.storeName || '');
       setStoreDescription(seller.storeDescription || '');
       setWhatsappNumber(seller.whatsappNumber || '');
+      setCity(seller.city || '');
+      setDepartment(seller.department || '');
     }
   }, [seller]);
 
@@ -53,6 +57,8 @@ export default function SellerSettingsPage() {
         storeName,
         storeDescription,
         whatsappNumber,
+        city,
+        department,
     };
 
     setDoc(userDocRef, updatedData, { merge: true })
@@ -103,7 +109,7 @@ export default function SellerSettingsPage() {
             <CardHeader>
               <CardTitle>Información de la Tienda</CardTitle>
               <CardDescription>
-                Actualiza el nombre, la descripción y el número de WhatsApp de tu tienda.
+                Actualiza el nombre, la descripción y los datos de contacto de tu tienda.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -125,6 +131,20 @@ export default function SellerSettingsPage() {
                   placeholder="Describe brevemente tu tienda, qué vendes y qué te hace especial."
                   disabled={isSaving}
                 />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                  <Label htmlFor="department">
+                    Departamento
+                  </Label>
+                  <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Ej: Central" disabled={isSaving}/>
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="city">
+                    Ciudad
+                  </Label>
+                  <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ej: Asunción" disabled={isSaving}/>
+                </div>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="whatsapp">

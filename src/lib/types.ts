@@ -9,6 +9,8 @@ export type UserProfile = {
   profilePictureUrl: string;
   bannerUrl: string;
   whatsappNumber: string;
+  city?: string;
+  department?: string;
 };
 
 export type AffiliatePayment = {
@@ -93,6 +95,8 @@ export type User = {
   id: string;
   storeName: string;
   profilePictureUrl: string;
+  city?: string;
+  department?: string;
 };
 
 export type WholesalePrice = {
