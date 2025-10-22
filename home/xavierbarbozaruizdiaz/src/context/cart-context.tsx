@@ -2,7 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
-import type { Product } from '@/lib/data';
+import type { Product } from '@/lib/types';
 
 export type CartItem = {
   product: Product;
@@ -32,7 +32,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const getPriceForQuantity = useCallback((product: Product, quantity: number): number => {
-    if (!product.wholesalePricing || product.wholesalePricing.length === 0) {
+    if (product.isAuction || !product.wholesalePricing || product.wholesalePricing.length === 0) {
       return product.price;
     }
 
@@ -95,5 +95,3 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     </CartContext.Provider>
   );
 };
-
-    
