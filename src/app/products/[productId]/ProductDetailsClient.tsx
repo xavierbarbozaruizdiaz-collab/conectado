@@ -4,12 +4,12 @@
 import Image from "next/image";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import type { Product } from "@/lib/data";
+import type { Product, WholesalePrice } from "@/lib/types";
 import type { UserProfile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hammer, ShoppingCart } from "lucide-react";
+import { Hammer, ShoppingCart, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
 import CircularAuctionTimer from "@/components/circular-auction-timer";
@@ -23,6 +23,15 @@ import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 import { updateDoc, doc } from 'firebase/firestore';
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 
 function ProductImageGallery({ images, productName }: { images: string[], productName: string }) {
     const [selectedImage, setSelectedImage] = useState(0);
@@ -60,6 +69,39 @@ function ProductImageGallery({ images, productName }: { images: string[], produc
             </div>
         </div>
     )
+}
+
+function WholesalePricingTable({ pricing }: { pricing: WholesalePrice[] }) {
+  const sortedPricing = useMemo(() => pricing.sort((a, b) => a.minQuantity - b.minQuantity), [pricing]);
+
+  return (
+    <Card className="bg-muted/50">
+      <CardHeader className="p-4">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary"/>
+          Precios por Volumen
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Cantidad Mínima</TableHead>
+              <TableHead className="text-right">Precio por Unidad</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedPricing.map((tier) => (
+              <TableRow key={tier.minQuantity}>
+                <TableCell className="font-medium">{tier.minQuantity} unidades</TableCell>
+                <TableCell className="text-right font-bold text-primary">{formatCurrency(tier.price)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 }
 
 
@@ -117,20 +159,14 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
       const productRef = doc(firestore, 'products', product.id);
       const newPrice = Number(bidAmount);
 
-      // Aquí se debería validar el plan de suscripción del usuario contra el monto de la puja
-      // const { data: userProfile } = useDoc(...)
-      // if (userProfile.subscription.maxBidding < newPrice) { ... }
-      // Por ahora, asumimos que el usuario puede pujar.
-
       updateDoc(productRef, { 
           price: newPrice,
-          // Opcional: guardar el último pujador: lastBidder: user.uid
       }).then(() => {
           toast({
               title: "¡Puja realizada con éxito!",
               description: `Has pujado ${formatCurrency(newPrice)} por ${product.name}. ¡Buena suerte!`,
           });
-          setBidAmount(''); // Limpiar el input después de una puja exitosa
+          setBidAmount('');
       }).catch((error) => {
             const permissionError = new FirestorePermissionError({
                 path: productRef.path,
@@ -204,14 +240,19 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4 rounded-lg border bg-card p-6">
-            <div className="flex items-center justify-between">
-              <span className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</span>
+          <div className="space-y-6">
+            <div className="space-y-4 rounded-lg border bg-card p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-4xl font-bold text-primary">{formatCurrency(product.price)}</span>
+              </div>
+              <Button onClick={handleAddToCart} size="lg" className="w-full">
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Añadir al Carrito
+              </Button>
             </div>
-            <Button onClick={handleAddToCart} size="lg" className="w-full">
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              Añadir al Carrito
-            </Button>
+            {product.wholesalePricing && product.wholesalePricing.length > 0 && (
+              <WholesalePricingTable pricing={product.wholesalePricing} />
+            )}
           </div>
         )}
          {seller && (

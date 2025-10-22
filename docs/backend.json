@@ -55,7 +55,19 @@
             "sellerId": { "type": "string" },
             "isAuction": { "type": "boolean" },
             "auctionEndDate": { "type": "string", "format": "date-time" },
-            "status": { "type": "string", "enum": ["Activo", "Vendido", "Pendiente"] }
+            "status": { "type": "string", "enum": ["Activo", "Vendido", "Pendiente"] },
+            "wholesalePricing": {
+                "type": "array",
+                "description": "Tiers for wholesale pricing.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "minQuantity": { "type": "number" },
+                        "price": { "type": "number" }
+                    },
+                    "required": ["minQuantity", "price"]
+                }
+            }
         },
         "required": ["id", "name", "price", "sellerId", "imageUrls", "condition"]
     },

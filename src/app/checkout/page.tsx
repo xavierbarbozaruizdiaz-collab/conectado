@@ -23,7 +23,8 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import type { Product } from '@/lib/types';
 
 export default function CheckoutPage() {
   const { cart, subtotal = 0 } = useCart();
@@ -32,6 +33,19 @@ export default function CheckoutPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const getPriceForQuantity = useCallback((product: Product, quantity: number): number => {
+    if (!product.wholesalePricing || product.wholesalePricing.length === 0) {
+      return product.price;
+    }
+    const sortedTiers = [...product.wholesalePricing].sort((a, b) => b.minQuantity - a.minQuantity);
+    for (const tier of sortedTiers) {
+      if (quantity >= tier.minQuantity) {
+        return tier.price;
+      }
+    }
+    return product.price;
+  }, []);
 
   if (cart.length === 0) {
     return (
@@ -85,9 +99,9 @@ export default function CheckoutPage() {
           items: cart.map(item => ({
               productId: item.product.id,
               name: item.product.name,
-              price: item.product.price,
+              price: getPriceForQuantity(item.product, item.quantity), // Usar precio mayorista si aplica
               quantity: item.quantity,
-              sellerId: item.product.sellerId, // Asegurándose de que sellerId se guarda
+              sellerId: item.product.sellerId,
           })),
       };
 
@@ -169,20 +183,23 @@ export default function CheckoutPage() {
             <CardTitle>Resumen del Pedido</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {cart.map(item => (
-              <div key={item.product.id} className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 rounded-md overflow-hidden border">
-                         <Image src={item.product.imageUrls[0]} alt={item.product.name} fill className="object-cover"/>
-                    </div>
-                    <div>
-                        <p className="font-medium">{item.product.name}</p>
-                        <p className="text-muted-foreground">Cant: {item.quantity}</p>
-                    </div>
+            {cart.map(item => {
+              const pricePerUnit = getPriceForQuantity(item.product, item.quantity);
+              return (
+                <div key={item.product.id} className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-12 rounded-md overflow-hidden border">
+                           <Image src={item.product.imageUrls[0]} alt={item.product.name} fill className="object-cover"/>
+                      </div>
+                      <div>
+                          <p className="font-medium">{item.product.name}</p>
+                          <p className="text-muted-foreground">Cant: {item.quantity} x {formatCurrency(pricePerUnit)}</p>
+                      </div>
+                  </div>
+                  <span className="font-medium">{formatCurrency(pricePerUnit * item.quantity)}</span>
                 </div>
-                <span className="font-medium">{formatCurrency(item.product.price * item.quantity)}</span>
-              </div>
-            ))}
+              );
+            })}
             <Separator />
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">

@@ -22,19 +22,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Plus, Trash2 } from 'lucide-react';
 import { categories } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, useStorage } from '@/firebase';
 import { useDoc, docRef } from '@/firebase/firestore/use-doc';
 import { updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import type { Product } from '@/lib/data';
+import type { Product, WholesalePrice } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
 
-// Helper to check if a URL is a Firebase Storage URL
 const isFirebaseStorageUrl = (url: string) => /firebasestorage\.googleapis\.com/.test(url);
 
 export default function EditProductPage({ params }: { params: { productId: string } }) {
@@ -51,15 +50,16 @@ export default function EditProductPage({ params }: { params: { productId: strin
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
+  const [condition, setCondition] = useState('');
   const [isAuction, setIsAuction] = useState(false);
   const [auctionEndDate, setAuctionEndDate] = useState<string | null>(null);
   
-  // Track existing image URLs and new file uploads separately
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
 
+  const [wholesalePrices, setWholesalePrices] = useState<WholesalePrice[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -73,9 +73,11 @@ export default function EditProductPage({ params }: { params: { productId: strin
       setDescription(product.description);
       setPrice(product.price.toString());
       setCategory(product.category);
+      setCondition(product.condition);
       setIsAuction(product.isAuction);
       setAuctionEndDate(product.auctionEndDate || '');
       setExistingImageUrls(product.imageUrls);
+      setWholesalePrices(product.wholesalePricing || []);
     }
   }, [product, user, router, toast]);
 
@@ -106,19 +108,31 @@ export default function EditProductPage({ params }: { params: { productId: strin
     setExistingImageUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleWholesaleChange = (index: number, field: keyof WholesalePrice, value: string) => {
+    const newPrices = [...wholesalePrices];
+    newPrices[index] = { ...newPrices[index], [field]: Number(value) };
+    setWholesalePrices(newPrices);
+  };
+
+  const addWholesaleTier = () => {
+    setWholesalePrices([...wholesalePrices, { minQuantity: 0, price: 0 }]);
+  };
+
+  const removeWholesaleTier = (index: number) => {
+    setWholesalePrices(wholesalePrices.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productDocRef || !user || !storage) return;
     setIsSaving(true);
     
     try {
-        // 1. Delete images marked for deletion
         if (imagesToDelete.length > 0) {
             toast({ title: 'Eliminando imágenes antiguas...' });
             await Promise.all(imagesToDelete.map(url => deleteObject(ref(storage, url))));
         }
 
-        // 2. Upload new images
         let newUploadedUrls: string[] = [];
         if (newImageFiles.length > 0) {
             toast({ title: 'Subiendo nuevas imágenes...' });
@@ -132,7 +146,6 @@ export default function EditProductPage({ params }: { params: { productId: strin
             );
         }
         
-        // 3. Combine image URLs and update Firestore
         const finalImageUrls = [...existingImageUrls, ...newUploadedUrls];
          if (finalImageUrls.length === 0) {
             toast({ variant: 'destructive', title: 'Se requiere al menos una imagen.' });
@@ -146,9 +159,11 @@ export default function EditProductPage({ params }: { params: { productId: strin
             description: description,
             price: Number(price),
             category: category,
+            condition: condition,
             imageUrls: finalImageUrls,
             isAuction: isAuction,
             auctionEndDate: isAuction ? auctionEndDate : null,
+            wholesalePricing: wholesalePrices.filter(p => p.minQuantity > 0 && p.price > 0),
         };
 
         await updateDoc(productDocRef, productData);
@@ -199,7 +214,6 @@ export default function EditProductPage({ params }: { params: { productId: strin
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                {/* Existing Images */}
                 {existingImageUrls.map((src, index) => (
                   <div key={src} className="relative aspect-square rounded-md border group">
                     <img src={src} alt={`Imagen existente ${index}`} className="object-cover w-full h-full rounded-md" />
@@ -208,7 +222,6 @@ export default function EditProductPage({ params }: { params: { productId: strin
                     </Button>
                   </div>
                 ))}
-                {/* New Image Previews */}
                 {newImagePreviews.map((src, index) => (
                   <div key={src} className="relative aspect-square rounded-md border group">
                     <img src={src} alt={`Preview nueva ${index}`} className="object-cover w-full h-full rounded-md" />
@@ -217,7 +230,6 @@ export default function EditProductPage({ params }: { params: { productId: strin
                     </Button>
                   </div>
                 ))}
-                {/* Upload Button */}
                 {(existingImageUrls.length + newImageFiles.length) < 10 && (
                   <Label htmlFor="image-upload" className="relative aspect-square rounded-md border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground cursor-pointer hover:bg-muted/50">
                     <Upload className="h-8 w-8" />
@@ -226,6 +238,44 @@ export default function EditProductPage({ params }: { params: { productId: strin
                   </Label>
                 )}
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Precios por Cantidad (Mayorista)</CardTitle>
+              <CardDescription>Opcional. Ofrece precios reducidos para compras en volumen. No aplica para subastas.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {wholesalePrices.map((tier, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 bg-muted rounded-md">
+                   <Label className="text-sm" htmlFor={`ws-qty-${index}`}>A partir de</Label>
+                  <Input
+                    id={`ws-qty-${index}`}
+                    type="number"
+                    value={tier.minQuantity || ''}
+                    onChange={(e) => handleWholesaleChange(index, 'minQuantity', e.target.value)}
+                    className="w-24"
+                    placeholder="Cantidad"
+                    disabled={isAuction}
+                  />
+                  <Label className="text-sm" htmlFor={`ws-price-${index}`}>el precio es</Label>
+                   <Input
+                    id={`ws-price-${index}`}
+                    type="number"
+                    value={tier.price || ''}
+                    onChange={(e) => handleWholesaleChange(index, 'price', e.target.value)}
+                    className="w-32"
+                    placeholder="Gs. por unidad"
+                    disabled={isAuction}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeWholesaleTier(index)} disabled={isAuction}>
+                    <Trash2 className="h-4 w-4 text-destructive"/>
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={addWholesaleTier} disabled={isAuction}>
+                <Plus className="mr-2 h-4 w-4" /> Añadir Nivel de Precio
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -240,6 +290,20 @@ export default function EditProductPage({ params }: { params: { productId: strin
                   <SelectTrigger id="category"><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
                   <SelectContent>{categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="condition">Estado</Label>
+                  <Select required onValueChange={(value) => setCondition(value as any)} value={condition}>
+                      <SelectTrigger id="condition">
+                          <SelectValue placeholder="Selecciona un estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="Nuevo">Nuevo</SelectItem>
+                          <SelectItem value="Usado - Como nuevo">Usado - Como nuevo</SelectItem>
+                          <SelectItem value="Usado - Buen estado">Usado - Buen estado</SelectItem>
+                          <SelectItem value="Usado - Aceptable">Usado - Aceptable</SelectItem>
+                      </SelectContent>
+                  </Select>
               </div>
             </CardContent>
           </Card>

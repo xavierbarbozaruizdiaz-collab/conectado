@@ -95,6 +95,11 @@ export type User = {
   profilePictureUrl: string;
 };
 
+export type WholesalePrice = {
+  minQuantity: number;
+  price: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -107,4 +112,5 @@ export type Product = {
   isAuction: boolean;
   auctionEndDate?: string | null;
   status: 'Activo' | 'Vendido' | 'Pendiente';
+  wholesalePricing?: WholesalePrice[];
 };

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 import type { Product } from '@/lib/data';
 
 export type CartItem = {
@@ -11,7 +11,7 @@ export type CartItem = {
 
 type CartContextType = {
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -31,17 +31,33 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const addToCart = (product: Product) => {
+  const getPriceForQuantity = useCallback((product: Product, quantity: number): number => {
+    if (!product.wholesalePricing || product.wholesalePricing.length === 0) {
+      return product.price;
+    }
+
+    const sortedTiers = [...product.wholesalePricing].sort((a, b) => b.minQuantity - a.minQuantity);
+
+    for (const tier of sortedTiers) {
+      if (quantity >= tier.minQuantity) {
+        return tier.price;
+      }
+    }
+
+    return product.price;
+  }, []);
+
+  const addToCart = (product: Product, quantityToAdd: number = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.product.id === product.id);
       if (existingItem) {
         return prevCart.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + quantityToAdd }
             : item
         );
       }
-      return [...prevCart, { product, quantity: 1 }];
+      return [...prevCart, { product, quantity: quantityToAdd }];
     });
   };
 
@@ -66,8 +82,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const subtotal = useMemo(() => {
-    return cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  }, [cart]);
+    return cart.reduce((acc, item) => {
+      const pricePerUnit = getPriceForQuantity(item.product, item.quantity);
+      return acc + pricePerUnit * item.quantity;
+    }, 0);
+  }, [cart, getPriceForQuantity]);
 
 
   return (

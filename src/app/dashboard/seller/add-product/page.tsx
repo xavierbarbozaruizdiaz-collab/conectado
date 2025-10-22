@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Plus, Trash2 } from 'lucide-react';
 import { categories } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -31,6 +31,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
+import type { WholesalePrice } from '@/lib/types';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState('');
@@ -42,6 +43,7 @@ export default function AddProductPage() {
   const [auctionEndDate, setAuctionEndDate] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [wholesalePrices, setWholesalePrices] = useState<WholesalePrice[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   
   const { user } = useUser();
@@ -73,8 +75,21 @@ export default function AddProductPage() {
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     setImages(newImages);
     setImagePreviews(newPreviews);
-    // Revoke the object URL to free up memory
     URL.revokeObjectURL(imagePreviews[index]);
+  };
+
+  const handleWholesaleChange = (index: number, field: keyof WholesalePrice, value: string) => {
+    const newPrices = [...wholesalePrices];
+    newPrices[index] = { ...newPrices[index], [field]: Number(value) };
+    setWholesalePrices(newPrices);
+  };
+
+  const addWholesaleTier = () => {
+    setWholesalePrices([...wholesalePrices, { minQuantity: 0, price: 0 }]);
+  };
+
+  const removeWholesaleTier = (index: number) => {
+    setWholesalePrices(wholesalePrices.filter((_, i) => i !== index));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,6 +137,7 @@ export default function AddProductPage() {
             isAuction: isAuction,
             auctionEndDate: isAuction ? auctionEndDate : null,
             status: 'Activo',
+            wholesalePricing: wholesalePrices.filter(p => p.minQuantity > 0 && p.price > 0),
         };
 
         const docRef = await addDoc(collection(firestore, 'products'), productData);
@@ -135,7 +151,7 @@ export default function AddProductPage() {
         const permissionError = new FirestorePermissionError({
             path: 'products',
             operation: 'create',
-            requestResourceData: {} // Don't log full data for brevity
+            requestResourceData: {}
         });
         errorEmitter.emit('permission-error', permissionError);
         toast({ variant: 'destructive', title: 'Error al guardar', description: e.message });
@@ -205,6 +221,44 @@ export default function AddProductPage() {
                         </Label>
                     )}
                 </div>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>Precios por Cantidad (Mayorista)</CardTitle>
+              <CardDescription>Opcional. Ofrece precios reducidos para compras en volumen. No aplica para subastas.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {wholesalePrices.map((tier, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 bg-muted rounded-md">
+                   <Label className="text-sm" htmlFor={`ws-qty-${index}`}>A partir de</Label>
+                  <Input
+                    id={`ws-qty-${index}`}
+                    type="number"
+                    value={tier.minQuantity || ''}
+                    onChange={(e) => handleWholesaleChange(index, 'minQuantity', e.target.value)}
+                    className="w-24"
+                    placeholder="Cantidad"
+                    disabled={isAuction}
+                  />
+                  <Label className="text-sm" htmlFor={`ws-price-${index}`}>el precio es</Label>
+                   <Input
+                    id={`ws-price-${index}`}
+                    type="number"
+                    value={tier.price || ''}
+                    onChange={(e) => handleWholesaleChange(index, 'price', e.target.value)}
+                    className="w-32"
+                    placeholder="Gs. por unidad"
+                    disabled={isAuction}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeWholesaleTier(index)} disabled={isAuction}>
+                    <Trash2 className="h-4 w-4 text-destructive"/>
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={addWholesaleTier} disabled={isAuction}>
+                <Plus className="mr-2 h-4 w-4" /> Añadir Nivel de Precio
+              </Button>
             </CardContent>
           </Card>
         </div>
