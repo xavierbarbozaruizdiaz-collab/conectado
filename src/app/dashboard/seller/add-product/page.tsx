@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -21,19 +21,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X, Plus, Trash2, Star, AlertCircle } from 'lucide-react';
+import { Upload, X, Plus, Trash2, Star, AlertCircle, Info } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useStorage, useUser, useFirestore, useCollection, doc } from '@/firebase';
+import { useStorage, useUser, useFirestore, useCollection, doc, query, where, collection, addDoc, orderBy } from '@/firebase';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { collection, addDoc, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
-import type { WholesalePrice, Category, SubscriptionTier, UserProfile } from '@/lib/types';
+import type { WholesalePrice, Category, SubscriptionTier, UserProfile, PlatformSettings } from '@/lib/types';
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState('');
@@ -65,6 +66,9 @@ export default function AddProductPage() {
   
   const tiersQuery = useMemo(() => firestore ? collection(firestore!, 'subscriptionTiers') : null, [firestore]);
   const { data: tiers, loading: tiersLoading } = useCollection<SubscriptionTier>(tiersQuery);
+
+  const settingsDocRef = useMemo(() => firestore ? doc(firestore, 'config/platform') : null, [firestore]);
+  const { data: platformSettings, loading: settingsLoading } = useDoc<PlatformSettings>(settingsDocRef);
   
   const currentTier = useMemo(() => {
       if (!tiers || !userData) return null;
@@ -190,8 +194,30 @@ export default function AddProductPage() {
         setIsSaving(false);
       }
   };
+
+  const { commission, earnings, buyerPrice } = useMemo(() => {
+    if (!platformSettings) return { commission: 0, earnings: 0, buyerPrice: 0 };
+    const numPrice = Number(price) || 0;
+    
+    if (isAuction) {
+        const sellerCommission = (platformSettings.auctionSellerCommission / 100) * numPrice;
+        const buyerCommission = (platformSettings.auctionBuyerCommission / 100) * numPrice;
+        return {
+            commission: sellerCommission,
+            earnings: numPrice - sellerCommission,
+            buyerPrice: numPrice + buyerCommission
+        };
+    } else {
+        const directCommission = (platformSettings.directSaleCommission / 100) * numPrice;
+        return {
+            commission: directCommission,
+            earnings: numPrice - directCommission,
+            buyerPrice: numPrice
+        };
+    }
+  }, [price, isAuction, platformSettings]);
   
-   const loading = categoriesLoading || productsLoading || tiersLoading;
+  const loading = categoriesLoading || productsLoading || tiersLoading || settingsLoading;
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -352,7 +378,7 @@ export default function AddProductPage() {
           </Card>
            <Card>
             <CardHeader>
-              <CardTitle>Tipo de Venta</CardTitle>
+              <CardTitle>Tipo de Venta y Precio</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center space-x-2">
@@ -363,6 +389,29 @@ export default function AddProductPage() {
                     <Label htmlFor="price">{isAuction ? "Precio de Salida" : "Precio"}</Label>
                     <Input id="price" type="number" placeholder="Gs. 100.000" required value={price} onChange={(e) => setPrice(e.target.value)}/>
                 </div>
+                {Number(price) > 0 && platformSettings && (
+                  <div className="space-y-3 rounded-lg border bg-muted/50 p-4 text-sm">
+                      <div className="flex justify-between">
+                          <span className="text-muted-foreground">Tu precio base</span>
+                          <span>{formatCurrency(Number(price))}</span>
+                      </div>
+                      <div className="flex justify-between">
+                          <span className="text-muted-foreground">Comisión ({isAuction ? platformSettings.auctionSellerCommission : platformSettings.directSaleCommission}%)</span>
+                          <span className="text-destructive">- {formatCurrency(commission)}</span>
+                      </div>
+                      <Separator/>
+                      <div className="flex justify-between font-bold">
+                          <span>Tus ganancias estimadas</span>
+                          <span>{formatCurrency(earnings)}</span>
+                      </div>
+                      {isAuction && platformSettings.auctionBuyerCommission > 0 && (
+                          <div className="text-xs text-muted-foreground pt-2">
+                              <Info className="inline-block h-3 w-3 mr-1" />
+                              El precio final para el comprador (incluyendo su comisión del {platformSettings.auctionBuyerCommission}%) será de aproximadamente <span className="font-medium text-foreground">{formatCurrency(buyerPrice)}</span>.
+                          </div>
+                      )}
+                  </div>
+                )}
                 {isAuction && (
                     <div className="space-y-2">
                         <Label htmlFor="auction-end">Fecha de finalización de la subasta</Label>

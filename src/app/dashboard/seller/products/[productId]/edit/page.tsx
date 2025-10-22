@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import {
   Card,
@@ -22,17 +22,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X, Plus, Trash2 } from 'lucide-react';
-import { categories } from '@/lib/data';
+import { Upload, X, Plus, Trash2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser, useStorage } from '@/firebase';
+import { useFirestore, useUser, useStorage, useCollection } from '@/firebase';
 import { useDoc, docRef } from '@/firebase/firestore/use-doc';
-import { updateDoc } from 'firebase/firestore';
+import { updateDoc, collection, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import type { Product, WholesalePrice } from '@/lib/types';
+import type { Product, WholesalePrice, Category, PlatformSettings } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
+import { formatCurrency } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const isFirebaseStorageUrl = (url: string) => /firebasestorage\.googleapis\.com/.test(url);
 
@@ -43,8 +44,14 @@ export default function EditProductPage({ params }: { params: { productId: strin
   const { toast } = useToast();
   const router = useRouter();
 
-  const productDocRef = firestore ? docRef(firestore, "products", params.productId) : null;
-  const { data: product, loading } = useDoc<Product>(productDocRef);
+  const productDocRef = useMemo(() => firestore ? docRef(firestore, "products", params.productId) : null, [firestore, params.productId]);
+  const { data: product, loading: productLoading } = useDoc<Product>(productDocRef);
+
+  const categoriesQuery = useMemo(() => firestore ? query(collection(firestore, 'categories'), orderBy('name')) : null, [firestore]);
+  const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
+
+  const settingsDocRef = useMemo(() => firestore ? docRef(firestore, 'config/platform') : null, [firestore]);
+  const { data: platformSettings, loading: settingsLoading } = useDoc<PlatformSettings>(settingsDocRef);
 
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
@@ -179,6 +186,30 @@ export default function EditProductPage({ params }: { params: { productId: strin
     }
   };
 
+  const { commission, earnings, buyerPrice } = useMemo(() => {
+    if (!platformSettings) return { commission: 0, earnings: 0, buyerPrice: 0 };
+    const numPrice = Number(price) || 0;
+    
+    if (isAuction) {
+        const sellerCommission = (platformSettings.auctionSellerCommission / 100) * numPrice;
+        const buyerCommission = (platformSettings.auctionBuyerCommission / 100) * numPrice;
+        return {
+            commission: sellerCommission,
+            earnings: numPrice - sellerCommission,
+            buyerPrice: numPrice + buyerCommission
+        };
+    } else {
+        const directCommission = (platformSettings.directSaleCommission / 100) * numPrice;
+        return {
+            commission: directCommission,
+            earnings: numPrice - directCommission,
+            buyerPrice: numPrice
+        };
+    }
+  }, [price, isAuction, platformSettings]);
+
+  const loading = productLoading || categoriesLoading || settingsLoading;
+
   if (loading) return <div>Cargando producto...</div>;
   if (!product) return notFound();
 
@@ -288,7 +319,9 @@ export default function EditProductPage({ params }: { params: { productId: strin
                 <Label htmlFor="category">Categoría</Label>
                 <Select required onValueChange={setCategory} value={category}>
                   <SelectTrigger id="category"><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
-                  <SelectContent>{categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {categories?.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
@@ -308,7 +341,7 @@ export default function EditProductPage({ params }: { params: { productId: strin
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Tipo de Venta</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Tipo de Venta y Precio</CardTitle></CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-2">
                 <Switch id="sale-type-switch" checked={isAuction} onCheckedChange={setIsAuction} />
@@ -318,6 +351,29 @@ export default function EditProductPage({ params }: { params: { productId: strin
                 <Label htmlFor="price">{isAuction ? "Precio de Salida" : "Precio"}</Label>
                 <Input id="price" type="number" required value={price} onChange={(e) => setPrice(e.target.value)} />
               </div>
+               {Number(price) > 0 && platformSettings && (
+                  <div className="space-y-3 rounded-lg border bg-muted/50 p-4 text-sm">
+                      <div className="flex justify-between">
+                          <span className="text-muted-foreground">Tu precio base</span>
+                          <span>{formatCurrency(Number(price))}</span>
+                      </div>
+                      <div className="flex justify-between">
+                          <span className="text-muted-foreground">Comisión ({isAuction ? platformSettings.auctionSellerCommission : platformSettings.directSaleCommission}%)</span>
+                          <span className="text-destructive">- {formatCurrency(commission)}</span>
+                      </div>
+                      <Separator/>
+                      <div className="flex justify-between font-bold">
+                          <span>Tus ganancias estimadas</span>
+                          <span>{formatCurrency(earnings)}</span>
+                      </div>
+                      {isAuction && platformSettings.auctionBuyerCommission > 0 && (
+                          <div className="text-xs text-muted-foreground pt-2">
+                              <Info className="inline-block h-3 w-3 mr-1" />
+                              El precio final para el comprador (incluyendo su comisión del {platformSettings.auctionBuyerCommission}%) será de aproximadamente <span className="font-medium text-foreground">{formatCurrency(buyerPrice)}</span>.
+                          </div>
+                      )}
+                  </div>
+                )}
               {isAuction && (
                 <div className="space-y-2">
                   <Label htmlFor="auction-end">Fecha de finalización</Label>
