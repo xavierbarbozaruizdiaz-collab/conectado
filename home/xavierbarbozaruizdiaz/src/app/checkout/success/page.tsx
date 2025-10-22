@@ -7,10 +7,19 @@ import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
+import { useCart } from "@/context/cart-context";
 
 function CheckoutSuccessContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
+    const { clearCart } = useCart();
+
+    useEffect(() => {
+        // Limpia el carrito cuando el componente se monta
+        if (orderId) {
+            clearCart();
+        }
+    }, [clearCart, orderId]);
 
     return (
         <div className="container mx-auto px-4 md:px-6 py-24 flex items-center justify-center">

@@ -27,7 +27,7 @@ import { useState, useCallback } from 'react';
 import type { Product } from '@/lib/types';
 
 export default function CheckoutPage() {
-  const { cart, subtotal, clearCart } = useCart();
+  const { cart, subtotal = 0 } = useCart();
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -107,7 +107,7 @@ export default function CheckoutPage() {
 
       try {
           const docRef = await addDoc(collection(firestore, 'orders'), orderData);
-          clearCart(); // Limpiar el carrito después de una compra exitosa
+          // La limpieza del carrito ahora se hace en la página de éxito
           router.push(`/checkout/success?orderId=${docRef.id}`);
       } catch (error) {
           const permissionError = new FirestorePermissionError({
