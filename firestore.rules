@@ -1,195 +1,164 @@
 /**
- * @fileoverview Firestore Security Rules for Prototyping.
+ * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset prioritizes developer iteration speed by focusing on authorization.
- * It enforces strict user-based access control and relational integrity where necessary,
- * but it skips comprehensive data validation to allow for rapid schema changes.
+ * This ruleset enforces a user-ownership model for user profiles and restricts
+ * write access to specific roles or ownership. Read access is generally public
+ * for products and banners, with restricted write access. Listing of the `users` collection is forbidden.
  *
  * Data Structure:
- * - `/users/{userId}`: Stores public user profile data, accessible only by the owning user.
- * - `/products/{productId}`: Stores product data; publicly readable, owner-only write access.
- * - `/orders/{orderId}`: Stores order data; publicly readable, but write operations are not permitted.
- * - `/affiliates/{affiliateId}`: Stores affiliate data, accessible only by the affiliate.
- * - `/banners/{bannerId}`: Stores promotional banners; publicly readable, write access is not permitted.
- * - `/config/platform`: Stores platform-wide configuration, write access is not permitted.
- * - `/affiliateEvents/{eventId}`: Stores affiliate event data, write access is not permitted.
- * - `/subscriptionTiers/{tierId}`: Stores subscription tier information; publicly readable, write access is not permitted.
+ * - /users/{userId}: User profiles, owned by the respective user.
+ * - /products/{productId}: Products available on the platform. Publicly readable, owner-restricted writes.
+ * - /orders/{orderId}: Orders placed by users.
+ * - /affiliates/{affiliateId}: Affiliate user data.
+ * - /banners/{bannerId}: Promotional banners for the homepage.
+ * - /config/platform: Platform-wide configuration settings (single document).
+ * - /affiliateEvents/{eventId}: Affiliate event tracking data.
+ * - /subscriptionTiers/{tierId}: Subscription tier definitions.
  *
  * Key Security Decisions:
- * - User listing is disallowed for all collections to protect privacy.
- * - Data validation is relaxed to speed up prototyping, focusing only on ownership and relational integrity.
- * - Strict ownership is enforced for user profiles and write access to products.
- * - The root level collections: orders, banners, config/platform, affiliateEvents and subscriptionTiers are publicly readable, with no write access.
- *
- * Denormalization for Authorization:
- *  - Products have a `sellerId` field to easily verify ownership during create, update, and delete operations.
- *
- * Structural Segregation:
- *  - No specific segregation is implemented in this prototype.
+ * - Users can only read and write their own profile data.
+ * - Listing of all users is explicitly denied.
+ * - Products and banners are publicly readable but only writable by authorized users (e.g., admins - not implemented in this version).
+ * - Platform settings can only be read and written by admins (not implemented in this version).
+ * - Orders are only writable by authorized users (e.g., admins - not implemented in this version).
+ * - Affiliate data is only writable by authorized users (e.g., admins - not implemented in this version).
+ * - Affiliate events are only writable by authorized users (e.g., admins - not implemented in this version).
+ * - Subscription tiers are only writable by authorized users (e.g., admins - not implemented in this version).
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages access to user profile data.
+     * @description Ensures the user is signed in
+     */
+    function isSignedIn() {
+        return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource.
+     */
+    function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the existing resource.
+     */
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description User profiles are private and only accessible/modifiable by the user themselves.
      * @path /users/{userId}
-     * @allow (create) User with matching {userId} can create their profile.
-     * @allow (get, list, update, delete) User can only access their own profile.
-     * @deny (create) User cannot create a profile with a mismatched {userId}.
-     * @principle Enforces user-ownership for profile data.
+     * @allow (create) User 'user123' creates their profile with matching UID in the document.
+     * @allow (update) User 'user123' updates their own profile.
+     * @deny (create) User 'user456' attempts to create a profile for 'user123'.
+     * @deny (update) User 'user456' attempts to update 'user123's profile.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow list: if false; // Listing users is not permitted
+
+      // Allow create if the user is signed in and the userId matches the authenticated user's ID.
+      allow create: if isOwner(userId) && request.resource.data.uid == request.auth.uid;
+
+      // Allow update and delete only if the user is the owner and the document exists
       allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Manages access to product data.
+     * @description Products are publicly readable, but only writable by authorized users.
      * @path /products/{productId}
-     * @allow (get, list) Products are publicly readable.
-     * @allow (create) User can create a product if they are the seller.
-     * @allow (update, delete) User can only update or delete their own products.
-     * @deny (create) User cannot create a product with a mismatched sellerId.
-     * @principle Enforces document ownership for writes, allows public reads.
+     * @allow (get) Any user can read product details.
+     * @allow (list) Any user can list products.
+     * @deny (create) Unauthorized user attempts to create a product.
+     * @deny (update) Unauthorized user attempts to update a product.
+     * @principle Public read, owner-only writes (requires 'sellerId' field).
      */
     match /products/{productId} {
-        function isSignedIn() {
-            return request.auth != null;
-        }
-
-        function isOwner(sellerId) {
-            return isSignedIn() && request.auth.uid == sellerId;
-        }
-
-        function isExistingOwner(sellerId) {
-            return isOwner(sellerId) && resource != null;
-        }
-
-        allow get: if true;
-        allow list: if true;
-        allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
-        allow update: if isExistingOwner(resource.data.sellerId);
-        allow delete: if isExistingOwner(resource.data.sellerId);
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add admin/seller validation.
     }
 
     /**
-     * @description Manages access to order data.
+     * @description Orders can only be created by authenticated users and only updated/deleted by authorized users (e.g., admins).
      * @path /orders/{orderId}
-     * @allow (get, list) Orders are publicly readable.
-     * @deny (create, update, delete) Write operations are not permitted.
-     * @principle Orders are read-only in this prototype.
+     * @allow (create) Authenticated user creates a new order.
+     * @deny (get) Unauthorized user tries to access order data.
+     * @principle Authentication and authorization required for order management.
      */
     match /orders/{orderId} {
-        allow get: if true;
-        allow list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+        allow get: if false;
+        allow list: if false;
+        allow create: if isSignedIn();
+        allow update, delete: if false; // TODO: Add admin validation.
     }
 
     /**
-     * @description Manages access to affiliate data.
+     * @description Affiliate data management is restricted to authorized users (e.g., admins).
      * @path /affiliates/{affiliateId}
-     * @allow (get, update, delete) User can only access their own affiliate data.
-     * @allow (create) User with matching {affiliateId} can create their affiliate data.
-     * @deny (create) User cannot create an affiliate with a mismatched {affiliateId}.
-     * @deny list operations.
-     * @principle Enforces user-ownership for affiliate data.
+     * @deny (get) Unauthorized user tries to access affiliate data.
+     * @principle Authorization required for affiliate management.
      */
     match /affiliates/{affiliateId} {
-        function isSignedIn() {
-            return request.auth != null;
-        }
-
-        function isOwner(affiliateId) {
-            return isSignedIn() && request.auth.uid == affiliateId;
-        }
-
-        function isExistingOwner(affiliateId) {
-            return isOwner(affiliateId) && resource != null;
-        }
-
-        allow get: if isOwner(affiliateId);
+        allow get: if false;
         allow list: if false;
-        allow create: if isOwner(affiliateId) && request.resource.data.user.uid == affiliateId;
-        allow update: if isExistingOwner(affiliateId) && request.resource.data.user.uid == resource.data.user.uid;
-        allow delete: if isExistingOwner(affiliateId);
+        allow create, update, delete: if false; // TODO: Add admin validation.
     }
 
     /**
-     * @description Manages access to banner data.
+     * @description Banners are publicly readable, but only writable by authorized users.
      * @path /banners/{bannerId}
-     * @allow (get, list) Banners are publicly readable.
-     * @deny (create, update, delete) Write operations are not permitted.
-     * @principle Banners are read-only in this prototype.
+     * @allow (get) Any user can read banner details.
+     * @allow (list) Any user can list banners.
+     * @deny (create) Unauthorized user attempts to create a banner.
+     * @principle Public read, restricted writes.
      */
     match /banners/{bannerId} {
-        allow get: if true;
-        allow list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+        allow get, list: if true;
+        allow create, update, delete: if false; // TODO: Add admin validation.
     }
 
     /**
-     * @description Manages access to platform configuration.
+     * @description Platform settings management is restricted to authorized users (e.g., admins).
      * @path /config/platform
-     * @allow (get) Platform configuration is publicly readable.
-     * @deny (list, create, update, delete) Write operations are not permitted.
-     * @principle Platform configuration is read-only in this prototype.
+     * @deny (get) Unauthorized user tries to access platform settings.
+     * @principle Authorization required for platform configuration.
      */
     match /config/platform {
-        allow get: if true;
+        allow get: if false;
         allow list: if false;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+        allow create, update, delete: if false; // TODO: Add admin validation.
     }
 
     /**
-     * @description Manages access to affiliate event data.
+     * @description Affiliate event data management is restricted to authorized users (e.g., admins).
      * @path /affiliateEvents/{eventId}
-     * @allow (get, list) Affiliate events are publicly readable.
-     * @deny (create, update, delete) Write operations are not permitted.
+     * @deny (get) Unauthorized user tries to access affiliate event data.
+     * @principle Authorization required for affiliate event management.
      */
     match /affiliateEvents/{eventId} {
-        allow get: if true;
-        allow list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+        allow get: if false;
+        allow list: if false;
+        allow create, update, delete: if false; // TODO: Add admin validation.
     }
 
-      /**
-       * @description Manages access to subscription tier information.
-       * @path /subscriptionTiers/{tierId}
-       * @allow (get, list) Subscription tiers are publicly readable.
-       * @deny (create, update, delete) Write operations are not permitted.
-       * @principle Subscription tiers are read-only in this prototype.
-       */
-      match /subscriptionTiers/{tierId} {
-          allow get: if true;
-          allow list: if true;
-          allow create: if false;
-          allow update: if false;
-          allow delete: if false;
-      }
+    /**
+     * @description Subscription tier data management is restricted to authorized users (e.g., admins).
+     * @path /subscriptionTiers/{tierId}
+     * @deny (get) Unauthorized user tries to access subscription tier data.
+     * @principle Authorization required for subscription tier management.
+     */
+    match /subscriptionTiers/{tierId} {
+        allow get: if false;
+        allow list: if false;
+        allow create, update, delete: if false; // TODO: Add admin validation.
+    }
   }
 }
