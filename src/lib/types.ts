@@ -101,6 +101,7 @@ export type Product = {
   description: string;
   price: number;
   category: string;
+  condition: 'Nuevo' | 'Usado - Como nuevo' | 'Usado - Buen estado' | 'Usado - Aceptable';
   imageUrls: string[];
   sellerId: string;
   isAuction: boolean;

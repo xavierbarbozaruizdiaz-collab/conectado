@@ -37,6 +37,7 @@ export default function AddProductPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
+  const [condition, setCondition] = useState<'Nuevo' | 'Usado - Como nuevo' | 'Usado - Buen estado' | 'Usado - Aceptable' | ''>('');
   const [isAuction, setIsAuction] = useState(false);
   const [auctionEndDate, setAuctionEndDate] = useState('');
   const [images, setImages] = useState<File[]>([]);
@@ -115,6 +116,7 @@ export default function AddProductPage() {
             description: description,
             price: Number(price),
             category: category,
+            condition: condition,
             imageUrls: imageUrls,
             sellerId: user.uid,
             isAuction: isAuction,
@@ -222,6 +224,20 @@ export default function AddProductPage() {
                     <SelectContent>
                         {categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
                     </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="condition">Estado</Label>
+                    <Select required onValueChange={(value) => setCondition(value as any)} value={condition}>
+                        <SelectTrigger id="condition">
+                            <SelectValue placeholder="Selecciona un estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Nuevo">Nuevo</SelectItem>
+                            <SelectItem value="Usado - Como nuevo">Usado - Como nuevo</SelectItem>
+                            <SelectItem value="Usado - Buen estado">Usado - Buen estado</SelectItem>
+                            <SelectItem value="Usado - Aceptable">Usado - Aceptable</SelectItem>
+                        </SelectContent>
                     </Select>
                 </div>
             </CardContent>

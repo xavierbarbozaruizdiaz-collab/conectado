@@ -50,13 +50,14 @@
             "description": { "type": "string" },
             "price": { "type": "number" },
             "category": { "type": "string" },
+            "condition": { "type": "string", "enum": ["Nuevo", "Usado - Como nuevo", "Usado - Buen estado", "Usado - Aceptable"] },
             "imageUrls": { "type": "array", "items": { "type": "string", "format": "uri" } },
             "sellerId": { "type": "string" },
             "isAuction": { "type": "boolean" },
             "auctionEndDate": { "type": "string", "format": "date-time" },
             "status": { "type": "string", "enum": ["Activo", "Vendido", "Pendiente"] }
         },
-        "required": ["id", "name", "price", "sellerId", "imageUrls"]
+        "required": ["id", "name", "price", "sellerId", "imageUrls", "condition"]
     },
     "Order": {
       "title": "Order",
@@ -251,5 +252,3 @@
     }
   }
 }
-
-    
