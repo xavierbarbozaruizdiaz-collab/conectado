@@ -21,16 +21,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X, Plus, Trash2 } from 'lucide-react';
+import { Upload, X, Plus, Trash2, Star, AlertCircle } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useStorage, useUser, useFirestore, useCollection } from '@/firebase';
+import { useStorage, useUser, useFirestore, useCollection, doc } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { collection, addDoc, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
-import type { WholesalePrice, Category } from '@/lib/types';
+import type { WholesalePrice, Category, SubscriptionTier, UserProfile } from '@/lib/types';
+import Link from 'next/link';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState('');
@@ -53,6 +56,25 @@ export default function AddProductPage() {
 
   const categoriesQuery = useMemo(() => firestore ? query(collection(firestore, 'categories'), orderBy('name')) : null, [firestore]);
   const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
+  
+  const productsQuery = useMemo(() => user ? query(collection(firestore!, 'products'), where('sellerId', '==', user.uid)) : null, [user, firestore]);
+  const { data: sellerProducts, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  const userDocRef = useMemo(() => user ? doc(firestore!, 'users', user.uid) : null, [user, firestore]);
+  const { data: userData } = useDoc<UserProfile>(userDocRef);
+  
+  const tiersQuery = useMemo(() => firestore ? collection(firestore!, 'subscriptionTiers') : null, [firestore]);
+  const { data: tiers, loading: tiersLoading } = useCollection<SubscriptionTier>(tiersQuery);
+  
+  const currentTier = useMemo(() => {
+      if (!tiers || !userData) return null;
+      const tierName = userData.subscriptionTier || 'Gratis'; 
+      return tiers.find(t => t.name === tierName) || tiers.find(t => t.name === 'Gratis');
+  }, [tiers, userData]);
+  
+  const productCount = sellerProducts?.length || 0;
+  const productLimit = currentTier?.maxProducts ?? 5;
+  const canAddProduct = productCount < productLimit;
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -100,6 +122,14 @@ export default function AddProductPage() {
           variant: 'destructive',
           title: 'Error de inicialización',
           description: 'Los servicios de Firebase no están disponibles. Intenta recargar la página.',
+        });
+        return;
+      }
+       if (!canAddProduct) {
+        toast({
+            variant: 'destructive',
+            title: 'Límite de productos alcanzado',
+            description: 'Por favor, mejora tu plan para añadir más productos.',
         });
         return;
       }
@@ -160,6 +190,29 @@ export default function AddProductPage() {
         setIsSaving(false);
       }
   };
+  
+   const loading = categoriesLoading || productsLoading || tiersLoading;
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
+  if (!canAddProduct) {
+      return (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+              <h1 className="text-2xl font-bold">Límite de Productos Alcanzado</h1>
+              <p className="text-muted-foreground mt-2 max-w-md">
+                  Has alcanzado el límite de {productLimit} productos para tu plan actual ({currentTier?.name}). Para seguir publicando, por favor, mejora tu suscripción.
+              </p>
+              <Button asChild className="mt-6">
+                  <Link href="/pricing">
+                      <Star className="mr-2 h-4 w-4" /> Ver Planes de Suscripción
+                  </Link>
+              </Button>
+          </div>
+      )
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -170,7 +223,7 @@ export default function AddProductPage() {
             Completa los detalles para poner tu producto a la venta.
           </p>
         </div>
-        <Button type="submit" size="lg" disabled={isSaving}>
+        <Button type="submit" size="lg" disabled={isSaving || !canAddProduct}>
           {isSaving ? 'Guardando...' : 'Guardar Producto'}
         </Button>
       </div>
@@ -323,5 +376,3 @@ export default function AddProductPage() {
     </form>
   );
 }
-
-    

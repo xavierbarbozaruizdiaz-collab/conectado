@@ -17,7 +17,7 @@ import type { UserProfile, Location } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
-import { setDoc, collection, query, where, orderBy } from "firebase/firestore";
+import { setDoc, collection, query, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -35,7 +35,7 @@ export default function SellerSettingsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const userDocRef = user && firestore ? docRef(firestore, "users", user.uid) : null;
+  const userDocRef = useMemo(() => user && firestore ? docRef(firestore, "users", user.uid) : null, [user, firestore]);
   const { data: seller, loading: sellerLoading } = useDoc<UserProfile>(userDocRef);
 
   const locationsQuery = useMemo(() => firestore ? query(collection(firestore, 'locations'), orderBy('name')) : null, [firestore]);
@@ -254,5 +254,3 @@ export default function SellerSettingsPage() {
     </div>
   );
 }
-
-    

@@ -27,20 +27,37 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Plus, Search } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MoreHorizontal, Plus, Search, Star } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { Product } from '@/lib/data';
-import { useFirestore, useUser, useCollection, query, where, collection } from '@/firebase';
+import type { Product, SubscriptionTier, UserProfile } from '@/lib/types';
+import { useFirestore, useUser, useCollection, query, where, collection, doc } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Progress } from '@/components/ui/progress';
 
 export default function SellerProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const productsQuery = user ? query(collection(firestore!, 'products'), where('sellerId', '==', user.uid)) : null;
-  const { data: sellerProducts, loading } = useCollection<Product>(productsQuery);
+  const productsQuery = useMemo(() => user ? query(collection(firestore!, 'products'), where('sellerId', '==', user.uid)) : null, [user, firestore]);
+  const { data: sellerProducts, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  const userDocRef = useMemo(() => user ? doc(firestore!, 'users', user.uid) : null, [user, firestore]);
+  const { data: userData } = useDoc<UserProfile>(userDocRef);
+
+  const tiersQuery = useMemo(() => firestore ? collection(firestore!, 'subscriptionTiers') : null, [firestore]);
+  const { data: tiers, loading: tiersLoading } = useCollection<SubscriptionTier>(tiersQuery);
+  
+  const currentTier = useMemo(() => {
+      if (!tiers || !userData) return null;
+      // Default to "Gratis" if not set
+      const tierName = userData.subscriptionTier || 'Gratis'; 
+      return tiers.find(t => t.name === tierName) || tiers.find(t => t.name === 'Gratis');
+  }, [tiers, userData]);
+
 
   const filteredProducts = useMemo(() => {
     if (!sellerProducts) return [];
@@ -48,6 +65,13 @@ export default function SellerProductsPage() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [sellerProducts, searchTerm]);
+
+  const loading = productsLoading || tiersLoading;
+  
+  const productCount = sellerProducts?.length || 0;
+  const productLimit = currentTier?.maxProducts ?? 5;
+  const canAddProduct = productCount < productLimit;
+  const progress = productLimit === Infinity ? 0 : (productCount / productLimit) * 100;
 
   if (loading) {
     return <div>Cargando tus productos...</div>;
@@ -62,13 +86,32 @@ export default function SellerProductsPage() {
             Gestiona todos los productos de tu tienda.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild disabled={!canAddProduct}>
           <Link href="/dashboard/seller/add-product">
             <Plus className="mr-2 h-4 w-4" />
             Añadir Producto
           </Link>
         </Button>
       </div>
+      
+      {currentTier && (
+          <Alert>
+             <Star className="h-4 w-4" />
+            <AlertTitle>Plan {currentTier.name}</AlertTitle>
+            <AlertDescription>
+              Has publicado {productCount} de {productLimit === Infinity ? 'ilimitados' : productLimit} productos.
+              {productLimit !== Infinity && 
+                <Progress value={progress} className="mt-2" />
+              }
+               {!canAddProduct && (
+                 <p className="mt-2 text-sm text-destructive">
+                   Has alcanzado tu límite de productos. <Link href="/pricing" className="font-bold underline">Mejora tu plan</Link> para publicar más.
+                 </p>
+               )}
+            </AlertDescription>
+          </Alert>
+      )}
+
 
       <Card>
         <CardHeader>

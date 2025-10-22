@@ -28,7 +28,7 @@ export default function PricingPage() {
     <div className="container mx-auto px-4 md:px-6 py-16 md:py-24">
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-          Elige tu Plan
+          Elige tu Plan de Vendedor
         </h1>
         <p className="text-lg text-muted-foreground">
           Desbloquea más funciones y haz crecer tu tienda con nuestros flexibles niveles de suscripción. Cancela en cualquier momento.
@@ -50,9 +50,9 @@ export default function PricingPage() {
               <CardHeader className="text-center">
                 <CardTitle className="text-3xl">{tier.name}</CardTitle>
                 <CardDescription>
-                  {tier.maxBidding === Infinity || tier.maxBidding > 999999999
-                    ? "Puja sin límites"
-                    : `Puja Máxima: ${formatCurrency(tier.maxBidding)}`}
+                  {tier.maxProducts === Infinity || tier.maxProducts > 99999
+                    ? "Productos ilimitados"
+                    : `Hasta ${tier.maxProducts} productos`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow space-y-6">

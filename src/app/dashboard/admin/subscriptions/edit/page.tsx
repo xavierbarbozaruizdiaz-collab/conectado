@@ -90,8 +90,8 @@ export default function EditSubscriptionsPage() {
         tiers.forEach(tier => {
             const { id, ...tierData } = tier;
             // Handle Infinity case for Firestore
-            if (tierData.maxBidding === Infinity) {
-                tierData.maxBidding = 1.7976931348623157e+308; // Max number in JS
+            if (tierData.maxProducts === Infinity) {
+                tierData.maxProducts = 1.7976931348623157e+308; // Max number in JS
             }
             const docRef = doc(firestore, 'subscriptionTiers', id!);
             batch.set(docRef, tierData);
@@ -133,7 +133,7 @@ export default function EditSubscriptionsPage() {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8 items-start">
         {tiers.map(tier => (
           <Card key={tier.id}>
             <CardHeader>
@@ -151,18 +151,18 @@ export default function EditSubscriptionsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`maxBidding-${tier.id}`}>Puja Máxima (Gs.)</Label>
+                <Label htmlFor={`maxProducts-${tier.id}`}>Nº Máx. de Productos</Label>
                 <Input
-                  id={`maxBidding-${tier.id}`}
+                  id={`maxProducts-${tier.id}`}
                   type="number"
-                  value={tier.maxBidding === Infinity || tier.maxBidding > 999999999 ? '' : tier.maxBidding}
+                  value={tier.maxProducts === Infinity || tier.maxProducts > 99999 ? '' : tier.maxProducts}
                   placeholder="Ilimitado"
                   onChange={(e) => {
                     const value = e.target.value;
-                    handleTierChange(tier.id!, 'maxBidding', value === '' ? Infinity : Number(value))
+                    handleTierChange(tier.id!, 'maxProducts', value === '' ? Infinity : Number(value))
                   }}
                 />
-                 <p className="text-xs text-muted-foreground">Dejar en blanco para puja ilimitada.</p>
+                 <p className="text-xs text-muted-foreground">Dejar en blanco para productos ilimitados.</p>
               </div>
               <div className="space-y-4">
                 <Label>Características</Label>

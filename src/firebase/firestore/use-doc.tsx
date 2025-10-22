@@ -12,30 +12,14 @@ import { useFirestore } from '../';
 import { FirestorePermissionError } from '../errors';
 import { errorEmitter } from '../error-emitter';
 
-interface UseDocOptions {
-  // Define any options here
-}
-
-// Custom hook to memoize the document reference
-const useMemoizedDocRef = (docPathOrRef: string | DocumentReference | null) => {
-    const firestore = useFirestore() as Firestore;
-    return useMemo(() => {
-        if (!firestore || !docPathOrRef) return null;
-        return typeof docPathOrRef === 'string'
-            ? doc(firestore, docPathOrRef)
-            : docPathOrRef;
-    }, [firestore, docPathOrRef]);
-};
-
 
 export function useDoc<T = DocumentData>(
-  docPathOrRef: string | DocumentReference | null
+  docRef: DocumentReference | null
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const docRef = useMemoizedDocRef(docPathOrRef);
   const unsubscribeRef = useRef<() => void>();
 
   useEffect(() => {
@@ -91,5 +75,3 @@ export function useDoc<T = DocumentData>(
 
 // Re-export doc from firestore to be used in components
 export { doc as docRef } from 'firebase/firestore';
-
-    

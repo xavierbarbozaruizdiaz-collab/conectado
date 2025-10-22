@@ -44,6 +44,10 @@
         "city": {
             "type": "string",
             "description": "The city/sub-location where the store is located."
+        },
+        "subscriptionTier": {
+          "type": "string",
+          "description": "The ID of the user's current subscription tier."
         }
       },
       "required": ["uid", "email", "storeName"]
@@ -213,17 +217,17 @@
     },
     "SubscriptionTier": {
       "title": "Subscription Tier",
-      "description": "Defines a subscription plan for users, typically for auction bidding.",
+      "description": "Defines a subscription plan for users, typically for auction bidding or product limits.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string", "enum": ["Gratis", "Bronce", "Plata", "Oro"] },
         "price": { "type": "number" },
-        "maxBidding": { "type": "number", "description": "Maximum bidding amount allowed. Use a very large number for infinity." },
+        "maxProducts": { "type": "number", "description": "Maximum number of products a user can have. Use a very large number for infinity."},
         "features": { "type": "array", "items": { "type": "string" } },
         "order": { "type": "number", "description": "The display order of the tier." }
       },
-      "required": ["name", "price", "maxBidding", "features", "order"]
+      "required": ["name", "price", "maxProducts", "features", "order"]
     },
     "Category": {
       "title": "Product Category",
@@ -301,5 +305,3 @@
     }
   }
 }
-
-    

@@ -11,6 +11,7 @@ export type UserProfile = {
   whatsappNumber: string;
   department?: string;
   city?: string;
+  subscriptionTier?: 'Gratis' | 'Bronce' | 'Plata' | 'Oro';
 };
 
 export type AffiliatePayment = {
@@ -85,7 +86,7 @@ export type SubscriptionTier = {
   id?: string;
   name: 'Gratis' | 'Bronce' | 'Plata' | 'Oro';
   price: number;
-  maxBidding: number;
+  maxProducts: number;
   features: string[];
   order: number;
 };
@@ -110,7 +111,7 @@ export type Product = {
   description: string;
   price: number;
   category: string;
-  condition: 'Nuevo' | 'Usado - Como nuevo' | 'Usado - Buen estado' | 'Usado - Aceptable';
+  condition: 'Nuevo' | 'Usado - Como nuevo' | 'Usado - Buen estado' | 'Aceptable';
   imageUrls: string[];
   sellerId: string;
   isAuction: boolean;
@@ -131,5 +132,3 @@ export type Location = {
     parentId: string | null;
     level: number;
 }
-
-    

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import type { SubscriptionTier } from "@/lib/types";
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
-import { Check, Pencil } from "lucide-react";
+import { Check, Pencil, Package } from "lucide-react";
 import Link from "next/link";
 import { useCollection, collection, useFirestore, query, orderBy } from "@/firebase";
 
@@ -30,7 +30,7 @@ export default function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-3xl font-bold">Gestión de Suscripciones</h1>
           <p className="text-muted-foreground">
-            Visualiza y gestiona los planes de suscripción y sus límites.
+            Visualiza y gestiona los planes de suscripción para vendedores.
           </p>
         </div>
         <Button asChild>
@@ -43,9 +43,9 @@ export default function AdminSubscriptionsPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Planes de Suscripción para Subastas</CardTitle>
+          <CardTitle>Planes de Suscripción para Vendedores</CardTitle>
           <CardDescription>
-            Estos planes definen los límites de puja para los usuarios.
+            Estos planes definen los límites de productos y otras características para los vendedores.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -57,16 +57,17 @@ export default function AdminSubscriptionsPage() {
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
                       <span>{tier.name}</span>
-                      {tier.name === 'Gratis' ? (
-                        <Badge variant="secondary">Default</Badge>
-                      ) : (
+                      {tier.price > 0 && (
                         <Badge variant="default" className="bg-primary">{formatCurrency(tier.price)}/mes</Badge>
                       )}
                     </CardTitle>
-                    <CardDescription>
-                      {tier.maxBidding === Infinity || tier.maxBidding > 999999999
-                        ? "Puja máxima ilimitada"
-                        : `Puja máxima: ${formatCurrency(tier.maxBidding)}`}
+                    <CardDescription className="flex items-center gap-2 pt-2">
+                       <Package className="h-4 w-4" />
+                       <span>
+                           {tier.maxProducts === Infinity || tier.maxProducts > 99999
+                            ? "Productos ilimitados"
+                            : `${tier.maxProducts} productos`}
+                       </span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow space-y-3">

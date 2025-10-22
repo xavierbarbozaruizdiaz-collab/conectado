@@ -27,6 +27,8 @@ import logger from '@/lib/logger';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 export default function RegisterPage() {
   const [storeName, setStoreName] = useState('');
@@ -68,6 +70,7 @@ export default function RegisterPage() {
         profilePictureUrl: user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`,
         bannerUrl: `https://picsum.photos/seed/${user.uid}/1200/400`,
         whatsappNumber: '',
+        subscriptionTier: 'Gratis', // Default tier
       };
       
       await setDoc(userRef, userData, { merge: true });
@@ -112,6 +115,7 @@ export default function RegisterPage() {
         profilePictureUrl: user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`,
         bannerUrl: `https://picsum.photos/seed/${user.uid}/1200/400`,
         whatsappNumber: '',
+        subscriptionTier: 'Gratis', // Default tier
       };
       
       setDoc(userRef, userData, { merge: true }).catch(e => {
@@ -146,6 +150,12 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4 bg-blue-500/10 border-blue-500/30">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-blue-700 dark:text-blue-300">
+                  El plan gratuito te permite publicar hasta 5 productos. <Link href="/pricing" className="font-bold underline">Ver planes</Link>.
+              </AlertDescription>
+          </Alert>
           <form onSubmit={handleRegister} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="store-name">Nombre de la Tienda</Label>
