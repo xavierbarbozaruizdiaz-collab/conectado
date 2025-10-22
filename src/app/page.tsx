@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, collection } from '@/firebase/firestore/use-collection';
@@ -23,19 +23,33 @@ import { useFirestore } from '@/firebase';
 
 export default function Home() {
   const firestore = useFirestore();
-  const { data: products, loading: productsLoading } = useCollection<Product>(
-    firestore ? collection(firestore, 'products') : null
-  );
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-    firestore ? collection(firestore, 'users') : null
-  );
-  const { data: banners, loading: bannersLoading } = useCollection<Banner>(
-    firestore ? collection(firestore, 'banners') : null
-  );
 
-  const directSaleProducts = (products || []).filter((p) => !p.isAuction);
-  const auctionProducts = (products || []).filter((p) => p.isAuction);
-  const activeBanners = (banners || []).filter(b => b.status === 'Activo');
+  const productsQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'products') : null;
+  }, [firestore]);
+  const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  const usersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'users') : null;
+  }, [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+
+  const bannersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'banners') : null;
+  }, [firestore]);
+  const { data: banners, loading: bannersLoading } = useCollection<Banner>(bannersQuery);
+
+  const directSaleProducts = useMemo(() => {
+    return (products || []).filter((p) => !p.isAuction);
+  }, [products]);
+  
+  const auctionProducts = useMemo(() => {
+    return (products || []).filter((p) => p.isAuction);
+  }, [products]);
+
+  const activeBanners = useMemo(() => {
+    return (banners || []).filter(b => b.status === 'Activo');
+  }, [banners]);
 
   const autoplayPlugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })

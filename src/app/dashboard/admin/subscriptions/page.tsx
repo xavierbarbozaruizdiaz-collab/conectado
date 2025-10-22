@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -18,7 +19,9 @@ import { useCollection, collection, useFirestore, query, orderBy } from "@/fireb
 
 export default function AdminSubscriptionsPage() {
   const firestore = useFirestore();
-  const tiersQuery = firestore ? query(collection(firestore, 'subscriptionTiers'), orderBy('order')) : null;
+  const tiersQuery = useMemo(() => {
+    return firestore ? query(collection(firestore, 'subscriptionTiers'), orderBy('order')) : null;
+  }, [firestore]);
   const { data: currentTiers, loading } = useCollection<SubscriptionTier>(tiersQuery);
 
   return (
@@ -86,5 +89,3 @@ export default function AdminSubscriptionsPage() {
     </div>
   );
 }
-
-    

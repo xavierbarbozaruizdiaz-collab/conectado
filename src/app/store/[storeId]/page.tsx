@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { useDoc, docRef } from "@/firebase/firestore/use-doc";
@@ -20,7 +21,10 @@ export default function StorePage({ params }: { params: { storeId: string } }) {
     firestore ? docRef(firestore, "users", params.storeId) : null
   );
 
-  const productsQuery = firestore ? query(collection(firestore, "products"), where("sellerId", "==", params.storeId)) : null;
+  const productsQuery = useMemo(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "products"), where("sellerId", "==", params.storeId));
+  }, [firestore, params.storeId]);
   const { data: storeProducts, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   if (sellerLoading || productsLoading) {

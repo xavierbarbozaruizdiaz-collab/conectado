@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -30,7 +31,6 @@ import { formatCurrency } from '@/lib/utils';
 import type { Order, UserProfile } from '@/lib/types';
 import { useFirestore, useCollection, collection, useUser } from '@/firebase';
 import { Timestamp } from 'firebase/firestore';
-import { useMemo } from 'react';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -57,9 +57,10 @@ export default function SellerOrdersPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  const { data: allOrders, loading: ordersLoading } = useCollection<Order>(
-    firestore ? collection(firestore, 'orders') : null
-  );
+  const allOrdersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'orders') : null;
+  }, [firestore]);
+  const { data: allOrders, loading: ordersLoading } = useCollection<Order>(allOrdersQuery);
 
   const sellerOrders = useMemo(() => {
     if (!allOrders || !user) return [];
@@ -69,9 +70,10 @@ export default function SellerOrdersPage() {
     );
   }, [allOrders, user]);
 
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-      firestore ? collection(firestore, 'users') : null
-  );
+  const usersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'users') : null;
+  }, [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const getCustomerName = (userId: string) => {
       return users?.find(u => u.uid === userId)?.storeName || userId;

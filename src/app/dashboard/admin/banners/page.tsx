@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -114,9 +114,11 @@ export default function AdminBannersPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { data: banners, loading } = useCollection<Banner>(
-    firestore ? collection(firestore, 'banners') : null
-  );
+
+  const bannersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'banners') : null;
+  }, [firestore]);
+  const { data: banners, loading } = useCollection<Banner>(bannersQuery);
 
   const handleDelete = (id: string) => {
     if (!firestore) return;

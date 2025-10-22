@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -59,15 +59,20 @@ export default function AdminAffiliatesPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const { data: affiliates, loading: affiliatesLoading, error } = useCollection<Affiliate>(
-    firestore ? collection(firestore, 'affiliates') : null
-  );
+  const affiliatesQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'affiliates') : null;
+  }, [firestore]);
 
-  const filteredAffiliates = (affiliates || []).filter(
-    (affiliate) =>
-      affiliate.user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      affiliate.affiliateCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { data: affiliates, loading: affiliatesLoading, error } = useCollection<Affiliate>(affiliatesQuery);
+
+  const filteredAffiliates = useMemo(() => {
+    if (!affiliates) return [];
+    return affiliates.filter(
+      (affiliate) =>
+        affiliate.user.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        affiliate.affiliateCode.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [affiliates, searchTerm]);
   
   const handlePaymentStatusUpdate = (affiliateId: string, paymentId: string, status: AffiliatePayment['status']) => {
       if (!firestore || !affiliates) return;
@@ -109,7 +114,10 @@ export default function AdminAffiliatesPage() {
         });
   };
 
-  const allPayments = (affiliates || []).flatMap(aff => aff.paymentHistory.map(p => ({...p, user: aff.user, affiliateId: aff.id || '' }))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const allPayments = useMemo(() => {
+    if (!affiliates) return [];
+    return affiliates.flatMap(aff => aff.paymentHistory.map(p => ({...p, user: aff.user, affiliateId: aff.id || '' }))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [affiliates]);
 
   if (affiliatesLoading) {
       return <div>Cargando afiliados...</div>;

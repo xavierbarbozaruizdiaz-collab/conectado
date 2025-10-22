@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from "react";
+import React, { useMemo } from "react";
 import StatCard from "@/components/stat-card";
 import {
   DollarSign,
@@ -33,15 +33,14 @@ import type { Product, UserProfile, Order } from '@/lib/types';
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
   
-  const { data: products, loading: productsLoading } = useCollection<Product>(
-    firestore ? collection(firestore, 'products') : null
-  );
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-    firestore ? collection(firestore, 'users') : null
-  );
-  const { data: orders, loading: ordersLoading } = useCollection<Order>(
-      firestore ? collection(firestore, 'orders') : null
-  );
+  const productsQuery = useMemo(() => (firestore ? collection(firestore, 'products') : null), [firestore]);
+  const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  const usersQuery = useMemo(() => (firestore ? collection(firestore, 'users') : null), [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+
+  const ordersQuery = useMemo(() => (firestore ? collection(firestore, 'orders') : null), [firestore]);
+  const { data: orders, loading: ordersLoading } = useCollection<Order>(ordersQuery);
 
   const recentUsers = (users || []).slice(0, 5);
   const recentProducts = (products || []).slice(0, 5);

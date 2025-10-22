@@ -1,6 +1,6 @@
 
 "use client"
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -35,14 +35,19 @@ import Link from 'next/link';
 export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const firestore = useFirestore();
-  const { data: users, loading } = useCollection<UserProfile>(
-    firestore ? collection(firestore, 'users') : null
-  );
 
-  const filteredUsers = (users || []).filter(user => 
-    (user.storeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.uid || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const usersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'users') : null;
+  }, [firestore]);
+  const { data: users, loading } = useCollection<UserProfile>(usersQuery);
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter(user => 
+      (user.storeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.uid || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [users, searchTerm]);
 
   if (loading) {
     return <div>Cargando...</div>

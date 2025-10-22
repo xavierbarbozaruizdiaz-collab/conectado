@@ -21,9 +21,11 @@ type ProductType = "all" | "direct" | "auction";
 const useProductFilters = () => {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
-    const { data: products, loading } = useCollection<Product>(
-      firestore ? collection(firestore, 'products') : null
-    );
+
+    const productsQuery = useMemo(() => {
+      return firestore ? collection(firestore, 'products') : null;
+    }, [firestore]);
+    const { data: products, loading } = useCollection<Product>(productsQuery);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("featured");

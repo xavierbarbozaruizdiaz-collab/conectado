@@ -26,12 +26,12 @@ const departments = [
 
 export default function StoresPage() {
   const firestore = useFirestore();
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-    firestore ? collection(firestore, 'users') : null
-  );
-  const { data: products, loading: productsLoading } = useCollection<Product>(
-    firestore ? collection(firestore, 'products') : null
-  );
+
+  const usersQuery = useMemo(() => (firestore ? collection(firestore, 'users') : null), [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+
+  const productsQuery = useMemo(() => (firestore ? collection(firestore, 'products') : null), [firestore]);
+  const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');

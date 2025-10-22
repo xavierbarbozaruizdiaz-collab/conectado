@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { notFound } from "next/navigation";
 import { useFirestore } from "@/firebase";
 import { useCollection, collection } from "@/firebase/firestore/use-collection";
@@ -17,9 +18,10 @@ export default function ProductPage({ params }: { params: { productId: string } 
     firestore ? docRef(firestore, "products", params.productId) : null
   );
 
-  const { data: products, loading: productsLoading } = useCollection<Product>(
-    firestore ? collection(firestore, 'products') : null
-  );
+  const productsQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'products') : null;
+  }, [firestore]);
+  const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   if (productLoading || productsLoading) {
     return <div>Cargando...</div>;

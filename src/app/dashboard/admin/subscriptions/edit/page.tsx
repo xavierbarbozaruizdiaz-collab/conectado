@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SubscriptionTier } from "@/lib/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,9 @@ import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function EditSubscriptionsPage() {
   const firestore = useFirestore();
-  const tiersQuery = firestore ? query(collection(firestore, 'subscriptionTiers'), orderBy('order')) : null;
+  const tiersQuery = useMemo(() => {
+    return firestore ? query(collection(firestore, 'subscriptionTiers'), orderBy('order')) : null;
+  }, [firestore]);
   const { data: initialTiers, loading } = useCollection<SubscriptionTier>(tiersQuery);
   
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
@@ -192,5 +194,3 @@ export default function EditSubscriptionsPage() {
     </div>
   );
 }
-
-    

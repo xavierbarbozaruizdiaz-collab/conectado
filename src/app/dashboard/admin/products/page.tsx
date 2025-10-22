@@ -1,6 +1,6 @@
 
 "use client"
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -38,17 +38,24 @@ import Link from 'next/link';
 export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const firestore = useFirestore();
-  const { data: products, loading: productsLoading } = useCollection<Product>(
-    firestore ? collection(firestore, 'products') : null
-  );
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-    firestore ? collection(firestore, 'users') : null
-  );
 
-  const filteredProducts = (products || []).filter(product => 
-    (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.id || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const productsQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'products') : null;
+  }, [firestore]);
+  const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
+
+  const usersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'users') : null;
+  }, [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    return products.filter(product => 
+      (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [products, searchTerm]);
 
   if (productsLoading || usersLoading) {
     return <div>Cargando...</div>

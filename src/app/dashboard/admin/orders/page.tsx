@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -59,13 +60,15 @@ export default function AdminOrdersPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const { data: orders, loading: ordersLoading } = useCollection<Order>(
-    firestore ? collection(firestore, 'orders') : null
-  );
+  const ordersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'orders') : null;
+  }, [firestore]);
+  const { data: orders, loading: ordersLoading } = useCollection<Order>(ordersQuery);
 
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(
-      firestore ? collection(firestore, 'users') : null
-  );
+  const usersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'users') : null;
+  }, [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const getUserName = (userId: string) => {
       return users?.find(u => u.uid === userId)?.storeName || userId;
