@@ -29,8 +29,8 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Order, UserProfile } from '@/lib/types';
-import { useFirestore, useCollection, collection } from '@/firebase';
-import { Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, collection, updateDoc, doc } from '@/firebase';
+import { Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -65,13 +65,10 @@ export default function AdminOrdersPage() {
   }, [firestore]);
   const { data: orders, loading: ordersLoading } = useCollection<Order>(ordersQuery);
 
-  const usersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'users') : null;
-  }, [firestore]);
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
-
+  // NOTA: Se eliminó la carga de la colección de usuarios para evitar el error de `list`.
+  // Por ahora, se mostrará el ID del usuario.
   const getUserName = (userId: string) => {
-      return users?.find(u => u.uid === userId)?.storeName || userId;
+      return userId;
   }
 
   const handleUpdateStatus = (orderId: string, status: Order['status']) => {
@@ -94,7 +91,7 @@ export default function AdminOrdersPage() {
       });
   };
 
-  if (ordersLoading || usersLoading) {
+  if (ordersLoading) {
     return <div>Cargando pedidos...</div>;
   }
 
@@ -120,7 +117,7 @@ export default function AdminOrdersPage() {
               <TableRow>
                 <TableHead>ID Pedido</TableHead>
                 <TableHead>Fecha</TableHead>
-                <TableHead>Cliente</TableHead>
+                <TableHead>ID Cliente</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -131,7 +128,7 @@ export default function AdminOrdersPage() {
                 <TableRow key={order.id}>
                   <TableCell className="font-mono text-xs">#{order.id?.substring(0, 7)}</TableCell>
                   <TableCell>{order.createdAt ? formatDate(order.createdAt as Timestamp) : 'N/A'}</TableCell>
-                  <TableCell>{getUserName(order.userId)}</TableCell>
+                  <TableCell className="font-mono text-xs">{getUserName(order.userId)}</TableCell>
                   <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell className="text-right">

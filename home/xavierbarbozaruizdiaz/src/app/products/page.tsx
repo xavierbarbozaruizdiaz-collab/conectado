@@ -19,10 +19,20 @@ type ProductType = "all" | "direct" | "auction";
 const useProductFilters = () => {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
-
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortBy, setSortBy] = useState("featured");
+    
+    const productType = (searchParams.get('type') as ProductType | null) || "all";
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    
     const productsQuery = useMemo(() => {
-      return firestore ? query(collection(firestore, 'products')) : null;
-    }, [firestore]);
+      if (!firestore) return null;
+      // Si no hay filtros de búsqueda o categoría, no se carga nada para evitar el `list` general.
+      if (!category && !search && productType === 'all') return null;
+      return query(collection(firestore, 'products'));
+    }, [firestore, category, search, productType]);
+
     const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
     const categoriesQuery = useMemo(() => {
@@ -30,21 +40,16 @@ const useProductFilters = () => {
     }, [firestore]);
     const { data: categories, loading: categoriesLoading } = useCollection<Category>(categoriesQuery);
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [sortBy, setSortBy] = useState("featured");
-    
-    const productType = (searchParams.get('type') as ProductType | null) || "all";
-    const category = searchParams.get('category');
-    const search = searchParams.get('search');
 
     useEffect(() => {
         setSearchTerm(search || "");
     }, [search]);
 
     const filteredProducts = useMemo(() => {
+        if (!products) return [];
         return (products || [])
             .filter((product) => {
-                const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const searchMatch = !searchTerm || product.name.toLowerCase().includes(searchTerm.toLowerCase());
                 const typeMatch =
                     productType === 'all' ||
                     (productType === 'direct' && !product.isAuction) ||
@@ -59,10 +64,9 @@ const useProductFilters = () => {
                     case "price-desc":
                         return b.price - a.price;
                     case "newest":
-                        // Assuming newer products have greater IDs (like timestamps)
                         return (b.id || "").localeCompare(a.id || "");
                     default:
-                        return 0; // or some other default logic
+                        return 0; 
                 }
             });
     }, [searchTerm, productType, sortBy, category, products]);
@@ -81,19 +85,17 @@ const useProductFilters = () => {
         if (category || searchTerm) {
             return `${filteredProducts.length} productos encontrados.`;
         }
-        return "Encuentra lo que buscas en nuestra amplia colección.";
+        return "Filtra o busca para encontrar lo que necesitas.";
     }, [category, searchTerm, filteredProducts.length]);
 
 
-    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading: productsLoading || categoriesLoading };
+    const loading = productsQuery === null ? false : productsLoading;
+
+    return { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading, productsQuery };
 };
 
 function ProductsPageContent() {
-  const { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading } = useProductFilters();
-
-  if (loading) {
-      return <div>Cargando productos...</div>
-  }
+  const { filteredProducts, sortBy, setSortBy, pageTitle, pageDescription, loading, productsQuery } = useProductFilters();
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
@@ -118,13 +120,19 @@ function ProductsPageContent() {
       </div>
       
       <main>
-        {filteredProducts.length > 0 ? (
+        {loading && <div className="text-center py-16">Cargando productos...</div>}
+        {!loading && productsQuery === null && (
+             <div className="text-center py-16 border-2 border-dashed rounded-lg col-span-full">
+              <p className="text-muted-foreground">Usa la barra de búsqueda o los filtros para empezar a explorar.</p>
+          </div>
+        )}
+        {!loading && productsQuery !== null && filteredProducts.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        ) : (
+        ) : !loading && productsQuery !== null && (
           <div className="text-center py-16 border-2 border-dashed rounded-lg col-span-full">
               <p className="text-muted-foreground">No se encontraron productos. Intenta ajustar tus filtros.</p>
           </div>
@@ -134,7 +142,6 @@ function ProductsPageContent() {
   );
 }
 
-// We wrap the page in a Suspense boundary to allow `useSearchParams` to work correctly.
 export default function ProductsPage() {
     return (
         <React.Suspense fallback={<div>Cargando...</div>}>

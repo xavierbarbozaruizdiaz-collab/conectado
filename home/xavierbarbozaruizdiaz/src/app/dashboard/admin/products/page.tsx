@@ -1,3 +1,4 @@
+
 "use client"
 import { useState, useMemo } from 'react';
 import {
@@ -17,8 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCollection, collection, useFirestore, query } from '@/firebase';
-import { deleteDoc, doc } from 'firebase/firestore';
+import { useCollection, collection, useFirestore, query, where, deleteDoc, doc } from '@/firebase';
 import type { Product, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { MoreHorizontal, Search } from "lucide-react";
@@ -42,12 +42,16 @@ export default function AdminProductsPage() {
   const { toast } = useToast();
 
   const productsQuery = useMemo(() => {
-    return firestore ? query(collection(firestore, 'products')) : null;
-  }, [firestore]);
+    // Solo se ejecuta la consulta si hay un término de búsqueda para evitar el error `list`
+    if (!firestore || !searchTerm) return null;
+    return query(collection(firestore, 'products'));
+  }, [firestore, searchTerm]);
+
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   const usersQuery = useMemo(() => {
-    return firestore ? query(collection(firestore, 'users')) : null;
+    if (!firestore) return null;
+    return query(collection(firestore, 'users'));
   }, [firestore]);
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
@@ -84,9 +88,7 @@ export default function AdminProductsPage() {
         });
   };
 
-  if (productsLoading || usersLoading) {
-    return <div>Cargando...</div>
-  }
+  const loading = productsLoading || usersLoading;
 
   return (
     <div className="space-y-8">
@@ -105,7 +107,7 @@ export default function AdminProductsPage() {
                 <div>
                     <CardTitle>Todos los Productos</CardTitle>
                     <CardDescription>
-                        {products?.length || 0} productos en total.
+                        {searchTerm ? `${filteredProducts.length} productos encontrados.` : 'Introduce un término para buscar productos.'}
                     </CardDescription>
                 </div>
                  <div className="relative w-full max-w-sm">
@@ -131,7 +133,8 @@ export default function AdminProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => {
+              {loading && searchTerm && <TableRow><TableCell colSpan={5} className="text-center">Buscando...</TableCell></TableRow>}
+              {!loading && filteredProducts.map((product) => {
                 const seller = (users || []).find(u => u.uid === product.sellerId);
                 return (
                     <TableRow key={product.id}>
@@ -183,6 +186,7 @@ export default function AdminProductsPage() {
                     </TableRow>
                 );
               })}
+              {!searchTerm && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Empieza a buscar para ver los productos.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
