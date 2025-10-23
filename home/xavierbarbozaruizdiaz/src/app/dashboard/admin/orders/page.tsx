@@ -65,10 +65,14 @@ export default function AdminOrdersPage() {
   }, [firestore]);
   const { data: orders, loading: ordersLoading } = useCollection<Order>(ordersQuery);
 
-  // NOTA: Se eliminó la carga de la colección de usuarios para evitar el error de `list`.
-  // Por ahora, se mostrará el ID del usuario.
+  const usersQuery = useMemo(() => {
+    return firestore ? collection(firestore, 'users') : null;
+  }, [firestore]);
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+
   const getUserName = (userId: string) => {
-      return userId;
+      const user = users?.find(u => u.uid === userId);
+      return user?.storeName || userId;
   }
 
   const handleUpdateStatus = (orderId: string, status: Order['status']) => {
@@ -91,7 +95,9 @@ export default function AdminOrdersPage() {
       });
   };
 
-  if (ordersLoading) {
+  const loading = ordersLoading || usersLoading;
+
+  if (loading) {
     return <div>Cargando pedidos...</div>;
   }
 
@@ -117,7 +123,7 @@ export default function AdminOrdersPage() {
               <TableRow>
                 <TableHead>ID Pedido</TableHead>
                 <TableHead>Fecha</TableHead>
-                <TableHead>ID Cliente</TableHead>
+                <TableHead>Cliente</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -128,7 +134,7 @@ export default function AdminOrdersPage() {
                 <TableRow key={order.id}>
                   <TableCell className="font-mono text-xs">#{order.id?.substring(0, 7)}</TableCell>
                   <TableCell>{order.createdAt ? formatDate(order.createdAt as Timestamp) : 'N/A'}</TableCell>
-                  <TableCell className="font-mono text-xs">{getUserName(order.userId)}</TableCell>
+                  <TableCell>{getUserName(order.userId)}</TableCell>
                   <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell className="text-right">

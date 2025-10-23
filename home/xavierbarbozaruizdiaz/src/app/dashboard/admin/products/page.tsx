@@ -42,18 +42,11 @@ export default function AdminProductsPage() {
   const { toast } = useToast();
 
   const productsQuery = useMemo(() => {
-    // Solo se ejecuta la consulta si hay un término de búsqueda para evitar el error `list`
     if (!firestore || !searchTerm) return null;
     return query(collection(firestore, 'products'));
   }, [firestore, searchTerm]);
 
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
-
-  const usersQuery = useMemo(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'users'));
-  }, [firestore]);
-  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -88,7 +81,7 @@ export default function AdminProductsPage() {
         });
   };
 
-  const loading = productsLoading || usersLoading;
+  const loading = productsLoading;
 
   return (
     <div className="space-y-8">
@@ -126,7 +119,7 @@ export default function AdminProductsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead>Vendedor</TableHead>
+                <TableHead>ID Vendedor</TableHead>
                 <TableHead>Precio</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -135,7 +128,6 @@ export default function AdminProductsPage() {
             <TableBody>
               {loading && searchTerm && <TableRow><TableCell colSpan={5} className="text-center">Buscando...</TableCell></TableRow>}
               {!loading && filteredProducts.map((product) => {
-                const seller = (users || []).find(u => u.uid === product.sellerId);
                 return (
                     <TableRow key={product.id}>
                     <TableCell>
@@ -146,8 +138,8 @@ export default function AdminProductsPage() {
                             <span className="font-medium">{product.name}</span>
                         </div>
                     </TableCell>
-                    <TableCell>
-                        {seller ? seller.storeName : 'N/A'}
+                    <TableCell className="font-mono text-xs">
+                        {product.sellerId}
                     </TableCell>
                     <TableCell>{formatCurrency(product.price)}</TableCell>
                     <TableCell>

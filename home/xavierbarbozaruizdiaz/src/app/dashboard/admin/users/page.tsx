@@ -1,3 +1,4 @@
+
 "use client"
 import { useState, useMemo } from 'react';
 import {
@@ -18,7 +19,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useFirestore, useCollection, collection } from '@/firebase';
+import { useFirestore, useCollection, collection, query } from '@/firebase';
 import type { UserProfile } from '@/lib/types';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
@@ -35,21 +36,20 @@ export default function AdminUsersPage() {
   const firestore = useFirestore();
 
   const usersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'users') : null;
-  }, [firestore]);
+    // Solo se ejecuta la consulta si hay un término de búsqueda
+    if (!firestore || !searchTerm) return null;
+    return query(collection(firestore, 'users'));
+  }, [firestore, searchTerm]);
   const { data: users, loading } = useCollection<UserProfile>(usersQuery);
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     return users.filter(user => 
       (user.storeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.uid || '').toLowerCase().includes(searchTerm.toLowerCase())
+      (user.uid || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [users, searchTerm]);
-
-  if (loading) {
-    return <div>Cargando...</div>
-  }
 
   return (
     <div className="space-y-8">
@@ -68,13 +68,13 @@ export default function AdminUsersPage() {
                 <div>
                     <CardTitle>Todos los Usuarios</CardTitle>
                     <CardDescription>
-                        {users?.length || 0} usuarios en total.
+                        {searchTerm ? `${filteredUsers.length} usuarios encontrados.` : 'Introduce un término para buscar usuarios.'}
                     </CardDescription>
                 </div>
                  <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por tienda o ID..."
+                        placeholder="Buscar por tienda, email o ID..."
                         className="pl-9"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -93,7 +93,8 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {loading && searchTerm && <TableRow><TableCell colSpan={4} className="text-center">Buscando...</TableCell></TableRow>}
+              {!loading && filteredUsers.map((user) => (
                 <TableRow key={user.uid}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -126,6 +127,7 @@ export default function AdminUsersPage() {
                   </TableCell>
                 </TableRow>
               ))}
+               {!searchTerm && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Empieza a buscar para ver los usuarios.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
