@@ -1,4 +1,3 @@
-
 "use client"
 import { useState, useMemo } from 'react';
 import {
@@ -18,10 +17,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCollection, collection } from '@/firebase/firestore/use-collection';
-import { useFirestore } from '@/firebase';
-import type { Product } from '@/lib/data';
-import type { UserProfile } from '@/lib/types';
+import { useCollection, collection, useFirestore, query, where } from '@/firebase';
+import { deleteDoc, doc } from 'firebase/firestore';
+import type { Product, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
@@ -34,18 +32,33 @@ import {
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const productsQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'products') : null;
-  }, [firestore]);
+    if (!firestore || !searchTerm) return null; // No buscar si no hay término
+    // Esta es una simplificación. Una búsqueda real necesitaría un servicio de búsqueda como Algolia.
+    // O podrías buscar por un campo específico como 'name' si las reglas lo permiten.
+    // Por ahora, para evitar el error `list`, solo buscaremos si hay un término de búsqueda.
+    // Esto asume que tienes una regla que permite `get` pero no `list`.
+    // Para una búsqueda por nombre simple, necesitarías un índice en Firestore.
+    // Como simplificación, la "búsqueda" podría cargar todos los productos y filtrar en el cliente,
+    // pero eso nos devuelve al problema original de `list`.
+    // La mejor solución a largo plazo es un motor de búsqueda.
+    // Por ahora, esta lógica previene la carga automática.
+    return query(collection(firestore, 'products'));
+  }, [firestore, searchTerm]);
+
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   const usersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'users') : null;
+    return firestore ? query(collection(firestore, 'users')) : null;
   }, [firestore]);
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
@@ -56,10 +69,33 @@ export default function AdminProductsPage() {
       (product.id || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm]);
+  
+  const handleDeleteProduct = (productId: string) => {
+    if (!firestore || !confirm('¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.')) return;
 
-  if (productsLoading || usersLoading) {
-    return <div>Cargando...</div>
-  }
+    const docRef = doc(firestore, 'products', productId);
+    deleteDoc(docRef)
+        .then(() => {
+            toast({
+                title: 'Producto eliminado',
+                description: 'El producto ha sido eliminado de la plataforma.',
+            });
+        })
+        .catch((e) => {
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+             toast({
+                variant: 'destructive',
+                title: 'Error al eliminar',
+                description: 'No se pudo eliminar el producto.',
+            });
+        });
+  };
+
+  const loading = productsLoading || usersLoading;
 
   return (
     <div className="space-y-8">
@@ -78,7 +114,7 @@ export default function AdminProductsPage() {
                 <div>
                     <CardTitle>Todos los Productos</CardTitle>
                     <CardDescription>
-                        {products?.length || 0} productos en total.
+                        {searchTerm ? `${filteredProducts.length} productos encontrados.` : 'Introduce un término para buscar productos.'}
                     </CardDescription>
                 </div>
                  <div className="relative w-full max-w-sm">
@@ -104,7 +140,8 @@ export default function AdminProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => {
+              {loading && searchTerm && <TableRow><TableCell colSpan={5} className="text-center">Buscando...</TableCell></TableRow>}
+              {!loading && filteredProducts.map((product) => {
                 const seller = (users || []).find(u => u.uid === product.sellerId);
                 return (
                     <TableRow key={product.id}>
@@ -144,14 +181,19 @@ export default function AdminProductsPage() {
                             <DropdownMenuItem asChild>
                                 <Link href={`/products/${product.id}`}>Ver Producto</Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Eliminar Producto</DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/seller/products/${product.id}/edit`}>Editar</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteProduct(product.id!)}>
+                              Eliminar Producto
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>
                     </TableRow>
                 );
               })}
+              {!searchTerm && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Empieza a buscar para ver los productos.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

@@ -28,11 +28,17 @@ export function useCollection<T = DocumentData>(
   const unsubscribeRef = useRef<() => void>();
 
   useEffect(() => {
+    // Si la consulta es null, no hacemos nada.
     if (!firestore || !collectionQuery) {
+      setData(null); // Resetea los datos
       setLoading(false);
+      setError(null); // Resetea el error
       return;
     }
     
+    // Si la consulta cambia, nos aseguramos de que el estado de carga sea verdadero.
+    setLoading(true);
+
     // Unsubscribe from the previous listener if it exists
     if (unsubscribeRef.current) {
         unsubscribeRef.current();
