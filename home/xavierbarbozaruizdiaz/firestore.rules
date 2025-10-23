@@ -1,0 +1,227 @@
+/**
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes security by enforcing strict ownership and role-based access control.
+ * All write operations require authentication and appropriate authorization.
+ * Data validation is minimized for rapid prototyping, focusing on authorization-critical fields only.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores public user profile information, accessible only by the user themselves.
+ * - /products/{productId}: Stores product information, publicly readable but writable only by the seller.
+ * - /orders/{orderId}: Stores customer orders, publicly readable but writable only by the user that created the order.
+ * - /affiliates/{affiliateId}: Stores affiliate data, accessible only by the affiliate themselves.
+ * - /banners/{bannerId}: Stores promotional banners, publicly readable, writable by admins (unimplemented).
+ * - /config/platform: Stores platform settings, writable by admins (unimplemented).
+ * - /affiliateEvents/{eventId}: Stores affiliate event data, writable only if the affiliateId matches the authenticated user.
+ * - /subscriptionTiers/{tierId}: Stores subscription plans, publicly readable, writable by admins (unimplemented).
+ * - /categories/{categoryId}: Stores product categories, publicly readable, writable by admins (unimplemented).
+ * - /locations/{locationId}: Stores geographical locations, publicly readable, writable by admins (unimplemented).
+ *
+ * Key Security Decisions:
+ * - Users can only read and write their own profile data under /users/{userId}.
+ * - Products are publicly readable, but only the seller can modify them.
+ * - Orders are publicly readable, but only the user can modify them.
+ * - Affiliates can only read and write their own affiliate data under /affiliates/{affiliateId}.
+ * - Platform settings and banners are restricted to admin access (unimplemented in this version).
+ * - Affiliate events are linked to the user performing the action.
+ *
+ * Denormalization for Authorization:
+ * - The products documents denormalizes the sellerId, in order to grant write access to the product to only the seller.
+ * - The orders documents denormalizes the userId, in order to grant write access to the order to only the user that created the order.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages user profile data.  Users can only read and write their own profile.
+     * @path /users/{userId}
+     * @allow (create, update): User with UID 'test_user' can create/update their own profile with matching userId.
+     *   request.auth.uid == 'test_user' and request.resource.data.uid == 'test_user' (on create)
+     *   request.auth.uid == 'test_user' and resource.data.uid == 'test_user' (on update)
+     * @allow (get, list): User with UID 'test_user' can read their profile (get) or list all profiles (list).
+     *   request.auth.uid == 'test_user'
+     * @deny (create): User with UID 'other_user' cannot create a profile for 'test_user'.
+     *   request.auth.uid == 'other_user' and request.resource.data.uid == 'test_user'
+     * @deny (update): User with UID 'other_user' cannot update the profile of 'test_user'.
+     *   request.auth.uid == 'other_user' and resource.data.uid == 'test_user'
+     * @deny (delete): Only the user can delete their profile.
+     *   request.auth.uid != 'test_user'
+     * @principle Enforces document ownership; users can only manage their own profiles.
+     */
+    match /users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages product data.  Products are publicly readable, but only the seller can modify them.
+     * @path /products/{productId}
+     * @allow (get, list): Any user can read any product.
+     * @allow (create): User with UID 'test_user' can create a product, if they are the seller (sellerId in document matches UID).
+     *   request.auth.uid == 'test_user' and request.resource.data.sellerId == 'test_user'
+     * @allow (update, delete): User with UID 'test_user' can update/delete a product if they are the seller.
+     *   request.auth.uid == 'test_user' and resource.data.sellerId == 'test_user'
+     * @deny (create): User with UID 'other_user' cannot create a product and assign 'test_user' as the seller.
+     *   request.auth.uid == 'other_user' and request.resource.data.sellerId == 'test_user'
+     * @deny (update, delete): User with UID 'other_user' cannot update/delete a product owned by 'test_user'.
+     *   request.auth.uid == 'other_user' and resource.data.sellerId == 'test_user'
+     * @principle Enforces document ownership for writes; any user can read products.
+     */
+    match /products/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.sellerId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.sellerId);
+    }
+
+    /**
+     * @description Manages order data.  Orders are publicly readable, but only the user that created the order can modify them.
+     * @path /orders/{orderId}
+     * @allow (get, list): Any user can read any order.
+     * @allow (create): User with UID 'test_user' can create an order for themself (userId in document matches UID).
+     *   request.auth.uid == 'test_user' and request.resource.data.userId == 'test_user'
+     * @allow (update, delete): User with UID 'test_user' can update/delete an order if they are the owner of that order.
+     *   request.auth.uid == 'test_user' and resource.data.userId == 'test_user'
+     * @deny (create): User with UID 'other_user' cannot create an order and assign 'test_user' as the user of the order.
+     *   request.auth.uid == 'other_user' and request.resource.data.userId == 'test_user'
+     * @deny (update, delete): User with UID 'other_user' cannot update/delete an order owned by 'test_user'.
+     *   request.auth.uid == 'other_user' and resource.data.userId == 'test_user'
+     * @principle Enforces document ownership for writes; any user can read orders.
+     */
+    match /orders/{orderId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.userId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Manages affiliate data.  Affiliates can only read and write their own data.
+     * @path /affiliates/{affiliateId}
+     * @allow (create, update): Affiliate with UID 'test_user' can create/update their own data with matching affiliateId.
+     *   request.auth.uid == 'test_user' and affiliateId == 'test_user'
+     * @allow (get, list): Affiliate with UID 'test_user' can read their data (get) or list all affiliate (list).
+     *   request.auth.uid == 'test_user' and affiliateId == 'test_user'
+     * @deny (create): Affiliate with UID 'other_user' cannot create data for 'test_user'.
+     *   request.auth.uid == 'other_user' and affiliateId == 'test_user'
+     * @deny (update): Affiliate with UID 'other_user' cannot update the data of 'test_user'.
+     *   request.auth.uid == 'other_user' and affiliateId == 'test_user'
+     * @deny (delete): Only the affiliate can delete their data.
+     *   request.auth.uid != 'test_user' and affiliateId == 'test_user'
+     * @principle Enforces document ownership; affiliates can only manage their own data.
+     */
+    match /affiliates/{affiliateId} {
+      allow get: if isSignedIn() && isOwner(affiliateId);
+      allow list: if isSignedIn() && isOwner(affiliateId);
+      allow create: if isSignedIn() && isOwner(affiliateId) && affiliateId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(affiliateId) && affiliateId == request.auth.uid;
+      allow delete: if isSignedIn() && isExistingOwner(affiliateId);
+    }
+
+    /**
+     * @description Manages promotional banners. Banners are publicly readable, but only admins can modify them.
+     * @path /banners/{bannerId}
+     * @allow (get, list): Any user can read any banner.
+     * @deny (create, update, delete): Only admins can modify banners (unimplemented).
+     * @principle Publicly readable, admin-only write access (admin check unimplemented).
+     */
+    match /banners/{bannerId} {
+      allow get: if true;
+      allow list: if true;
+      allow create, update, delete: if false; // TODO: Add admin check
+    }
+
+    /**
+     * @description Manages global platform settings. Only admins can modify these settings.
+     * @path /config/platform
+     * @deny (get, list, create, update, delete): Only admins can access (unimplemented).
+     * @principle Admin-only access (admin check unimplemented).
+     */
+    match /config/platform {
+        allow get, list: if false; // TODO: Add admin check
+        allow create, update, delete: if false; // TODO: Add admin check
+    }
+
+    /**
+     * @description Tracks affiliate events. Only the affiliate can create events for themselves.
+     * @path /affiliateEvents/{eventId}
+     * @allow (create): Affiliate with UID 'test_user' can create an event with matching affiliateId.
+     *   request.auth.uid == 'test_user' and request.resource.data.affiliateId == 'test_user'
+     * @allow (get, list, update, delete): Not allowed.
+     * @deny (create): User with UID 'other_user' cannot create an event and assign 'test_user' as the affiliateId.
+     *   request.auth.uid == 'other_user' and request.resource.data.affiliateId == 'test_user'
+     * @principle Enforces that only the affiliate can create event and the data contains the user's id.
+     */
+    match /affiliateEvents/{eventId} {
+      allow get, list, update, delete: if false;
+      allow create: if isSignedIn() && request.resource.data.affiliateId == request.auth.uid;
+    }
+
+    /**
+     * @description Manages subscription tiers. Subscription tiers are publicly readable, but only admins can modify them.
+     * @path /subscriptionTiers/{tierId}
+     * @allow (get, list): Any user can read any subscription tier.
+     * @deny (create, update, delete): Only admins can modify subscription tiers (unimplemented).
+     * @principle Publicly readable, admin-only write access (admin check unimplemented).
+     */
+    match /subscriptionTiers/{tierId} {
+        allow get: if true;
+        allow list: if true;
+        allow create, update, delete: if false; // TODO: Add admin check
+    }
+
+    /**
+     * @description Manages product categories. Categories are publicly readable, but only admins can modify them.
+     * @path /categories/{categoryId}
+     * @allow (get, list): Any user can read any category.
+     * @deny (create, update, delete): Only admins can modify categories (unimplemented).
+     * @principle Publicly readable, admin-only write access (admin check unimplemented).
+     */
+    match /categories/{categoryId} {
+        allow get: if true;
+        allow list: if true;
+        allow create, update, delete: if false; // TODO: Add admin check
+    }
+
+    /**
+     * @description Manages geographical locations. Locations are publicly readable, but only admins can modify them.
+     * @path /locations/{locationId}
+     * @allow (get, list): Any user can read any location.
+     * @deny (create, update, delete): Only admins can modify locations (unimplemented).
+     * @principle Publicly readable, admin-only write access (admin check unimplemented).
+     */
+    match /locations/{locationId} {
+        allow get: if true;
+        allow list: if true;
+        allow create, update, delete: if false; // TODO: Add admin check
+    }
+
+    /**
+     * @description Helper function to determine if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Helper function to determine if the user is the owner of the document.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Helper function to determine if the user is the owner of the document and the document exists.
+     */
+    function isExistingOwner(userId) {
+      return isSignedIn() && isOwner(userId) && resource != null;
+    }
+  }
+}
