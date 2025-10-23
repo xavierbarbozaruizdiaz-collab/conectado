@@ -26,20 +26,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { useCollection, collection, useFirestore } from '@/firebase';
+import { useCollection, collection, useFirestore, query } from '@/firebase';
 import type { Product, UserProfile, Order } from '@/lib/types';
 
 
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
   
-  const productsQuery = useMemo(() => (firestore ? collection(firestore, 'products') : null), [firestore]);
+  const productsQuery = useMemo(() => (firestore ? query(collection(firestore, 'products')) : null), [firestore]);
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
-  const usersQuery = useMemo(() => (firestore ? collection(firestore, 'users') : null), [firestore]);
+  const usersQuery = useMemo(() => (firestore ? query(collection(firestore, 'users')) : null), [firestore]);
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
-  const ordersQuery = useMemo(() => (firestore ? collection(firestore, 'orders') : null), [firestore]);
+  const ordersQuery = useMemo(() => (firestore ? query(collection(firestore, 'orders')) : null), [firestore]);
   const { data: orders, loading: ordersLoading } = useCollection<Order>(ordersQuery);
 
   const recentUsers = (users || []).slice(0, 5);
@@ -49,6 +49,11 @@ export default function AdminDashboardPage() {
   const totalSales = orders?.length || 0;
   
   const loading = productsLoading || usersLoading || ordersLoading;
+  
+  const userMap = useMemo(() => {
+    if (!users) return new Map();
+    return new Map(users.map(u => [u.uid, u.storeName]));
+  }, [users]);
 
   return (
     <div className="space-y-8">
@@ -139,7 +144,7 @@ export default function AdminDashboardPage() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
-                      {(users || []).find(u => u.uid === product.sellerId)?.storeName}
+                      {userMap.get(product.sellerId) || 'N/A'}
                     </TableCell>
                     <TableCell>{formatCurrency(product.price)}</TableCell>
                   </TableRow>

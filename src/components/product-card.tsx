@@ -6,9 +6,8 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useFirestore } from "@/firebase";
-import { useDoc, docRef } from "@/firebase/firestore/use-doc";
-import type { Product, User } from "@/lib/data";
+import { useFirestore, useDoc, doc } from "@/firebase";
+import type { Product, UserProfile } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 type ProductCardProps = {
@@ -17,9 +16,8 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const firestore = useFirestore();
-  const { data: seller, loading } = useDoc<User>(
-    firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null
-  );
+  const sellerDocRef = firestore && product.sellerId ? doc(firestore, "users", product.sellerId) : null;
+  const { data: seller, loading } = useDoc<UserProfile>(sellerDocRef);
 
   return (
     <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -47,11 +45,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex justify-between items-center pt-2">
           <p className="text-xl font-bold text-primary">{formatCurrency(product.price)}</p>
           {seller && (
-            <Link href={`/store/${seller.id}`} className="flex items-center gap-2 group/seller">
+            <Link href={`/store/${seller.uid}`} className="flex items-center gap-2 group/seller">
               <span className="text-sm text-muted-foreground group-hover/seller:text-primary transition-colors">{seller.storeName}</span>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={seller.profilePictureUrl} alt={seller.storeName} />
-                <AvatarFallback>{seller.storeName.charAt(0)}</AvatarFallback>
+                <AvatarImage src={seller.profilePictureUrl} alt={seller.storeName || ''} />
+                <AvatarFallback>{seller.storeName?.charAt(0)}</AvatarFallback>
               </Avatar>
             </Link>
           )}

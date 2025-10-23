@@ -29,7 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Order, UserProfile } from '@/lib/types';
-import { useFirestore, useCollection, collection, useUser } from '@/firebase';
+import { useFirestore, useCollection, collection, useUser, query } from '@/firebase';
 import { Timestamp } from 'firebase/firestore';
 
 const getStatusBadge = (status: string) => {
@@ -58,7 +58,7 @@ export default function SellerOrdersPage() {
   const firestore = useFirestore();
   
   const allOrdersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'orders') : null;
+    return firestore ? query(collection(firestore, 'orders')) : null;
   }, [firestore]);
   const { data: allOrders, loading: ordersLoading } = useCollection<Order>(allOrdersQuery);
 
@@ -71,12 +71,17 @@ export default function SellerOrdersPage() {
   }, [allOrders, user]);
 
   const usersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'users') : null;
+    return firestore ? query(collection(firestore, 'users')) : null;
   }, [firestore]);
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+  
+  const customerNameMap = useMemo(() => {
+    if (!users) return new Map();
+    return new Map(users.map(u => [u.uid, u.storeName]));
+  }, [users]);
 
   const getCustomerName = (userId: string) => {
-      return users?.find(u => u.uid === userId)?.storeName || userId;
+      return customerNameMap.get(userId) || userId;
   }
 
   if (ordersLoading || usersLoading) {

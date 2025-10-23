@@ -4,8 +4,8 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, collection } from '@/firebase/firestore/use-collection';
-import type { Product } from '@/lib/data';
+import { useCollection, collection, query, useFirestore } from '@/firebase';
+import type { Product } from '@/lib/types';
 import type { Banner, UserProfile } from '@/lib/types';
 import ProductCard from '@/components/product-card';
 import {
@@ -19,23 +19,22 @@ import { CreditCard, ShieldCheck, Truck, Store } from 'lucide-react';
 import Autoplay from "embla-carousel-autoplay"
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useFirestore } from '@/firebase';
 
 export default function Home() {
   const firestore = useFirestore();
 
   const productsQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'products') : null;
+    return firestore ? query(collection(firestore, 'products')) : null;
   }, [firestore]);
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   const usersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'users') : null;
+    return firestore ? query(collection(firestore, 'users')) : null;
   }, [firestore]);
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const bannersQuery = useMemo(() => {
-    return firestore ? collection(firestore, 'banners') : null;
+    return firestore ? query(collection(firestore, 'banners')) : null;
   }, [firestore]);
   const { data: banners, loading: bannersLoading } = useCollection<Banner>(bannersQuery);
 
@@ -142,7 +141,7 @@ export default function Home() {
                   <Link href={`/store/${user.uid}`} key={user.uid} className="group flex flex-col items-center gap-2 text-center">
                     <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-transparent group-hover:border-primary transition-all duration-300">
                         <AvatarImage src={user.profilePictureUrl} />
-                        <AvatarFallback>{user.storeName.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{user.storeName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <p className="font-semibold text-sm group-hover:text-primary transition-colors">{user.storeName}</p>
                   </Link>  

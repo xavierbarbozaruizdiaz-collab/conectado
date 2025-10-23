@@ -49,7 +49,6 @@ export default function SellerDashboardPage() {
     let revenue = 0;
     let salesCount = 0;
     
-    // Filtra los pedidos que contienen productos del vendedor
     const sellerOrders = allOrders.filter(order => 
       order.items.some(item => item.sellerId === user.uid)
     );
@@ -58,13 +57,9 @@ export default function SellerDashboardPage() {
       const sellerItemsInOrder = order.items.filter(item => item.sellerId === user.uid);
       const revenueFromOrder = sellerItemsInOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       revenue += revenueFromOrder;
-      // Contamos la orden como una venta si el vendedor tiene al menos un item en ella.
       salesCount++; 
     });
 
-    // Nota: El 'pendingBalance' real debería venir de un agregado en el backend o de la entidad 'Affiliate'
-    // Por ahora lo dejaremos como un cálculo basado en órdenes no pagadas.
-    // Esto es una simplificación.
     const unpaidRevenue = sellerOrders
       .filter(o => o.status !== 'Entregado' && o.status !== 'Cancelado')
       .reduce((sum, order) => {
