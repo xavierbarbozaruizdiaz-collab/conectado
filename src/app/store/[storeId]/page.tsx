@@ -8,7 +8,7 @@ import { useDoc, docRef } from "@/firebase/firestore/use-doc";
 import { useCollection, collection, query, where } from "@/firebase/firestore/use-collection";
 import { useFirestore } from "@/firebase";
 import type { UserProfile } from '@/lib/types';
-import type { Product } from "@/lib/data";
+import type { Product } from "@/lib/types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
