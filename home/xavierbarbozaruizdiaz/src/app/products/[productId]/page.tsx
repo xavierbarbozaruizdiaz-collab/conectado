@@ -3,9 +3,7 @@
 
 import { useMemo } from 'react';
 import { notFound } from "next/navigation";
-import { useFirestore } from "@/firebase";
-import { useCollection, collection } from "@/firebase/firestore/use-collection";
-import { useDoc, doc } from "@/firebase";
+import { useFirestore, useCollection, useDoc, doc, collection } from "@/firebase";
 import type { Product } from "@/lib/types";
 import ProductCard from "@/components/product-card";
 import ProductDetailsClient from "./ProductDetailsClient";

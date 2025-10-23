@@ -18,9 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Store, MessageSquare } from "lucide-react";
 import { useState, useMemo } from "react";
 import logger from "@/lib/logger";
-import { useFirestore, useUser } from "@/firebase";
-import { useDoc, doc } from "@/firebase";
-import { updateDoc } from 'firebase/firestore';
+import { useFirestore, useUser, useDoc, doc, updateDoc } from "@/firebase";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import {

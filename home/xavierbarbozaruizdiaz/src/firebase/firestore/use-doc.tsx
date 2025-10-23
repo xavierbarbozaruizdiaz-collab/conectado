@@ -24,8 +24,9 @@ export function useDoc<T = DocumentData>(
 
   useEffect(() => {
     if (!docRef) {
-      setLoading(false);
       setData(null);
+      setLoading(false);
+      setError(null);
       return;
     }
     
