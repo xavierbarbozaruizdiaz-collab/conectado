@@ -15,7 +15,7 @@ function CheckoutSuccessContent() {
     const { clearCart } = useCart();
 
     useEffect(() => {
-        // Limpia el carrito cuando el componente se monta
+        // Limpia el carrito incondicionalmente cuando se muestra la página de éxito.
         clearCart();
     }, [clearCart]);
 
@@ -45,7 +45,7 @@ function CheckoutSuccessContent() {
                             </Link>
                         </Button>
                         <Button asChild variant="outline" className="flex-1" size="lg">
-                            <Link href="/dashboard/seller">
+                            <Link href="/dashboard/seller/orders">
                                 Ir a Mis Pedidos
                             </Link>
                         </Button>
