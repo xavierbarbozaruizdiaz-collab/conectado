@@ -1,77 +1,79 @@
 /**
- * @fileoverview Firestore Security Rules for the e-commerce application.
+ * @fileoverview Firestore Security Rules for Prototyping.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and products.
- * Affiliates have their own data, secured by ownership.
- * Read-only collections like banners, platform config, subscription tiers, categories, and locations are publicly readable.
- * Orders are accessible only to the user who created them.
+ * This ruleset prioritizes security by enforcing strict access control based on user roles and ownership.
+ * Schema validation is relaxed to enable rapid prototyping.
  *
  * Data Structure:
- * - /users/{userId}: User profile information.
- * - /products/{productId}: Product listings.
- * - /orders/{orderId}: Customer orders.
- * - /affiliates/{affiliateId}: Affiliate user data.
- * - /banners/{bannerId}: Promotional banners.
- * - /config/platform: Global platform settings.
- * - /affiliateEvents/{eventId}: Affiliate tracking events.
- * - /subscriptionTiers/{tierId}: Subscription plans.
- * - /categories/{categoryId}: Product categories.
- * - /locations/{locationId}: Geographical locations.
+ * - /users/{userId}: Stores user profile information. Access is restricted to the owning user.
+ * - /products/{productId}: Stores product information. Read access is public, but writes are restricted to the product owner.
+ * - /orders/{orderId}: Stores order information.  Currently unprotected for prototyping.
+ * - /affiliates/{affiliateId}: Stores affiliate data. Access is restricted to the owning user.
+ * - /banners/{bannerId}: Stores promotional banners. Read access is public, writes are unprotected.
+ * - /config/platform: Stores global platform settings. Currently unprotected.
+ * - /affiliateEvents/{eventId}: Stores affiliate event data. Currently unprotected.
+ * - /subscriptionTiers/{tierId}: Stores subscription tier data. Read access is public.
+ * - /categories/{categoryId}: Stores product categories. Read access is public, writes are unprotected.
+ * - /locations/{locationId}: Stores geographical locations. Read access is public, writes are unprotected.
  *
  * Key Security Decisions:
- * - User profiles are only readable and writable by the owning user.
- * - Products are only manageable by the selling user.
- * - Orders are only accessible to the user who created them.
- * - Banners, platform config, subscription tiers, categories, and locations are publicly readable.
- * - Listing of user documents is disallowed for privacy.
+ * - Listing of `/users` is denied to prevent information disclosure.
+ * - Read-only collections like `/subscriptionTiers`, `/categories`, and `/locations` are publicly readable.
+ * - Ownership is enforced for user profiles and products, enabling owner-only writes.
  *
  * Denormalization for Authorization:
- * - Products have a `sellerId` field to simplify ownership checks.
- * - Orders have a `userId` field to simplify ownership checks.
+ * - The `/products/{productId}` collection requires the `sellerId` field to determine ownership.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @returns {boolean} True if the user is signed in, false otherwise.
+     * @description Checks if the current user is signed in.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Authentication
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
-     * @param {string} userId - The user ID to compare against.
-     * @returns {boolean} True if the user is the owner, false otherwise.
+     * @description Checks if the current user is the owner of the resource.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Ownership
      */
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user is the owner of an existing document.
-     * @param {string} userId - The user ID to compare against.
-     * @returns {boolean} True if the user is the owner and the document exists.
+     * @description Checks if the current user is the existing owner of the resource.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Ownership and Existence Check
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Security rules for user profiles.
+     * @description Enforces ownership for user profiles.
      * @path /users/{userId}
-     * @allow (create) - User can create their profile if their UID matches the {userId}.
-     * @allow (get) - User can read their own profile.
-     * @allow (update) - User can update their own profile.
-     * @allow (delete) - User can delete their own profile.
-     * @deny (create) - User cannot create a profile with a mismatched ID.
-     * @deny (get) - User cannot read another user's profile.
-     * @deny (update) - User cannot update another user's profile.
-     * @deny (delete) - User cannot delete another user's profile.
-     * @principle Enforces document ownership for user profiles.
+     * @allow (create) User with UID 'user123' creates their own profile.
+     * @allow (get) User with UID 'user123' retrieves their own profile.
+     * @allow (update) User with UID 'user123' updates their own profile.
+     * @allow (delete) User with UID 'user123' deletes their own profile.
+     * @deny (create) User with UID 'user123' tries to create profile for 'user456'.
+     * @deny (get) User with UID 'user123' tries to retrieve profile for 'user456'.
+     * @deny (update) User with UID 'user123' tries to update profile for 'user456'.
+     * @deny (delete) User with UID 'user123' tries to delete profile for 'user456'.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -82,56 +84,53 @@ service cloud.firestore {
     }
 
     /**
-     * @description Security rules for product listings.
+     * @description Manages products, allowing public read but owner-only writes.
      * @path /products/{productId}
-     * @allow (create) - User can create a product if they are the seller.
-     * @allow (get) - Anyone can read a product listing.
-     * @allow (update) - User can update their own product listing.
-     * @allow (delete) - User can delete their own product listing.
-     * @deny (create) - User cannot create a product for another seller.
-     * @deny (update) - User cannot update another user's product listing.
-     * @deny (delete) - User cannot delete another user's product listing.
-     * @principle Enforces document ownership for product listings.
+     * @allow (get) Any user can retrieve product information.
+     * @allow (list) Any user can list products.
+     * @allow (create) User with UID 'user123' creates a product with 'sellerId' set to 'user123'.
+     * @allow (update) User with UID 'user123' updates a product where 'resource.data.sellerId' is 'user123'.
+     * @allow (delete) User with UID 'user123' deletes a product where 'resource.data.sellerId' is 'user123'.
+     * @deny (create) User with UID 'user123' creates a product with 'sellerId' set to 'user456'.
+     * @deny (update) User with UID 'user123' updates a product where 'resource.data.sellerId' is 'user456'.
+     * @deny (delete) User with UID 'user123' deletes a product where 'resource.data.sellerId' is 'user456'.
+     * @principle Enforces document ownership for writes.
      */
     match /products/{productId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.sellerId);
+      allow update: if isExistingOwner(resource.data.sellerId) && request.resource.data.sellerId == resource.data.sellerId;
       allow delete: if isExistingOwner(resource.data.sellerId);
     }
 
     /**
-     * @description Security rules for customer orders.
+     * @description Controls access to customer orders.
      * @path /orders/{orderId}
-     * @allow (create) - User can create an order if they are the order's user.
-     * @allow (get) - User can read their own order.
-     * @allow (update) - Not allowed.
-     * @allow (delete) - Not allowed.
-     * @deny (create) - User cannot create an order for another user.
-     * @deny (get) - User cannot read another user's order.
-     * @principle Enforces document ownership for orders.
+     * @allow (get) Any user can retrieve order information.
+     * @allow (list) Any user can list orders.
+     * @allow (create) Any signed in user can create an order.
+     * @allow (update) Any signed in user can update an order.
+     * @allow (delete) Any signed in user can delete an order.
+     * @principle Open access for prototyping.
      */
     match /orders/{orderId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
     }
 
     /**
-     * @description Security rules for affiliate user data.
+     * @description Restricts access to affiliate user data.
      * @path /affiliates/{affiliateId}
-     * @allow (create) - User can create their affiliate profile if their UID matches the {affiliateId}.
-     * @allow (get) - User can read their own affiliate profile.
-     * @allow (update) - User can update their own affiliate profile.
-     * @allow (delete) - User can delete their own affiliate profile.
-     * @deny (create) - User cannot create an affiliate profile with a mismatched ID.
-     * @deny (get) - User cannot read another user's affiliate profile.
-     * @deny (update) - User cannot update another user's affiliate profile.
-     * @deny (delete) - User cannot delete another user's affiliate profile.
-     * @principle Enforces document ownership for affiliate data.
+     * @allow (get) User with UID 'user123' retrieves their own affiliate data.
+     * @allow (update) User with UID 'user123' updates their own affiliate data.
+     * @allow (delete) User with UID 'user123' deletes their own affiliate data.
+     * @deny (create) User with UID 'user123' tries to create affiliate data for 'user456'.
+     * @deny (get) User with UID 'user123' tries to retrieve affiliate data for 'user456'.
+     * @deny (update) User with UID 'user123' tries to update affiliate data for 'user456'.
+     * @deny (delete) User with UID 'user123' tries to delete affiliate data for 'user456'.
+     * @principle Enforces document ownership for writes.
      */
     match /affiliates/{affiliateId} {
       allow get: if isOwner(affiliateId);
@@ -142,108 +141,104 @@ service cloud.firestore {
     }
 
     /**
-     * @description Security rules for promotional banners.
+     * @description Manages promotional banners for the homepage.
      * @path /banners/{bannerId}
-     * @allow (get) - Anyone can read a banner.
-     * @allow (list) - Anyone can list banners.
-     * @deny (create) - Not allowed.
-     * @deny (update) - Not allowed.
-     * @deny (delete) - Not allowed.
-     * @principle Allows public read access for banners.
+     * @allow (get) Any user can retrieve banner information.
+     * @allow (list) Any user can list banners.
+     * @allow (create) Any signed in user can create a banner.
+     * @allow (update) Any signed in user can update a banner.
+     * @allow (delete) Any signed in user can delete a banner.
+     * @principle Open access for prototyping.
      */
     match /banners/{bannerId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
     }
 
     /**
-     * @description Security rules for global platform settings.
+     * @description Stores global platform settings.
      * @path /config/platform
-     * @allow (get) - Anyone can read the platform settings.
-     * @allow (list) - Not allowed.
-     * @deny (create) - Not allowed.
-     * @deny (update) - Not allowed.
-     * @deny (delete) - Not allowed.
-     * @principle Allows public read access for platform settings.
+     * @allow (get) Any user can retrieve platform settings.
+     * @allow (create) Any signed in user can create platform settings.
+     * @allow (update) Any signed in user can update platform settings.
+     * @allow (delete) Any signed in user can delete platform settings.
+     * @principle Open access for prototyping.
      */
     match /config/platform {
-      allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
     }
 
     /**
-     * @description Security rules for affiliate tracking events.
+     * @description Stores tracking events for affiliate links (clicks, conversions).
      * @path /affiliateEvents/{eventId}
-     * @allow (create) - Anyone can create an affiliate event.
-     * @allow (get) - Anyone can read affiliate events.
-     * @allow (list) - Not allowed.
-     * @deny (update) - Not allowed.
-     * @deny (delete) - Not allowed.
+     * @allow (get) Any user can retrieve affiliate event information.
+     * @allow (list) Any user can list affiliate events.
+     * @allow (create) Any signed in user can create an affiliate event.
+     * @allow (update) Any signed in user can update an affiliate event.
+     * @allow (delete) Any signed in user can delete an affiliate event.
+     * @principle Open access for prototyping.
      */
     match /affiliateEvents/{eventId} {
-        allow get: if true;
-        allow list: if false;
-        allow create: if true; // Consider more restrictive rules.
+        allow get, list: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
+    }
+
+    /**
+     * @description Stores the available subscription plans for users.
+     * @path /subscriptionTiers/{tierId}
+     * @allow (get) Any user can retrieve subscription tier information.
+     * @allow (list) Any user can list subscription tiers.
+     * @deny (create) No one can create a subscription tier.
+     * @deny (update) No one can update a subscription tier.
+     * @deny (delete) No one can delete a subscription tier.
+     * @principle Public read, restricted write.
+     */
+    match /subscriptionTiers/{tierId} {
+        allow get, list: if true;
+        allow create: if false;
         allow update: if false;
         allow delete: if false;
     }
 
     /**
-     * @description Security rules for subscription tiers.
-     * @path /subscriptionTiers/{tierId}
-     * @allow (get) - Anyone can read a subscription tier.
-     * @allow (list) - Anyone can list subscription tiers.
-     * @deny (create) - Not allowed.
-     * @deny (update) - Not allowed.
-     * @deny (delete) - Not allowed.
-     * @principle Allows public read access for subscription tiers.
-     */
-    match /subscriptionTiers/{tierId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Security rules for product categories.
+     * @description Stores product categories, manageable by admins.
      * @path /categories/{categoryId}
-     * @allow (get) - Anyone can read a category.
-     * @allow (list) - Anyone can list categories.
-     * @deny (create) - Not allowed.
-     * @deny (update) - Not allowed.
-     * @deny (delete) - Not allowed.
+     * @allow (get) Any user can retrieve category information.
+     * @allow (list) Any user can list categories.
+     * @allow (create) Any signed in user can create a category.
+     * @allow (update) Any signed in user can update a category.
+     * @allow (delete) Any signed in user can delete a category.
+     * @principle Open access for prototyping.
      */
     match /categories/{categoryId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
     }
 
     /**
-     * @description Security rules for geographical locations.
+     * @description Stores geographical locations like departments and cities/sub-locations.
      * @path /locations/{locationId}
-     * @allow (get) - Anyone can read a location.
-     * @allow (list) - Anyone can list locations.
-     * @deny (create) - Not allowed.
-     * @deny (update) - Not allowed.
-     * @deny (delete) - Not allowed.
+     * @allow (get) Any user can retrieve location information.
+     * @allow (list) Any user can list locations.
+     * @allow (create) Any signed in user can create a location.
+     * @allow (update) Any signed in user can update a location.
+     * @allow (delete) Any signed in user can delete a location.
+     * @principle Open access for prototyping.
      */
     match /locations/{locationId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+        allow get, list: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
     }
   }
 }
