@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCollection, collection, useFirestore, query, where, deleteDoc, doc } from '@/firebase';
-import type { Product, UserProfile } from '@/lib/types';
+import type { Product } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { MoreHorizontal, Search } from "lucide-react";
 import {
@@ -42,7 +42,9 @@ export default function AdminProductsPage() {
   const { toast } = useToast();
 
   const productsQuery = useMemo(() => {
+    // Solo busca cuando el usuario ha escrito algo
     if (!firestore || !searchTerm) return null;
+    // Esta es una búsqueda simple por nombre. Para búsquedas más complejas, se necesitarían índices compuestos.
     return query(collection(firestore, 'products'));
   }, [firestore, searchTerm]);
 
@@ -52,7 +54,8 @@ export default function AdminProductsPage() {
     if (!products) return [];
     return products.filter(product => 
       (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+      (product.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.sellerId || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm]);
   
@@ -106,7 +109,7 @@ export default function AdminProductsPage() {
                  <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por nombre o ID..."
+                        placeholder="Buscar por nombre, ID o vendedor..."
                         className="pl-9"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

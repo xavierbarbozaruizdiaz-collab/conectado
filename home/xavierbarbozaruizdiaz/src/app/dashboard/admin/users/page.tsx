@@ -36,7 +36,7 @@ export default function AdminUsersPage() {
   const firestore = useFirestore();
 
   const usersQuery = useMemo(() => {
-    // Solo se ejecuta la consulta si hay un término de búsqueda
+    // Solo se ejecuta la consulta si hay un término de búsqueda para evitar el `list` inicial
     if (!firestore || !searchTerm) return null;
     return query(collection(firestore, 'users'));
   }, [firestore, searchTerm]);
