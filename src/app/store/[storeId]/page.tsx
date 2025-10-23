@@ -4,8 +4,8 @@
 import { useMemo } from 'react';
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { useDoc, docRef } from "@/firebase/firestore/use-doc";
-import { useCollection, collection, query, where } from "@/firebase/firestore/use-collection";
+import { useDoc, doc } from "@/firebase";
+import { useCollection, collection, query, where } from "@/firebase";
 import { useFirestore } from "@/firebase";
 import type { UserProfile } from '@/lib/types';
 import type { Product } from "@/lib/types";
@@ -18,7 +18,7 @@ export default function StorePage({ params }: { params: { storeId: string } }) {
   const firestore = useFirestore();
 
   const { data: seller, loading: sellerLoading } = useDoc<UserProfile>(
-    firestore ? docRef(firestore, "users", params.storeId) : null
+    firestore ? doc(firestore, "users", params.storeId) : null
   );
 
   const productsQuery = useMemo(() => {
