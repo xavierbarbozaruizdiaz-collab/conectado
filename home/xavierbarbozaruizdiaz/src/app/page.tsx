@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, collection, query, useFirestore } from '@/firebase';
+import { useCollection, collection, query, useFirestore, limit } from '@/firebase';
 import type { Product } from '@/lib/types';
 import type { Banner, UserProfile } from '@/lib/types';
 import ProductCard from '@/components/product-card';
@@ -24,12 +24,12 @@ export default function Home() {
   const firestore = useFirestore();
 
   const productsQuery = useMemo(() => {
-    return firestore ? query(collection(firestore, 'products')) : null;
+    return firestore ? query(collection(firestore, 'products'), limit(10)) : null;
   }, [firestore]);
   const { data: products, loading: productsLoading } = useCollection<Product>(productsQuery);
 
   const usersQuery = useMemo(() => {
-    return firestore ? query(collection(firestore, 'users')) : null;
+    return firestore ? query(collection(firestore, 'users'), limit(6)) : null;
   }, [firestore]);
   const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
@@ -137,7 +137,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                {(users || []).slice(0, 6).map(user => (
+                {(users || []).map(user => (
                   <Link href={`/store/${user.uid}`} key={user.uid} className="group flex flex-col items-center gap-2 text-center">
                     <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-transparent group-hover:border-primary transition-all duration-300">
                         <AvatarImage src={user.profilePictureUrl} />
@@ -223,3 +223,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

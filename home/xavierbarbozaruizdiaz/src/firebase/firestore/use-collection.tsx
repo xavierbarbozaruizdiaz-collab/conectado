@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -83,4 +84,6 @@ export function useCollection<T = DocumentData>(
 }
 
 // Re-export collection from firestore to be used in components
-export { collection, query, where, orderBy };
+export { collection, query, where, orderBy, limit };
+
+    
