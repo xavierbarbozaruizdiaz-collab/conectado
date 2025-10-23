@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useFirestore, useDoc, docRef } from "@/firebase";
+import { useFirestore, useDoc, doc } from "@/firebase";
 import type { Product, UserProfile } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const firestore = useFirestore();
-  const sellerDocRef = firestore && product.sellerId ? docRef(firestore, "users", product.sellerId) : null;
+  const sellerDocRef = firestore && product.sellerId ? doc(firestore, "users", product.sellerId) : null;
   const { data: seller, loading } = useDoc<UserProfile>(sellerDocRef);
 
   return (
