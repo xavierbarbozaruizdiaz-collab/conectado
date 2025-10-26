@@ -1,89 +1,83 @@
-
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
-  Firestore,
-  CollectionReference,
-  DocumentData,
-  Query,
+  Query as FSQuery,
+  Unsubscribe,
 } from 'firebase/firestore';
-import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
-import { useFirestore } from '../';
-import { FirestorePermissionError } from '../errors';
-import { errorEmitter } from '../error-emitter';
+import { onSnapshot } from 'firebase/firestore';
 
-interface UseCollectionOptions {
-  // Define any options here, e.g., for filtering or sorting
-}
+/**
+ * Hook seguro para escuchar una colección por Query.
+ * - Acepta `null` y, en ese caso, devuelve `data=[]` y `loading=false`.
+ * - Maneja unsubscribe al cambiar la query o desmontar.
+ * - No lanza: coloca errores en `error` y deja `data=[]`.
+ */
+export function useCollection<T = any>(query: FSQuery | null) {
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<unknown>(null);
 
-export function useCollection<T = DocumentData>(
-  collectionQuery: Query | null
-) {
-  const firestore = useFirestore() as Firestore;
-  const [data, setData] = useState<T[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  
-  const unsubscribeRef = useRef<() => void>();
+  const unsubRef = useRef<Unsubscribe | null>(null);
 
   useEffect(() => {
-    // Si la consulta es null, no hacemos nada.
-    if (!firestore || !collectionQuery) {
-      setData(null); // Resetea los datos
+    // Si llega null: no hay consulta -> devolver vacío y no suscribir
+    if (!query) {
+      // Limpia cualquier suscripción previa
+      if (unsubRef.current) {
+        try { unsubRef.current(); } catch { /* noop */ }
+        unsubRef.current = null;
+      }
+      setData([]);
+      setError(null);
       setLoading(false);
-      setError(null); // Resetea el error
       return;
     }
-    
-    // Si la consulta cambia, nos aseguramos de que el estado de carga sea verdadero.
-    setLoading(true);
 
-    // Unsubscribe from the previous listener if it exists
-    if (unsubscribeRef.current) {
-        unsubscribeRef.current();
+    // Cancelar suscripción anterior si existe
+    if (unsubRef.current) {
+      try { unsubRef.current(); } catch { /* noop */ }
+      unsubRef.current = null;
     }
 
+    setLoading(true);
+    setError(null);
+
     try {
-      const unsubscribe = onSnapshot(
-        collectionQuery,
-        (snapshot) => {
-          const items = snapshot.docs.map((doc) => ({
+      const unsub = onSnapshot(
+        query,
+        (snap) => {
+          const items = snap.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           })) as T[];
+
           setData(items);
           setLoading(false);
         },
         (err) => {
-          const path = (collectionQuery as any)._query?.path?.segments.join('/') || 'unknown path';
-          const permissionError = new FirestorePermissionError({
-            path: path,
-            operation: 'list'
-          });
-          errorEmitter.emit('permission-error', permissionError);
-          setError(permissionError);
+          setError(err);
+          setData([]);
           setLoading(false);
-        }
+        },
       );
-      
-      unsubscribeRef.current = unsubscribe;
 
-    } catch (e: any) {
-        setError(e);
-        setLoading(false);
+      unsubRef.current = unsub;
+    } catch (err) {
+      setError(err);
+      setData([]);
+      setLoading(false);
     }
 
-    // Cleanup subscription on unmount
     return () => {
-        if(unsubscribeRef.current) {
-            unsubscribeRef.current();
-        }
-    }
-  }, [firestore, collectionQuery]);
+      if (unsubRef.current) {
+        try { unsubRef.current(); } catch { /* noop */ }
+        unsubRef.current = null;
+      }
+    };
+  }, [query]);
 
   return { data, loading, error };
 }
 
-// Re-export collection from firestore to be used in components
-export { collection, query, where, orderBy };
+export default useCollection;
